@@ -1,93 +1,79 @@
-name: Deploy Greyspire Site
+/* ================================
+   Greyspire Ritual JS
+   - Selo desaparece ao clicar
+   - Carta revela com animação
+   - Pergaminho pulsa no BPM do áudio
+   - Assinatura ganha efeito corrompido + partículas
+   ================================= */
 
-on:
-  push:
-    branches:
-      - main
+const seloBtn = document.getElementById("seloBtn");
+const pergaminho = document.getElementById("pergaminho");
+const carta = document.getElementById("carta");
+const assinatura = document.getElementById("assinatura");
+const ritualAudio = document.getElementById("ritualAudio");
 
-permissions:
-  contents: write
+let audioStarted = false;
 
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
+function revelarCarta() {
+  // Oculta o selo
+  seloBtn.classList.add("hidden");
 
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+  // Mostra o conteúdo da carta
+  pergaminho.classList.add("revealed");
+  carta.setAttribute("aria-hidden", "false");
 
-      - name: Apagar tudo da branch main antes de gerar
-        run: |
-          shopt -s extglob
-          rm -rf !(.git|.github)
+  // Inicia pulsação visual
+  pergaminho.classList.add("pulse");
 
-      - name: Criar pastas do site
-        run: |
-          mkdir -p css js img audio
+  // Mostra assinatura com atraso dramático
+  setTimeout(() => assinatura.classList.add("revealed"), 900);
 
-      - name: Gerar index.html
-        run: |
-          cat << 'EOF' > index.html
-          <!doctype html>
-          <html lang="pt-br">
-          <head>
-          <meta charset="utf-8" />
-          <meta name="viewport" content="width=device-width,initial-scale=1" />
-          <title>Carta de Greyspire</title>
-          <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=MedievalSharp&display=swap" rel="stylesheet">
-          <link rel="stylesheet" href="css/estilo.css">
-          </head>
-          <body>
+  // Começa som (só na interação do usuário)
+  if (!audioStarted) {
+    ritualAudio.volume = 0.8;
+    ritualAudio.play().catch(() => {});
+    audioStarted = true;
+  }
 
-          <main class="pergaminho" id="pergaminho" data-bg="img/pergaminho_base.jpg" aria-live="polite">
-            <canvas id="fxCanvas" class="fx-canvas"></canvas>
+  iniciarParticulas();
+}
 
-            <button id="seloBtn" class="selo-btn" aria-label="Abrir carta">
-              <img src="img/selo.png" alt="Selo arcano" class="selo-img" />
-            </button>
+// Evento principal
+seloBtn.addEventListener("click", revelarCarta);
 
-            <section class="carta" id="carta" role="region" aria-hidden="true">
-              <div class="conteudo" id="conteudo">
-          (TEXTO DA CARTA SERÁ INSERIDO AQUI AUTOMATICAMENTE NA VERSÃO FINAL)
-              </div>
 
-              <div class="assinatura-wrap">
-                <div id="assinatura" class="assinatura" aria-hidden="true" data-text="Arcanista-mor Amaris Solun">
-                  <span class="visually-hidden">Arcanista-mor Amaris Solun</span>
-                </div>
-              </div>
-            </section>
-          </main>
+/* ================================
+   Partículas leves perto da assinatura
+   ================================ */
 
-          <audio id="ritualAudio" src="audio/ritual.mp3" preload="auto" loop></audio>
+function criarParticula() {
+  const p = document.createElement("div");
+  p.className = "spark";
+  const rect = assinatura.getBoundingClientRect();
+  p.style.left = rect.left + rect.width * Math.random() + "px";
+  p.style.top = rect.top + rect.height + 8 + "px";
+  document.body.appendChild(p);
+  setTimeout(() => p.remove(), 1500);
+}
 
-          <script src="js/ritual.js" defer></script>
-          </body>
-          </html>
-          EOF
+function iniciarParticulas() {
+  setInterval(criarParticula, 1200);
+}
 
-      - name: Gerar CSS
-        run: |
-          cat << 'EOF' > css/estilo.css
-          /* CSS SERÁ INSERIDO AQUI NA VERSÃO FINAL */
-          EOF
 
-      - name: Gerar JS
-        run: |
-          cat << 'EOF' > js/ritual.js
-          // JS SERÁ INSERIDO AQUI NA VERSÃO FINAL
-          EOF
+/* ================================
+   Futura área para shader WebGL
+   (Canvas já está no HTML)
+   ================================ */
 
-      - name: Gerar imagens e áudio (PLACEHOLDER)
-        run: |
-          echo "Imagem e áudio serão inseridos aqui depois"
+const canvas = document.getElementById("fxCanvas");
+const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true });
 
-      - name: Commit & Push
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add .
-          git commit -m "Deploy automático"
-          git push origin main --force
+function ajustarCanvas() {
+  canvas.width = pergaminho.clientWidth;
+  canvas.height = pergaminho.clientHeight;
+}
+ajustarCanvas();
+window.addEventListener("resize", ajustarCanvas);
+
+// Shader será adicionado depois (versão B do deploy)
