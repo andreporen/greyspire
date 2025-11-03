@@ -1,68 +1,38 @@
-// ELEMENTOS
 const seloBtn = document.getElementById('seloBtn');
-const pergaminho = document.getElementById('pergaminho');
-const carta = document.getElementById('carta');
-const assinatura = document.getElementById('assinatura');
+const crawl = document.getElementById('crawl');
+const crawlContent = document.getElementById('crawlContent');
 const ritualAudio = document.getElementById('ritualAudio');
 
-// CONTROLE
-let audioStarted = false;
-let particlesActive = false;
+// evita múltiplos starts
+let started = false;
 
-// REVELA A CARTA
-function revelarCarta(){
-  seloBtn.classList.add('hidden');
-  pergaminho.classList.add('revealed');
-  carta.setAttribute('aria-hidden','false');
+function startCrawl() {
+  if (started) return;
+  started = true;
 
-  // ativa pulsação da fenda
-  pergaminho.classList.add('fenda-pulse');
-  assinatura.classList.add('fenda');
+  // play audio (user interaction)
+  ritualAudio.currentTime = 0;
+  ritualAudio.play().catch(()=>{});
 
-  // toca o áudio
-  if(!audioStarted){
-    ritualAudio.volume = 0.8;
-    ritualAudio.play().catch(()=>{});
-    audioStarted = true;
-  }
+  // calcular duração baseada no tamanho do conteúdo (em px)
+  // mais conteúdo = animação mais longa
+  requestAnimationFrame(()=> {
+    const contentHeight = crawlContent.scrollHeight;
+    // base: 60s para 2000px; ajuste linear
+    const duration = Math.max(18, Math.min(140, Math.round((contentHeight / 2000) * 60)));
+    crawlContent.style.setProperty('--crawl-duration', duration + 's');
 
-  // inicia partículas
-  if(!particlesActive){
-    particlesActive = true;
-    iniciarParticulas();
-  }
+    // iniciar animação
+    crawlContent.classList.add('animate');
+    crawl.setAttribute('aria-hidden','false');
+
+    // opcional: suavemente diminuir brilho do selo para não distrair
+    seloBtn.style.transition = 'opacity 1.2s ease';
+    seloBtn.style.opacity = '0.9';
+  });
 }
 
-seloBtn.addEventListener('click', revelarCarta);
+seloBtn.addEventListener('click', startCrawl);
 
-// ===============================
-// PARTÍCULAS / CHISPAS DA FENDA
-// ===============================
-function criarParticula(){
-  const p = document.createElement('div');
-  p.className = 'spark';
-
-  const rect = assinatura.getBoundingClientRect();
-  p.style.left = rect.left + rect.width * Math.random() + 'px';
-  p.style.top  = rect.top  + rect.height + 4 + 'px';
-
-  document.body.appendChild(p);
-  setTimeout(()=>p.remove(), 1500);
-}
-
-function iniciarParticulas(){
-  setInterval(criarParticula, 900);
-}
-
-// ===============================
-// CANVAS (RESERVADO PARA FUTURO WEBGL/FX)
-// ===============================
-const canvas = document.getElementById('fxCanvas');
-const gl = canvas.getContext('webgl', { preserveDrawingBuffer:true });
-
-function ajustarCanvas(){
-  canvas.width  = pergaminho.clientWidth;
-  canvas.height = pergaminho.clientHeight;
-}
-ajustarCanvas();
-window.addEventListener('resize', ajustarCanvas);
+// se quiser que o usuário possa reiniciar ao clicar novamente, descomente abaixo:
+// seloBtn.addEventListener('dblclick', () => { location.reload(); });
