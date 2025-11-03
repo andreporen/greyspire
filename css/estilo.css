@@ -1,204 +1,138 @@
-/* ================================
-   VARIÁVEIS
-===================================*/
 :root{
-  --bg:#000;                     /* fundo do site */
-  --parchment:#bca97b;           /* base do pergaminho */
+  --bg:#000;
+  --text:#fff;
   --purple:#b24cff;
-  --pulse:#b24cff66;
-  --bpm:60;                      /* 60 bpm = 1 pulsação por segundo */
-  --text-size:15px;
+  --glow: rgba(178,76,255,0.8);
+  --crawl-duration: 60s; /* fallback; JS ajusta automaticamente */
+  --font-body: "Uncial Antiqua", serif;
+  --font-sign: "MedievalSharp", cursive;
 }
 
-/* ================================
-   RESET / BASE
-===================================*/
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{
+  margin:0;
   background:var(--bg);
-  display:grid;
-  place-items:center;
-  color:#0a0a0a;
-  font-family:"Uncial Antiqua", serif;
+  color:var(--text);
+  font-family:var(--font-body);
   -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
   overflow:hidden;
 }
 
-/* ================================
-   PERGAMINHO A4 CENTRALIZADO
-===================================*/
-.pergaminho{
-  position:relative;
-  aspect-ratio:1 / 1.414; /* A4 */
-  width:min(68vw,720px);
-  max-height:88vh;
-  background:var(--parchment) url("../img/pergaminho_base.jpg") center/cover no-repeat;
-  border-radius:6px;
-  box-shadow:
-    0 0 30px rgba(0,0,0,.9),
-    0 0 90px rgba(0,0,0,.7);
-  filter:saturate(1.05) contrast(1.07) brightness(.97);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  overflow:hidden;
-  isolation:isolate;
-  transition:filter 1.2s ease;
-}
-
-/* queimado nas bordas */
-.pergaminho::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.6) 100%);
-  pointer-events:none;
-  mix-blend-mode:multiply;
-}
-
-/* efeito pulsação */
-@keyframes parchmentPulse{
-  0%,100%{ filter:brightness(0.94) }
-  50%{ filter:brightness(1.15) saturate(1.22) }
-}
-.pergaminho.fenda-pulse{
-  animation:parchmentPulse calc(60s/var(--bpm)) infinite ease-in-out;
-}
-
-/* ================================
-   SELO
-===================================*/
+/* SELO */
 .selo-btn{
-  position:absolute;
-  top:50%; left:50%;
-  transform:translate(-50%,-50%);
+  position:fixed;
+  top:18px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:30;
   border:0;
   background:transparent;
   cursor:pointer;
-  z-index:3;
-  transition:opacity .6s ease, transform .4s ease;
 }
 .selo-img{
-  width:160px;
-  height:160px;
-  filter:drop-shadow(0 0 22px rgba(178,76,255,.45));
-  transition:transform .3s ease;
-}
-.selo-btn:hover .selo-img{ transform:scale(1.06) }
-.selo-btn.hidden{
-  opacity:0;
-  pointer-events:none;
-  transform:translate(-50%,-50%) scale(.88);
+  width:84px;
+  height:84px;
+  display:block;
+  filter:drop-shadow(0 0 12px var(--glow));
 }
 
-/* ================================
-   CARTA + SCROLL
-===================================*/
-.carta{
-  width:82%;
-  height:80%;
-  opacity:0;
-  transition:opacity 1s ease, filter 1.4s ease;
-  filter:blur(10px);
+/* CENA / PERSPECTIVA */
+.scene{
+  position:fixed;
+  inset:0;
   display:flex;
-}
-.pergaminho.revealed .carta{
-  opacity:1;
-  filter:blur(0);
+  align-items:flex-end;
+  justify-content:center;
+  perspective:700px;
+  z-index:1;
 }
 
-.scrollbox{
-  width:100%;
-  height:100%;
-  overflow-y:auto;
-  padding:22px 28px;
-  scrollbar-width:none;
+/* caixa que contém o crawl; limita largura */
+.crawl{
+  width:min(70vw,900px);
+  max-width:900px;
+  height:75vh;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  overflow:hidden;
+  pointer-events:none;
 }
-.scrollbox::-webkit-scrollbar{ width:0 }
 
-.conteudo p{
-  font-size:var(--text-size);
+/* o conteúdo que se move (rotacionado em X para criar profundidade) */
+.crawl-content{
+  width:70%;
+  transform-origin:50% 100%;
+  transform:translateY(100%) rotateX(20deg) translateZ(0);
+  text-align:center;
+  color:var(--text);
   line-height:1.6;
-  margin:0 0 1rem 0;
-  text-shadow:0 0 4px rgba(178,76,255,.15);
+  letter-spacing:.02em;
+  pointer-events:auto;
+  filter:drop-shadow(0 0 6px rgba(0,0,0,0.6));
 }
 
-/* ================================
-   ASSINATURA CORROMPIDA
-===================================*/
-.assinatura-wrap{
+/* TÍTULO - pequeno */
+.title h1{
+  font-size:20px;
+  margin-bottom:18px;
+  color:var(--text);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  opacity:.95;
+  text-shadow:0 0 10px var(--glow);
+}
+
+/* CORPO DO TEXTO - branco com detalhes roxos */
+.bodytext{
+  font-size:15px;
+  line-height:1.6;
+  color:var(--text);
+  text-align:justify;
+  text-shadow:
+    0 0 10px rgba(0,0,0,.35),
+    0 0 8px rgba(178,76,255,.08);
+  margin:0 auto;
+}
+.bodytext p{
+  margin:0 0 1rem 0;
+  color:var(--text);
+}
+
+/* assinatura estática, sem animação */
+.signature-area{
   margin-top:28px;
-  margin-bottom:8px;
+  margin-bottom:60px;
 }
 .assinatura{
-  position:relative;
-  font-family:"MedievalSharp", cursive;
+  font-family:var(--font-sign);
   font-size:20px;
-  letter-spacing:.05em;
-  color:#000;
-  opacity:0;
-  transform:scale(.96);
-  transition:opacity 1.4s ease, transform 1.4s ease;
+  color:var(--text);
   text-shadow:
-    0 0 5px rgba(178,76,255,.35),
-    0 0 15px rgba(178,76,255,.25);
-}
-.pergaminho.revealed .assinatura{
-  opacity:1;
-  transform:scale(1);
+    0 0 8px rgba(178,76,255,.45),
+    0 0 20px rgba(178,76,255,.25);
+  opacity:0.98;
 }
 
-/* glitch ghost layers */
-.assinatura::before,
-.assinatura::after{
-  content:attr(data-text);
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  mix-blend-mode:screen;
+/* ANIMAÇÃO DO CRAWL (iniciada via JS definindo --crawl-duration) */
+@keyframes crawlUp {
+  0%{
+    transform: translateY(100%) rotateX(20deg);
+  }
+  100%{
+    transform: translateY(-220%) rotateX(20deg);
+  }
 }
-.assinatura::before{
-  color:rgba(255,0,255,.25);
-  transform:translate(1px,-1px);
-}
-.assinatura::after{
-  color:rgba(150,0,255,.35);
-  transform:translate(-1px,1px);
+.crawl-content.animate{
+  animation: crawlUp var(--crawl-duration) linear forwards;
 }
 
-/* pulsação da fenda */
-@keyframes corruptPulse{
-  0%,100%{ filter:drop-shadow(0 0 6px var(--purple)) }
-  50%{ filter:drop-shadow(0 0 24px var(--purple)) }
-}
-.assinatura.fenda{
-  animation:corruptPulse calc(60s/var(--bpm)) infinite ease-in-out;
-}
-
-/* ================================
-   PARTÍCULAS
-===================================*/
-.spark{
-  position:absolute;
-  width:3px;
-  height:3px;
-  border-radius:50%;
-  background:radial-gradient(circle, #ffdca3, rgba(255,255,255,0));
-  pointer-events:none;
-  animation:sparkRise 1.6s ease-out forwards;
-}
-@keyframes sparkRise{
-  0%{ opacity:1; transform:translateY(0) scale(.5) }
-  100%{ opacity:0; transform:translateY(-70px) scale(1.4) }
-}
-
-/* ================================
-   MOBILE
-===================================*/
-@media (max-width:600px){
-  .pergaminho{ width:90vw; max-height:90vh }
-  .conteudo p{ font-size:14px }
-  .assinatura{ font-size:18px }
-  .selo-img{ width:130px; height:130px }
+/* pequenos ajustes responsivos */
+@media (max-width:720px){
+  .crawl{ width:92vw; height:70vh }
+  .crawl-content{ width:82% }
+  .bodytext{ font-size:14px }
+  .selo-img{ width:72px; height:72px }
 }
