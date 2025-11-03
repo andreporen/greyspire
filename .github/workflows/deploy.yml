@@ -24,35 +24,34 @@ jobs:
           set -e
           find . -mindepth 1 -maxdepth 1 ! -name '.git' ! -name '.github' -exec rm -rf {} +
 
-      - name: Create structure
+      - name: Create folders
         shell: bash
         run: |
           mkdir -p css js img audio
 
-      - name: Write index.html
+      - name: Generate index.html
         shell: bash
         run: |
-          cat << 'EOF' > index.html
-<!doctype html>
-<html lang="pt-br">
+          printf "%s" "<!doctype html>
+<html lang=\"pt-br\">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset=\"utf-8\" />
+  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />
   <title>Carta de Greyspire</title>
-  <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=MedievalSharp&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/estilo.css">
+  <link href=\"https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=MedievalSharp&display=swap\" rel=\"stylesheet\">
+  <link rel=\"stylesheet\" href=\"css/estilo.css\">
 </head>
 <body>
 
-<main class="pergaminho" id="pergaminho">
-  <canvas id="fxCanvas" class="fx-canvas"></canvas>
+<main class=\"pergaminho\" id=\"pergaminho\">
+  <canvas id=\"fxCanvas\" class=\"fx-canvas\"></canvas>
 
-  <button id="seloBtn" class="selo-btn" aria-label="Abrir carta">
-    <img src="img/selo.png" alt="Selo arcano" class="selo-img" />
+  <button id=\"seloBtn\" class=\"selo-btn\" aria-label=\"Abrir carta\">
+    <img src=\"img/selo.png\" alt=\"Selo arcano\" class=\"selo-img\" />
   </button>
 
-  <section class="carta" id="carta" role="region" aria-hidden="true">
-    <div class="conteudo" id="conteudo">
+  <section class=\"carta\" id=\"carta\" role=\"region\" aria-hidden=\"true\">
+    <div class=\"conteudo\" id=\"conteudo\">
       <p>Cidade de Greyspire, remanescentes do Velho Império, 537 D.R</p>
       <p>Vocês deviam ter percebido, mas a percepção é coisa perigosa por aqui, então talvez não notem até que já seja tarde; o mundo não se quebrou num só instante, ele vai quebrando aos poucos, como vidro que racha sem barulho, e essa lentidão é o que permite que todos finjam normalidade, que chamem de rotina aquilo que só parece rotina para quem esqueceu como é estar inteiro. O Império venceu, eles repetem isso com calma, como se a repetição tornasse a mentira menos afiada; a Federação Arcana não foi simplesmente derrotada, foi riscada da fala comum, apagada como se alguém tivesse passado a mão numa página cheia de nomes que nunca mereceram existir, e a Fenda fez exatamente o que prometeram que faria, o que prova que não foi erro técnico o que aconteceu ali, foi escolha com consequências que ninguém calculou direito, achando que se podia encerrar o que foi aberto, e desde então o mundo não acabou, apenas deixou de saber fechar suas próprias feridas.</p>
       <p>Greyspire sustenta-se enquanto sabe esconder o que a sustenta, e por isso não a chamem de cidade que vive; é uma cidade que é mantida, conserva-se por medida, por prática institucionalizada, cada pessoa que nasce recebe uma runa que pouco diz sobre destino e muito diz sobre controle, marca que serve para identificação e para decidir quem fica, quem se move, quem é observado, e os sermões da Liturgia falam em ordem espiritual com uma voz que soa oficial e seca, enquanto em salas que não aparecem nos mapas oficiais acontecem coisas que não são ditas em voz alta: eu vi corredores com portas que ninguém registra, vi salas onde se repetem rituais sem comunicado público, vi corpos voltando diferentes de como saíram; eu digo isto porque sei o suficiente para ter medo, e porque sei que a drenagem, se é preciso dar nome ao que vi, não é coisa de praça nem de boato, é segredo de casta, é prática que se faz atrás de cortinas grossas e que só se pronuncia com cuidado, como quem revela um pecado que corrói a garganta.</p>
@@ -60,26 +59,25 @@ jobs:
       <p>Vocês foram riscados das listas, mas não da memória que importa, e lembram de mim quando ninguém mais lembra, e isso é o erro que a cidade vai corrigir se vocês demorarem. Por isso venham. Não perguntem, não procurem provas, não tentem achar meu nome em arquivo algum porque já o arrancaram de todo lugar que pudesse apontá-lo; simplesmente apareçam no Ferrugem &amp; Ossos, no bairro Velha Chama, atrás do moinho cujas janelas foram muradas, antes da ponte que surge apenas quando chove, e venham enquanto ainda conseguem lembrar quem eram antes de serem anotados. Se chegarem cedo, talvez eu ainda esteja à mesa tentando juntar palavras que não se deixam prender. Se chegarem tarde, talvez eu ainda respire. Se chegarem muito tarde, talvez não reste nada em que vocês se reconheçam quando olharem para trás. Não peço confiança. Quero que saibam que já fazem parte da revolução.</p>
     </div>
 
-    <div class="assinatura-wrap">
-      <div id="assinatura" class="assinatura" aria-hidden="true" data-text="Arcanista-mor Amaris Solun">
-        <span class="visually-hidden">Arcanista-mor Amaris Solun</span>
+    <div class=\"assinatura-wrap\">
+      <div id=\"assinatura\" class=\"assinatura\" aria-hidden=\"true\" data-text=\"Arcanista-mor Amaris Solun\">
+        <span class=\"visually-hidden\">Arcanista-mor Amaris Solun</span>
       </div>
     </div>
   </section>
 </main>
 
-<audio id="ritualAudio" src="audio/ritual.mp3" preload="auto" loop></audio>
-<script src="js/ritual.js" defer></script>
+<audio id=\"ritualAudio\" src=\"audio/ritual.mp3\" preload=\"auto\" loop></audio>
+<script src=\"js/ritual.js\" defer></script>
 
 </body>
 </html>
-EOF
+" > index.html
 
-      - name: Write CSS
+      - name: Generate CSS
         shell: bash
         run: |
-          cat << 'EOF' > css/estilo.css
-:root{
+          printf "%s" ":root{
   --bg:#0b0a09;
   --purple:#b24cff;
   --bpm:60;
@@ -91,7 +89,7 @@ body{
   background:var(--bg);
   display:grid; place-items:center;
   color:#0a0a0a;
-  font-family:"Uncial Antiqua", serif;
+  font-family:\"Uncial Antiqua\", serif;
   -webkit-font-smoothing:antialiased;
 }
 
@@ -103,13 +101,13 @@ body{
   display:flex; flex-direction:column; justify-content:center; align-items:center;
   border-radius:14px;
   box-shadow:0 30px 80px rgba(0,0,0,.7);
-  background:#bca97b url("../img/pergaminho_base.jpg") center/cover no-repeat;
+  background:#bca97b url(\"../img/pergaminho_base.jpg\") center/cover no-repeat;
   filter:saturate(1.05) contrast(1.1) brightness(0.97);
   isolation:isolate;
   transition:filter 1.4s ease;
 }
 .pergaminho::before{
-  content:""; position:absolute; inset:0; z-index:0;
+  content:\"\"; position:absolute; inset:0; z-index:0;
   background:
     radial-gradient(ellipse at 50% 45%, rgba(255,230,180,.12), transparent 70%),
     radial-gradient(circle at 50% 60%, rgba(0,0,0,.45), transparent 70%);
@@ -164,15 +162,14 @@ body{
 }
 .assinatura{
   position:relative;
-  font-family:'MedievalSharp', cursive;
+  font-family:\"MedievalSharp\", cursive;
   font-size:26px; letter-spacing:.04em;
   color:#0a0a0a;
   text-shadow:
     0 0 10px rgba(178,76,255,.45),
     0 0 26px rgba(178,76,255,.30),
     0 0 50px rgba(178,76,255,.20);
-  opacity:0; transform:scale(.98);
-  transition:opacity 1.2s ease, transform 1.2s ease;
+  opacity:0; transform:scale(.98); transition:opacity 1.2s ease, transform 1.2s ease;
 }
 .pergaminho.revealed .assinatura{ opacity:1; transform:scale(1); }
 
@@ -197,28 +194,26 @@ body{
   .assinatura{ font-size:22px }
   .selo-img{ width:140px; height:140px }
 }
+" > css/estilo.css
 
-EOF
-
-      - name: Write JS
+      - name: Generate JS
         shell: bash
         run: |
-          cat << 'EOF' > js/ritual.js
-const seloBtn = document.getElementById("seloBtn");
-const pergaminho = document.getElementById("pergaminho");
-const carta = document.getElementById("carta");
-const assinatura = document.getElementById("assinatura");
-const ritualAudio = document.getElementById("ritualAudio");
+          printf "%s" "const seloBtn = document.getElementById(\"seloBtn\");
+const pergaminho = document.getElementById(\"pergaminho\");
+const carta = document.getElementById(\"carta\");
+const assinatura = document.getElementById(\"assinatura\");
+const ritualAudio = document.getElementById(\"ritualAudio\");
 
 let audioStarted = false;
 
 function revelarCarta() {
-  seloBtn.classList.add("hidden");
-  pergaminho.classList.add("revealed");
-  carta.setAttribute("aria-hidden", "false");
-  pergaminho.classList.add("pulse");
+  seloBtn.classList.add(\"hidden\");
+  pergaminho.classList.add(\"revealed\");
+  carta.setAttribute(\"aria-hidden\", \"false\");
+  pergaminho.classList.add(\"pulse\");
 
-  setTimeout(() => assinatura.classList.add("revealed"), 900);
+  setTimeout(() => assinatura.classList.add(\"revealed\"), 900);
 
   if (!audioStarted) {
     ritualAudio.volume = 0.8;
@@ -229,14 +224,14 @@ function revelarCarta() {
   iniciarParticulas();
 }
 
-seloBtn.addEventListener("click", revelarCarta);
+seloBtn.addEventListener(\"click\", revelarCarta);
 
 function criarParticula() {
-  const p = document.createElement("div");
-  p.className = "spark";
+  const p = document.createElement(\"div\");
+  p.className = \"spark\";
   const rect = assinatura.getBoundingClientRect();
-  p.style.left = rect.left + rect.width * Math.random() + "px";
-  p.style.top = rect.top + rect.height + 8 + "px";
+  p.style.left = rect.left + rect.width * Math.random() + \"px\";
+  p.style.top = rect.top + rect.height + 8 + \"px\";
   document.body.appendChild(p);
   setTimeout(() => p.remove(), 1500);
 }
@@ -245,17 +240,16 @@ function iniciarParticulas() {
   setInterval(criarParticula, 1200);
 }
 
-const canvas = document.getElementById("fxCanvas");
-const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true });
+const canvas = document.getElementById(\"fxCanvas\");
+const gl = canvas.getContext(\"webgl\", { preserveDrawingBuffer: true });
 
 function ajustarCanvas() {
   canvas.width = pergaminho.clientWidth;
   canvas.height = pergaminho.clientHeight;
 }
 ajustarCanvas();
-window.addEventListener("resize", ajustarCanvas);
-
-EOF
+window.addEventListener(\"resize\", ajustarCanvas);
+" > js/ritual.js
 
       - name: Commit & Push
         shell: bash
@@ -269,4 +263,3 @@ EOF
           else
             git commit -m "Deploy automático"
             git push origin main --force
-          fi
