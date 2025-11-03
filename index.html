@@ -5,27 +5,27 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Carta de Greyspire</title>
 
-  <!-- Fontes -->
   <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=MedievalSharp&display=swap" rel="stylesheet">
-
-  <!-- Estilos -->
   <link rel="stylesheet" href="css/estilo.css">
 </head>
 <body>
 
-<main class="pergaminho" id="pergaminho">
+<!-- Selo sempre visível -->
+<button id="seloBtn" class="selo-btn" aria-label="Iniciar leitura">
+  <img src="img/selo.png" alt="Selo arcano" class="selo-img" />
+</button>
 
-  <!-- Selo -->
-  <button id="seloBtn" class="selo-btn" aria-label="Abrir carta">
-    <img src="img/selo.png" alt="Selo arcano" class="selo-img" />
-  </button>
+<!-- Cena com perspectiva para o crawl -->
+<main class="scene" id="scene" aria-live="polite">
+  <div class="crawl" id="crawl" aria-hidden="true">
+    <div class="crawl-content" id="crawlContent">
 
-  <!-- Carta -->
-  <section class="carta" id="carta" aria-hidden="true">
-    <div class="scrollbox">
+      <div class="title">
+        <h1>Greyspire — Carta</h1>
+      </div>
 
-      <div class="conteudo">
-
+      <!-- Texto: mantenha completo (coloquei inteiro conforme solicitado) -->
+      <div class="bodytext">
         <p>Cidade de Greyspire, remanescentes do Velho Império, 537 D.R</p>
 
         <p>Vocês deviam ter percebido, mas a percepção é coisa perigosa por aqui, então talvez não notem até que já seja tarde; o mundo não se quebrou num só instante, ele vai quebrando aos poucos, como vidro que racha sem barulho, e essa lentidão é o que permite que todos finjam normalidade, que chamem de rotina aquilo que só parece rotina para quem esqueceu como é estar inteiro. O Império venceu, eles repetem isso com calma, como se a repetição tornasse a mentira menos afiada; a Federação Arcana não foi simplesmente derrotada, foi riscada da fala comum, apagada como se alguém tivesse passado a mão numa página cheia de nomes que nunca mereceram existir, e a Fenda fez exatamente o que prometeram que faria, o que prova que não foi erro técnico o que aconteceu ali, foi escolha com consequências que ninguém calculou direito, achando que se podia encerrar o que foi aberto, e desde então o mundo não acabou, apenas deixou de saber fechar suas próprias feridas.</p>
@@ -35,25 +35,22 @@
         <p>A magia existe, claro que existe, mas não como no livro didático; cada conjuro custa algo que não volta, às vezes sono, às vezes um sentimento, às vezes um nome que se apaga, e já vi mestres que falam como se as palavras fossem serras dentro da boca, e a Engrenagem Perpétua gira lá embaixo não como motor que move rodas, mas como dispositivo que compensa vazios, que adia o colapso por turnos e listas, e por isso chamam aquilo de manutenção, como se fosse possível domesticar um mal com papel e carimbo; só que agora algo mudou e não é sutileza de estatística, é sensação, e eu sinto: ela gira mais rápido, o número dos que deixam de ser contados aumentou, runas mudam sem dedo que escreva, bairros inteiros parecem sonhar acordados e sair pela manhã para andar em ruas que já não são exatamente ruas, pessoas voltam de lugares proibidos com palavras gravadas na pele, crianças nascem com marcas que não constam em nenhum livro, arquivos reescrevem-se sozinhos quando a cidade fecha os olhos.</p>
 
         <p>Vocês foram riscados das listas, mas não da memória que importa, e lembram de mim quando ninguém mais lembra, e isso é o erro que a cidade vai corrigir se vocês demorarem. Por isso venham. Não perguntem, não procurem provas, não tentem achar meu nome em arquivo algum porque já o arrancaram de todo lugar que pudesse apontá-lo; simplesmente apareçam no Ferrugem &amp; Ossos, no bairro Velha Chama, atrás do moinho cujas janelas foram muradas, antes da ponte que surge apenas quando chove, e venham enquanto ainda conseguem lembrar quem eram antes de serem anotados. Se chegarem cedo, talvez eu ainda esteja à mesa tentando juntar palavras que não se deixam prender. Se chegarem tarde, talvez eu ainda respire. Se chegarem muito tarde, talvez não reste nada em que vocês se reconheçam quando olharem para trás. Não peço confiança. Quero que saibam que já fazem parte da revolução.</p>
-
       </div>
 
-      <div class="assinatura-wrap">
+      <!-- Assinatura - estática, sem animação -->
+      <div class="signature-area">
         <div id="assinatura" class="assinatura" data-text="Arcanista-mor Amaris Solun">
-          <span class="visually-hidden">Arcanista-mor Amaris Solun</span>
+          Arcanista-mor Amaris Solun
         </div>
       </div>
 
     </div>
-  </section>
-
+  </div>
 </main>
 
-<!-- Audio -->
-<audio id="ritualAudio" src="audio/ritual.mp3" preload="auto" loop></audio>
+<!-- Audio (toque no selo para iniciar) -->
+<audio id="ritualAudio" src="audio/ritual.mp3" preload="auto"></audio>
 
-<!-- Script -->
 <script src="js/ritual.js" defer></script>
-
 </body>
 </html>
