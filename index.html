@@ -1,26 +1,44 @@
 <!doctype html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Carta de Greyspire</title>
-<link rel="stylesheet" href="css/estilo.css?v=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Carta — Ritual</title>
+  <link rel="stylesheet" href="css/estilo.css" />
 </head>
 <body>
+  <!-- Fundo pergaminho + selo central -->
+  <div id="stage" aria-hidden="true">
+    <div id="parchment">
+      <!-- Selo: imagem transparente fornecida pelo usuário em img/selo.png -->
+      <button id="seal" aria-label="Selo arcano" type="button">
+        <img src="img/selo.png" alt="Selo de cera" id="seal-img" />
+      </button>
 
-<main class="pergaminho" id="pergaminho">
-  <img src="img/selo_negro_arcano.png" id="seloBtn" class="selo-img" alt="Selo arcano" />
-  <section class="carta" id="carta">
-    <!-- COLE A CARTA AQUI -->
-  </section>
-  <footer class="rodape">
-    <div class="assinatura assinatura-brasa" id="assinatura" aria-label="Arcanista-mor Amaris Solun">
-      <span class="a11y">Arcanista-mor Amaris Solun</span>
+      <!-- Conteúdo oculto até o selo ser clicado -->
+      <div id="letter-wrapper" class="hidden">
+        <!-- A "fenda vertical" será criada com clip-path / mask animada -->
+        <section id="letter" aria-hidden="true">
+          <!-- Espaço onde o usuário irá inserir o texto principal depois -->
+          <div id="letter-body" class="handwritten">
+            <!-- Texto de exemplo / marcador — o usuário substituirá este conteúdo -->
+            <section id="main-text">
+              <p>Conteúdo da carta - substitua este texto pelo seu conteúdo manuscrito.</p>
+            </section>
+
+            <!-- Assinatura com efeito -->
+            <div id="signature" aria-hidden="true">
+              <span id="signature-letters" class="signature-text"></span>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
-  </footer>
-</main>
+  </div>
 
-<script src="js/audio.js?v=1" defer></script>
-<script src="js/runas.js?v=1" defer></script>
+  <!-- Áudio: arquivo fornecido pelo usuário em audio/ritual.mp3 -->
+  <audio id="ritual-audio" src="audio/ritual.mp3" loop preload="auto"></audio>
+
+  <script src="js/ritual.js"></script>
 </body>
 </html>
