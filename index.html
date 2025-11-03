@@ -4,36 +4,41 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Carta de Greyspire</title>
-<link rel="stylesheet" href="css/estilo.css?v=2">
+<link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/estilo.css?v=3">
 </head>
 <body>
 
 <main class="pergaminho" id="pergaminho" data-bg="img/pergaminho_base.jpg" aria-live="polite">
 
-  <!-- selo -->
+  <!-- Canvas WebGL para a Fenda (sobreposição) -->
+  <canvas id="fxCanvas" class="fx-canvas"></canvas>
+
+  <!-- Selo de abertura -->
   <button id="seloBtn" class="selo-btn" aria-label="Abrir carta">
     <img src="img/selo.png" alt="Selo arcano" class="selo-img" />
   </button>
 
-  <!-- carta -->
+  <!-- Carta -->
   <section class="carta" id="carta" role="region" aria-hidden="true">
     <div class="conteudo">
-      <!-- Insira aqui o texto da carta -->
+      <!-- INSIRA O TEXTO DA CARTA AQUI -->
     </div>
   </section>
 
-  <!-- assinatura -->
+  <!-- Assinatura animada -->
   <footer class="rodape">
-    <div id="assinatura" class="assinatura" aria-hidden="true">
+    <div id="assinatura" class="assinatura" aria-hidden="true" data-text="Arcanista-mor Amaris Solun">
       <span class="visually-hidden">Arcanista-mor Amaris Solun</span>
+      <!-- Letras/runas serão inseridas via JS -->
     </div>
   </footer>
 
 </main>
 
-<!-- áudio ritual -->
+<!-- Áudio ritual (substitua pelo seu arquivo) -->
 <audio id="ritualAudio" src="audio/ritual.mp3" preload="auto" loop></audio>
 
-<script src="js/ritual.js" defer></script>
+<script src="js/ritual.js?v=3" defer></script>
 </body>
 </html>
