@@ -1,9 +1,8 @@
 :root{
-  --bg:#000;
-  --text:#fff;
-  --purple:#b24cff;
-  --glow: rgba(178,76,255,0.8);
-  --crawl-duration: 60s; /* fallback; JS ajusta automaticamente */
+  --bg: #000;
+  --text: #fff;
+  --purple: #b24cff;
+  --glow: rgba(178,76,255,.85);
   --font-body: "Uncial Antiqua", serif;
   --font-sign: "MedievalSharp", cursive;
 }
@@ -11,128 +10,67 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{
-  margin:0;
   background:var(--bg);
   color:var(--text);
   font-family:var(--font-body);
+  overflow:hidden;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
-  overflow:hidden;
 }
 
-/* SELO */
-.selo-btn{
-  position:fixed;
-  top:18px;
-  left:50%;
-  transform:translateX(-50%);
-  z-index:30;
-  border:0;
-  background:transparent;
-  cursor:pointer;
-}
-.selo-img{
-  width:84px;
-  height:84px;
-  display:block;
-  filter:drop-shadow(0 0 12px var(--glow));
-}
-
-/* CENA / PERSPECTIVA */
-.scene{
+/* Canvas full-screen */
+#stage{
   position:fixed;
   inset:0;
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-  perspective:700px;
-  z-index:1;
+  width:100vw;
+  height:100vh;
+  display:block;
+  background:#000;
 }
 
-/* caixa que contém o crawl; limita largura */
-.crawl{
-  width:min(70vw,900px);
-  max-width:900px;
-  height:75vh;
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-  overflow:hidden;
-  pointer-events:none;
+/* Selo fixo, topo central */
+.selo-btn{
+  position:fixed;
+  top:16px; left:50%;
+  transform:translateX(-50%);
+  border:0; background:transparent;
+  cursor:pointer; z-index:10;
+  transition:opacity .6s ease, transform .3s ease;
 }
+.selo-img{
+  width:84px; height:84px; display:block;
+  filter: drop-shadow(0 0 14px var(--glow));
+}
+.selo-btn.dim{ opacity:.85 }
+.selo-btn.hidden{ opacity:0; pointer-events:none }
 
-/* o conteúdo que se move (rotacionado em X para criar profundidade) */
-.crawl-content{
-  width:70%;
-  transform-origin:50% 100%;
-  transform:translateY(100%) rotateX(20deg) translateZ(0);
-  text-align:center;
-  color:var(--text);
-  line-height:1.6;
-  letter-spacing:.02em;
-  pointer-events:auto;
-  filter:drop-shadow(0 0 6px rgba(0,0,0,0.6));
-}
-
-/* TÍTULO - pequeno */
-.title h1{
-  font-size:20px;
-  margin-bottom:18px;
-  color:var(--text);
-  text-transform:uppercase;
-  letter-spacing:.12em;
-  opacity:.95;
-  text-shadow:0 0 10px var(--glow);
-}
-
-/* CORPO DO TEXTO - branco com detalhes roxos */
-.bodytext{
-  font-size:15px;
-  line-height:1.6;
-  color:var(--text);
-  text-align:justify;
-  text-shadow:
-    0 0 10px rgba(0,0,0,.35),
-    0 0 8px rgba(178,76,255,.08);
-  margin:0 auto;
-}
-.bodytext p{
-  margin:0 0 1rem 0;
-  color:var(--text);
-}
-
-/* assinatura estática, sem animação */
-.signature-area{
-  margin-top:28px;
-  margin-bottom:60px;
-}
+/* Assinatura final (estática) */
 .assinatura{
-  font-family:var(--font-sign);
-  font-size:20px;
+  position:fixed;
+  left:50%; bottom:6vh;
+  transform:translateX(-50%);
+  font-family: var(--font-sign);
+  font-size: clamp(18px, 2.2vw, 28px);
   color:var(--text);
   text-shadow:
-    0 0 8px rgba(178,76,255,.45),
-    0 0 20px rgba(178,76,255,.25);
-  opacity:0.98;
+    0 0 6px var(--glow),
+    0 0 16px rgba(178,76,255,.45);
+  opacity:0;
+  transition: opacity 1s ease;
+  pointer-events:none;
+  z-index:9;
+}
+.assinatura.show{ opacity:1 }
+
+/* Texto do crawl é renderizado numa textura 2D, mas
+   garantimos coerência visual declarando estilos de base aqui */
+.crawl-paint{
+  font-family: var(--font-body);
+  color: var(--text);
+  text-shadow: 0 0 8px rgba(178,76,255,.25);
 }
 
-/* ANIMAÇÃO DO CRAWL (iniciada via JS definindo --crawl-duration) */
-@keyframes crawlUp {
-  0%{
-    transform: translateY(100%) rotateX(20deg);
-  }
-  100%{
-    transform: translateY(-220%) rotateX(20deg);
-  }
-}
-.crawl-content.animate{
-  animation: crawlUp var(--crawl-duration) linear forwards;
-}
-
-/* pequenos ajustes responsivos */
-@media (max-width:720px){
-  .crawl{ width:92vw; height:70vh }
-  .crawl-content{ width:82% }
-  .bodytext{ font-size:14px }
+/* Pequenos ajustes mobile */
+@media (max-width:600px){
   .selo-img{ width:72px; height:72px }
 }
