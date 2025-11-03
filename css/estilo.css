@@ -1,97 +1,263 @@
 :root{
-  --bg:#0f1114;
-  --paper:#c8b99e;
-  --paper-light:#e6d9bf;
-  --ember-red:#c43b1a;
-  --ember-orange:#f08a2a;
-  --ember-gold:#ffd066;
+  --bg-color: #e9dcc6;
+  --ink-dark: #1b1210;
+  --ink-faded: #3b2f2d;
+  --purple-glow: 180 65% 60%;
+  --safe-margin: 4vmin;
+  --signature-size: clamp(1.2rem, 2.6vmin, 2rem);
 }
 
+/* Reset minimal */
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
+html,body,#stage{height:100%}
 body{
+  font-family: "Times New Roman", Georgia, serif;
+  background: var(--bg-color);
+  overflow:hidden; /* evitar scroll */
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* Textured parchment background (user's requested style).
+   Use background-image to point to a parchment texture if desired.
+   If you want to replace the texture, set body::before background-image to your file. */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background-image:
+    radial-gradient(rgba(0,0,0,0.04) 0 1px, transparent 1px),
+    linear-gradient(180deg, rgba(0,0,0,0.03), rgba(255,255,255,0.02)),
+    url('../img/parchment-texture.jpg'); /* optional: keep or replace with your texture */
+  background-size: cover;
+  background-position: center;
+  opacity:1;
+  z-index:-2;
+  mix-blend-mode:multiply;
+}
+
+/* Stage centers the parchment card */
+#parchment{
+  width:min(92vw,900px);
+  height:min(88vh,720px);
+  max-width:1100px;
+  max-height:900px;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   background:
-    radial-gradient(1100px 780px at 20% 10%, #1a1e24 0, transparent 60%),
-    radial-gradient(900px 600px at 80% 90%, #13171b 0, transparent 55%),
-    repeating-linear-gradient(135deg, rgba(255,255,255,.03) 0 2px, rgba(255,255,255,0) 2px 4px),
-    var(--bg);
-  font-family:"Cormorant Garamond",serif;
-  display:grid;place-items:center;padding:40px;color:#1a140c;
+    linear-gradient(180deg, rgba(240,230,210,0.95), rgba(230,218,200,0.95));
+  border-radius: 6px;
+  box-shadow: 0 30px 80px rgba(10,6,6,0.6), inset 0 2px 8px rgba(255,255,255,0.05);
+  overflow:hidden;
+  background-size: cover;
+  padding: 3vmin;
+  user-select:none;
 }
 
-/* Pergaminho */
-.pergaminho{
-  position:relative;width:min(880px,92vw);min-height:min(760px,82vh);
-  padding:24px;border-radius:14px;overflow:hidden;isolation:isolate;
+/* Seal button in center */
+#seal{
+  all:unset;
+  position:absolute;
+  cursor:pointer;
+  z-index:30;
+  width: clamp(80px, 18vmin, 220px);
+  height: clamp(80px, 18vmin, 220px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transform-origin:center;
+  transition: transform .25s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+#seal:active{ transform: scale(.98) }
+#seal-img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  filter: drop-shadow(0 12px 18px rgba(0,0,0,0.55))
+          drop-shadow(0 0 8px rgba(120,60,160,0.25));
+  /* slight neon sheen */
+  mix-blend-mode:multiply;
+}
+
+/* Initially hide letter wrapper */
+.hidden{visibility:hidden;opacity:0;pointer-events:none}
+
+/* Letter element covers center, will be revealed by animation */
+#letter-wrapper{
+  position:relative;
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:10;
+}
+
+/* The letter element looks like a page/paper with subtle creases */
+#letter{
+  width:83%;
+  height:86%;
   background:
-    radial-gradient(240px 180px at 30% 20%, rgba(60,40,20,.08), transparent 70%),
-    radial-gradient(200px 150px at 65% 35%, rgba(30,20,10,.06), transparent 80%),
-    radial-gradient(260px 200px at 75% 80%, rgba(70,45,25,.07), transparent 80%),
-    repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 2px, rgba(255,255,255,0) 2px 4px),
-    linear-gradient(180deg, var(--paper-light), var(--paper));
-  box-shadow:0 25px 70px rgba(0,0,0,.55),0 8px 24px rgba(0,0,0,.35);
+    linear-gradient(180deg, rgba(245,238,224,0.95), rgba(230,220,205,0.95));
+  border-radius:6px;
+  padding: calc(var(--safe-margin));
+  box-shadow: 0 18px 50px rgba(8,6,6,0.45), inset 0 2px 8px rgba(255,255,255,0.06);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:visible;
+  /* Start fully clipped (closed). We'll animate clip-path to reveal. */
+  clip-path: inset(0 0 0 0);
 }
 
-/* Selo */
-.selo-img{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:170px;cursor:pointer;
-  filter:drop-shadow(0 0 14px rgba(150,0,255,.45));
-  transition:transform .25s ease, filter .4s ease, opacity .6s ease;
-}
-.selo-img:hover{transform:translate(-50%,-50%) scale(1.05);filter:drop-shadow(0 0 24px rgba(180,0,255,.65))}
-.selo-img.ativado{animation:seloPulse 2s ease-in-out infinite}
-@keyframes seloPulse{0%,100%{filter:drop-shadow(0 0 22px rgba(190,0,255,.6))}50%{filter:drop-shadow(0 0 36px rgba(230,0,255,.8))}}
-
-/* Carta */
-.carta{
-  position:relative;border-radius:8px;padding:18px;
-  line-height:1.5;font-size:18px;text-align:justify;
-  background:linear-gradient(transparent 0 36px, rgba(255,255,255,.12) 36px 37px, transparent 37px 100%);
-  clip-path:polygon(49.5% 0, 50.5% 0, 50.5% 100%, 49.5% 100%);
-  opacity:0;transition:clip-path 1100ms cubic-bezier(.2,.7,.2,1),opacity 500ms ease;
-}
-.carta::before{
-  content:"";position:absolute;inset:-2px;pointer-events:none;opacity:0;mix-blend-mode:screen;
-  background:
-    radial-gradient(120px 80px at 50% 0%, rgba(255,200,120,.25), transparent 60%),
-    radial-gradient(120px 80px at 50% 100%, rgba(255,200,120,.25), transparent 60%),
-    linear-gradient(90deg, transparent 49%, rgba(255,210,140,.65) 50%, transparent 51%);
-  transition:opacity 1100ms ease;
-}
-.pergaminho.revealed .carta{clip-path:inset(0% 0% 0% 0% round 8px);opacity:1}
-.pergaminho.revealed .carta::before{opacity:.9;animation:fadeGlow 1200ms ease forwards}
-@keyframes fadeGlow{0%{opacity:.9}100%{opacity:.15}}
-
-/* Assinatura */
-.rodape{display:flex;align-items:flex-end;justify-content:flex-start;padding:10px 6px 4px}
-.assinatura{max-width:78%;opacity:0;transition:opacity 1600ms ease}
-.assinatura-brasa{
-  position:relative;font-family:"Cinzel Decorative",serif;font-weight:700;
-  font-size:20px;letter-spacing:.02em;color:transparent;
-  background:linear-gradient(90deg,var(--ember-red),var(--ember-orange),var(--ember-gold));
-  -webkit-background-clip:text;background-clip:text;
-  text-shadow:0 0 8px rgba(240,110,50,.28),0 0 18px rgba(255,170,80,.18);
+/* The "tear" mask that animates: we'll overlay pseudo elements for extra organic edges */
+#letter::before,
+#letter::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  mix-blend-mode:multiply;
+  opacity:0.12;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(0,0,0,0.06) 0 8%, transparent 10%),
+    radial-gradient(circle at 80% 80%, rgba(0,0,0,0.04) 0 6%, transparent 8%);
+  border-radius:6px;
 }
 
-/* Runas */
-.runes{display:inline-flex;gap:.02em;user-select:none;position:relative;
-  color:transparent;background:linear-gradient(90deg,var(--ember-red),var(--ember-orange),var(--ember-gold));-webkit-background-clip:text;background-clip:text;
-}
-.rune{position:relative;display:inline-block;transform-origin:50% 70%;
-  transition:transform 800ms cubic-bezier(.25,.7,.2,1),opacity 800ms ease;
-}
-.rune::after{
-  content:attr(data-ghost);position:absolute;inset:0;pointer-events:none;
-  color:rgba(255,200,130,.35);transform:translateY(8%) scale(.96);opacity:.3;
+/* Handwritten-ish text style */
+.handwritten{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:left;
+  color:var(--ink-dark);
+  font-size:clamp(1rem, 2.2vmin, 1.15rem);
+  line-height:1.55;
+  letter-spacing:0.2px;
+  padding: 4vmin;
+  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:antialiased;
+  filter: contrast(0.95) saturate(0.9);
+  background-image:
+    linear-gradient(180deg, rgba(0,0,0,0.02), transparent 60%);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.02);
 }
 
-/* Partículas */
-.spark{position:absolute;width:2px;height:2px;border-radius:50%;
-  background:radial-gradient(circle,var(--ember-gold),transparent 60%);
-  pointer-events:none;opacity:0;transform:translate(-50%,-50%) scale(1);animation:spark 1.8s ease-in forwards;
+/* Simulated ink aging variations */
+.handwritten p{
+  color:var(--ink-faded);
+  max-width:65ch;
+  font-family: "Patrick Hand", "Bradley Hand", "Segoe Script", "Lucida Handwriting", Georgia, serif;
+  text-shadow:
+    0.3px 0.3px 0 rgba(0,0,0,0.02),
+    -0.2px 0.2px 0 rgba(255,255,255,0.02);
+  background: linear-gradient(180deg, rgba(0,0,0,0.02), transparent 30%);
+  padding: 0.4rem 0;
 }
-@keyframes spark{0%{opacity:0;transform:translate(-50%,-30%) scale(.4)}12%{opacity:.9}100%{opacity:0;transform:translate(-50%,-140%) scale(1.6)}}
 
-/* A11y */
-.a11y{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+/* Signature area */
+#signature{
+  margin-top: 3vmin;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  width:100%;
+}
+
+/* The animated signature text */
+.signature-text{
+  font-family: "Segoe Script", "Lucida Handwriting", "Brush Script MT", Georgia, serif;
+  font-weight:600;
+  font-size: var(--signature-size);
+  color: var(--ink-dark);
+  letter-spacing: 0.6px;
+  white-space:pre;
+  display:inline-block;
+  min-height: calc(var(--signature-size) * 1.4);
+  transition: text-shadow .35s ease, color .35s ease;
+}
+
+/* After signature settled, apply subtle pulsing purple glow */
+.signed {
+  color: rgba(230,210,240,0.98);
+  text-shadow:
+    0 0 12px rgba(140,80,180,0.08),
+    0 0 28px rgba(100,40,150,0.08);
+  animation: pulse-glow 2.8s ease-in-out infinite;
+  mix-blend-mode:screen;
+}
+@keyframes pulse-glow{
+  0%{ text-shadow: 0 0 6px rgba(140,80,180,0.12), 0 0 20px rgba(120,60,170,0.06) }
+  50%{ text-shadow: 0 0 12px rgba(170,100,220,0.26), 0 0 36px rgba(100,50,170,0.12) }
+  100%{ text-shadow: 0 0 6px rgba(140,80,180,0.12), 0 0 20px rgba(120,60,170,0.06) }
+}
+
+/* Seal disappear animations */
+@keyframes seal-dissolve {
+  0%{ opacity:1; transform: scale(1) rotate(0deg) }
+  35%{ opacity:0.9; filter: hue-rotate(10deg) saturate(1.2) }
+  65%{ opacity:0.35; transform: scale(0.88) rotate(-6deg) filter: blur(1px) drop-shadow(0 20px 30px rgba(40,0,60,0.35)) }
+  100%{ opacity:0; transform: scale(0.6) rotate(-12deg) filter: blur(6px) drop-shadow(0 0 0 rgba(0,0,0,0)) }
+}
+
+/* Add small "ember/arcane burst" */
+.seal-burn {
+  animation: seal-dissolve 900ms cubic-bezier(.2,.9,.2,1) forwards;
+}
+
+/* The reveal animation for the letter (vertical tear) using clip-path */
+@keyframes tear-open {
+  /* Start: fully closed (narrow slit) */
+  0%{
+    clip-path: polygon(49.5% 0%, 50.5% 0%, 50.5% 100%, 49.5% 100%);
+    opacity:0;
+  }
+  30%{
+    clip-path: polygon(45% 0%, 55% 0%, 55% 100%, 45% 100%);
+    opacity:0.25;
+  }
+  60%{
+    clip-path: polygon(20% 0%, 80% 0%, 80% 100%, 20% 100%);
+    opacity:1;
+  }
+  100%{
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+    opacity:1;
+  }
+}
+
+/* Organic edge jitter during tear */
+.tear-anim{
+  animation: tear-open 1200ms cubic-bezier(.2,.8,.25,1) forwards;
+  transition: filter .6s ease;
+  filter: drop-shadow(0 20px 50px rgba(0,0,0,0.4));
+}
+
+/* Slight inner shadow to emphasize ripped edge */
+.tear-anim::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  box-shadow: inset 0 30px 60px rgba(0,0,0,0.12);
+  mix-blend-mode:multiply;
+}
+
+/* Responsive tweaks */
+@media (max-width:520px){
+  #parchment{ padding: 3vmin; border-radius: 0.6rem }
+  #letter{ width:92%; height:92%; padding:3vmin }
+  #seal{ width: 22vmin; height:22vmin }
+  .handwritten p{ font-size: .95rem }
+}
