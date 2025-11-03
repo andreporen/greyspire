@@ -1,0 +1,93 @@
+name: Deploy Greyspire Site
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apagar tudo da branch main antes de gerar
+        run: |
+          shopt -s extglob
+          rm -rf !(.git|.github)
+
+      - name: Criar pastas do site
+        run: |
+          mkdir -p css js img audio
+
+      - name: Gerar index.html
+        run: |
+          cat << 'EOF' > index.html
+          <!doctype html>
+          <html lang="pt-br">
+          <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width,initial-scale=1" />
+          <title>Carta de Greyspire</title>
+          <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=MedievalSharp&display=swap" rel="stylesheet">
+          <link rel="stylesheet" href="css/estilo.css">
+          </head>
+          <body>
+
+          <main class="pergaminho" id="pergaminho" data-bg="img/pergaminho_base.jpg" aria-live="polite">
+            <canvas id="fxCanvas" class="fx-canvas"></canvas>
+
+            <button id="seloBtn" class="selo-btn" aria-label="Abrir carta">
+              <img src="img/selo.png" alt="Selo arcano" class="selo-img" />
+            </button>
+
+            <section class="carta" id="carta" role="region" aria-hidden="true">
+              <div class="conteudo" id="conteudo">
+          (TEXTO DA CARTA SERÁ INSERIDO AQUI AUTOMATICAMENTE NA VERSÃO FINAL)
+              </div>
+
+              <div class="assinatura-wrap">
+                <div id="assinatura" class="assinatura" aria-hidden="true" data-text="Arcanista-mor Amaris Solun">
+                  <span class="visually-hidden">Arcanista-mor Amaris Solun</span>
+                </div>
+              </div>
+            </section>
+          </main>
+
+          <audio id="ritualAudio" src="audio/ritual.mp3" preload="auto" loop></audio>
+
+          <script src="js/ritual.js" defer></script>
+          </body>
+          </html>
+          EOF
+
+      - name: Gerar CSS
+        run: |
+          cat << 'EOF' > css/estilo.css
+          /* CSS SERÁ INSERIDO AQUI NA VERSÃO FINAL */
+          EOF
+
+      - name: Gerar JS
+        run: |
+          cat << 'EOF' > js/ritual.js
+          // JS SERÁ INSERIDO AQUI NA VERSÃO FINAL
+          EOF
+
+      - name: Gerar imagens e áudio (PLACEHOLDER)
+        run: |
+          echo "Imagem e áudio serão inseridos aqui depois"
+
+      - name: Commit & Push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git commit -m "Deploy automático"
+          git push origin main --force
