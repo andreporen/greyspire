@@ -65,7 +65,7 @@ filter: brightness(1.05);
 #signature-container{
 display:none; opacity:0; position:fixed; bottom:110px; left:50%;
 transform:translateX(-50%); z-index:10; text-align:center; font-size:1.2rem;
-font-family:'MedievalSharp', cursive; transition:opacity 1s ease-in;
+font-family:'MedievalSharp', cursive; transition:opacity 1.2s ease-in;
 max-width:600px; line-height:1.35;
 }
 #signature{ color:#fff; animation:pulse-arcano 1.4s ease-in-out infinite; }
@@ -128,7 +128,7 @@ float perspective = 1.0 + bend * (p.y + 1.0) * 0.5;
 p /= perspective;
 vec2 warpedUv = p * 0.5 + 0.5;
 
-/* === EFEITOS REDUZIDOS A 20% === */
+/* === EFEITOS A 20% DA INTENSIDADE === */
 float intensity = 0.20;
 
 /* Ondas sutis */
@@ -409,8 +409,8 @@ crawlGroup.rotation.x = 0;
 const startY = -textHeight / 2 - 280;
 crawlGroup.position.y = startY;
 
-// CORRIGIDO: mais margem para não cortar o final
-endThreshold = (textHeight * Math.cos(crawlGroup.rotation.x)) * 1.35;
+// FIX: Margem extra + cálculo mais preciso
+endThreshold = textHeight / 2 + 600; // Garante que o topo do texto passe do centro
 
 scene.add(crawlGroup);
 }
@@ -419,7 +419,7 @@ function createTextCanvas(text){
 const lines = text.split('\n');
 const fontSize = 32;
 const lineHeight = fontSize * 1.3;
-const canvasHeight = lines.length * lineHeight + (fontSize * 2.5); // + margem extra
+const canvasHeight = lines.length * lineHeight + (fontSize * 3); // + margem
 const canvasWidth = 1024;
 
 const canvas = document.createElement('canvas');
@@ -431,9 +431,9 @@ ctx.font = `${fontSize}px 'Cinzel Decorative'`;
 ctx.fillStyle = '#FFFFFF';
 ctx.textAlign = 'center';
 
-let y = fontSize * 2;
+let y = fontSize * 2.5;
 for (const line of lines){
-ctx.fillText(line, canvasWidth/2, y);
+ctx.fillText(line.trim(), canvasWidth/2, y);
 y += lineHeight;
 }
 return canvas;
@@ -455,12 +455,14 @@ textMesh.material.uniforms.time.value = clock.getElapsedTime();
 textMesh.material.uniforms.beatLevel.value = beat;
 }
 
-const base = 0.8;
+// Movimento suave com desaceleração
+const baseSpeed = 1.0;
 const remaining = Math.max(0, endThreshold - crawlGroup.position.y);
-const slowFactor = remaining < 200 ? Math.max(0.4, remaining / 200) : 1.0;
-crawlGroup.position.y += base * slowFactor;
+const slowFactor = remaining < 300 ? Math.max(0.3, remaining / 300) : 1.0;
+crawlGroup.position.y += baseSpeed * slowFactor;
 
-if (crawlGroup.position.y > endThreshold){
+// FIX: gatilho garantido
+if (crawlGroup.position.y >= endThreshold) {
 finishAnimation();
 }
 
@@ -468,8 +470,10 @@ renderer.render(scene, camera);
 }
 
 function finishAnimation(){
+if (!animationInProgress) return;
 animationInProgress = false;
 
+// Remove texto
 if (crawlGroup){
 scene.remove(crawlGroup);
 if (textMesh.geometry) textMesh.geometry.dispose();
@@ -479,6 +483,7 @@ textMesh.material.dispose();
 }
 }
 
+// Fade dos áudios
 if (sfx2Id !== null && sfx2.playing(sfx2Id)){
 sfx2.fade(sfx2.volume(sfx2Id), 0, 800, sfx2Id);
 setTimeout(() => { try{ sfx2.stop(sfx2Id); }catch(e){} }, 820);
@@ -488,7 +493,7 @@ sfx25.fade(sfx25.volume(sfx25Id), 0, 800, sfx25Id);
 setTimeout(() => { try{ sfx25.stop(sfx25Id); }catch(e){} }, 820);
 }
 
-// CORRIGIDO: assinatura aparece com fade
+// Assinatura + sfx3
 const signature = document.getElementById('signature-container');
 signature.style.display = 'block';
 requestAnimationFrame(() => {
