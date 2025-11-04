@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
 
   <style>
     :root { --cor-arcana:#b24cff; }
@@ -36,16 +37,6 @@
     /* Canvas Three.js */
     #three-canvas{ position:fixed; top:0; left:0; z-index:1; }
 
-    /* Intersticial (se desejar usar de novo, basta exibir) */
-    #interstitial{
-      display:none; opacity:0;
-      position:fixed; inset:0; z-index:9;
-      display:flex; align-items:center; justify-content:center;
-      pointer-events:none;
-      background:transparent;
-      transition:opacity .5s ease;
-    }
-
     /* Assinatura final */
     #signature-container{
       display:none; opacity:0; position:fixed; bottom:10vh; left:50%;
@@ -64,10 +55,6 @@
   </div>
 
   <canvas id="three-canvas"></canvas>
-
-  <div id="interstitial">
-    <div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div>
-  </div>
 
   <div id="signature-container">
     <p id="signature">
@@ -90,32 +77,30 @@ Mas a sensação é de que você já está atrasado.
   <script type="x-shader/x-fragment" id="fragmentShader">
     uniform sampler2D map;
     uniform float time;
-    uniform vec3 glowColor;        // roxo leve (pulsação sutil)
+    uniform vec3 glowColor;         // roxo leve
     uniform float distortionStrength;
 
-    // Uniforms de revelação
-    uniform float revealPos;       // 0..1 - posição da “janela” de revelação (anda junto com o scroll)
-    uniform float revealWidth;     // altura da banda de revelação (em UV Y)
-    uniform float revealFeather;   // suavização nas bordas da banda
-    uniform float pulseBoost;      // ganho quando a linha entra no “meio” da banda
+    /* Revelação por janela móvel */
+    uniform float revealPos;        // varre de ~-0.2 a ~1.2
+    uniform float revealWidth;      // largura da banda
+    uniform float revealFeather;    // suavização das bordas
+    uniform float pulseBoost;       // brilho extra no centro (efeito marcado)
 
     varying vec2 vUv;
 
     float rand(vec2 co){ return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
 
-    // janela suave (0..1) centrada em revealPos, com largura revealWidth e feather
     float movingWindow(float y, float center, float width, float feather){
       float halfW = width * 0.5;
       float dist = abs(y - center);
-      float edge = halfW;
-      float t = smoothstep(edge + feather, edge - feather, dist);
+      float t = smoothstep(halfW + feather, halfW, dist);
       return clamp(t, 0.0, 1.0);
     }
 
     void main(){
       vec2 uv = vUv;
 
-      // Curvatura suave (sem zoom cumulativo)
+      /* Curvatura leve */
       float bend = 0.35;
       vec2 p = uv * 2.0 - 1.0;
       p.y = p.y + bend * (p.y * p.y);
@@ -123,7 +108,7 @@ Mas a sensação é de que você já está atrasado.
       p /= perspective;
       vec2 warpedUv = p * 0.5 + 0.5;
 
-      // Distorção leve (+15%)
+      /* Distorção (+15%) */
       vec2 distortedUv = warpedUv;
       float noise = (rand(warpedUv * 10.0 + time * 0.5) - 0.5) * distortionStrength;
       distortedUv.x += sin(warpedUv.y * 15.0 + time * 8.0) * noise;
@@ -131,30 +116,27 @@ Mas a sensação é de que você já está atrasado.
 
       vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
 
-      // Revelação por banda móvel
+      /* Janela de revelação (efeito marcado) */
       float w = movingWindow(warpedUv.y, revealPos, revealWidth, revealFeather);
 
-      // Base branca nas letras, modulada pela janela
+      /* Base branca modulada pela janela */
       vec3 base = vec3(1.0) * texel.a * w;
 
-      // Pulsação roxa sutil
+      /* Pulsação roxa sutil + pulso marcado no centro */
       float pulse = 0.6 + 0.4 * sin(time * 0.9);
-      vec3 glow = glowColor * texel.a * pulse * 0.5 * w;
+      float centerBoost = smoothstep(0.22, 0.0, abs(warpedUv.y - revealPos)); // mais estreito = mais marcado
+      vec3 glow = glowColor * texel.a * (0.45 * pulse + pulseBoost * centerBoost);
 
-      // Micro-flash preto curtíssimo (apenas no texto) – estilo original
+      /* Micro-flash preto curtíssimo (apenas no texto) */
       float interval = 1.2;
       float width = 0.07;
       float phase = fract(time / interval);
-      float blackout = step(phase, width);       // 1 nos primeiros 70ms de cada 1.2s
+      float blackout = step(phase, width);
       float blackoutStrength = 0.45;
 
-      // “Pulso arcano” extra no centro da janela (brilho breve e sutil)
-      float centerBoost = smoothstep(0.35, 0.0, abs(warpedUv.y - revealPos));
-      float pulseArc = centerBoost * pulseBoost;
+      vec3 color = base + glow;
 
-      vec3 color = base + glow + pulseArc * glowColor * texel.a * 0.35;
-
-      // Aplicar microblackout só onde há texto e janela (>0)
+      /* aplica blackout só quando visível (w>0) */
       color = mix(color, vec3(0.0), blackout * blackoutStrength * texel.a * step(0.01, w));
 
       gl_FragColor = vec4(color, texel.a * w);
@@ -206,16 +188,44 @@ E vos chama.
 `;
 
     /* ======= VARS ======= */
-    let scene,camera,renderer,crawlGroup,textMesh,textHeight,animationInProgress=false,endThreshold=0,clock=new THREE.Clock();
+    let scene, camera, renderer;
+    let sfx1, sfx2, sfx25, sfx3;
+    let sfx2PreId=null, sfx25PreId=null, sfx3PreId=null;
+    let sfx2Id=null, sfx25Id=null;
+    let crawlGroup, textMesh, textHeight;
+    let animationInProgress=false, endThreshold=0;
+    let clock=new THREE.Clock();
+
     const ARCANE_PURPLE = new THREE.Color('#b24cff');
 
     function init(){
-      setupScene(); setupListeners();
+      Howler.autoSuspend = false;
+      Howler.mute(false);
+      Howler.volume(1.0);
+
+      setupAudio();
+      setupScene();
+      setupListeners();
+    }
+
+    function setupAudio(){
+      sfx1  = new Howl({ src:['./sfx1.mp3'],   volume:0.8, loop:false, html5:false });
+      sfx2  = new Howl({ src:['./sfx2.mp3'],   volume:0.6, loop:true,  html5:false });
+      sfx25 = new Howl({ src:['./sfx2_5.mp3'], volume:1.0, loop:true,  html5:false });
+      sfx3  = new Howl({ src:['./sfx3.mp3'],   volume:0.6, loop:false, html5:false });
+
+      [sfx1, sfx2, sfx25, sfx3].forEach(h=>{
+        h.once('playerror',(id)=>{
+          try{ Howler.ctx.resume(); }catch(e){}
+          try{ h.play(id); }catch(e){}
+        });
+      });
     }
 
     function setupScene(){
       const canvas=document.getElementById('three-canvas');
       scene=new THREE.Scene();
+
       const aspect=window.innerWidth/window.innerHeight;
       camera=new THREE.PerspectiveCamera(50,aspect,1,10000);
       camera.position.set(0,130,480);
@@ -228,17 +238,48 @@ E vos chama.
     }
 
     function setupListeners(){
-      document.getElementById('seal-container').addEventListener('click',startExperience,{once:true});
-      window.addEventListener('resize',onWindowResize);
+      document.getElementById('seal-container').addEventListener('click', startExperience, {once:true});
+      window.addEventListener('resize', onWindowResize, {passive:true});
+      window.addEventListener('orientationchange', onWindowResize, {passive:true});
+      document.addEventListener('visibilitychange', ()=>{ if (Howler.ctx && Howler.ctx.state!=='running') Howler.ctx.resume(); });
     }
 
     function startExperience(){
-      if(animationInProgress) return;
-      animationInProgress=true;
+      if (animationInProgress) return;
+      animationInProgress = true;
+
+      try{ if (Howler.ctx && Howler.ctx.state !== 'running') Howler.ctx.resume(); }catch(e){}
 
       const seal=document.getElementById('arcane-seal-img');
       seal.classList.add('clicked');
       setTimeout(()=>{ document.getElementById('seal-container').style.display='none'; },400);
+
+      /* sfx1 toca no clique (desbloqueio iOS) */
+      sfx1.play();
+
+      /* Pré-desbloquear os demais no iOS */
+      sfx2PreId  = sfx2.play();  sfx2.volume(0, sfx2PreId);   sfx2.pause(sfx2PreId);
+      sfx25PreId = sfx25.play(); sfx25.volume(0, sfx25PreId); sfx25.pause(sfx25PreId);
+      sfx3PreId  = sfx3.play();  sfx3.volume(0, sfx3PreId);   sfx3.pause(sfx3PreId);
+
+      /* Inicia texto + ambiente */
+      startTextAndAudio();
+    }
+
+    function startTextAndAudio(){
+      /* sfx2: fade-in 3s */
+      if (!sfx2PreId) sfx2PreId = sfx2.play();
+      sfx2.seek(0, sfx2PreId);
+      sfx2.play(sfx2PreId);
+      sfx2.fade(0, 0.6, 3000, sfx2PreId);
+      sfx2Id = sfx2PreId;
+
+      /* sfx2_5 (batimento): fade-in 3s */
+      if (!sfx25PreId) sfx25PreId = sfx25.play();
+      sfx25.seek(0, sfx25PreId);
+      sfx25.play(sfx25PreId);
+      sfx25.fade(0, 1.0, 3000, sfx25PreId);
+      sfx25Id = sfx25PreId;
 
       createCrawlText();
       animate();
@@ -251,7 +292,7 @@ E vos chama.
 
       const texture=new THREE.CanvasTexture(textCanvas);
       texture.minFilter=THREE.LinearFilter;
-      texture.magFilter=THREE.NearestFilter; // nitidez no magnify
+      texture.magFilter=THREE.NearestFilter;
       if (renderer && renderer.capabilities) {
         texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
       }
@@ -262,12 +303,11 @@ E vos chama.
           map:{value:texture},
           time:{value:0.0},
           glowColor:{value:ARCANE_PURPLE},
-          distortionStrength:{value:0.00605},   // +15%
-          // Revelação (valores iniciais)
-          revealPos:{value:0.0},
-          revealWidth:{value:0.18},
-          revealFeather:{value:0.06},
-          pulseBoost:{value:0.35}
+          distortionStrength:{value:0.00605},
+          revealPos:{value:-0.2},         // começa “abaixo” da tela
+          revealWidth:{value:0.20},       // banda mais estreita = efeito marcado
+          revealFeather:{value:0.055},    // borda moderada
+          pulseBoost:{value:0.42}         // brilho extra visível
         },
         vertexShader:document.getElementById('vertexShader').textContent,
         fragmentShader:document.getElementById('fragmentShader').textContent,
@@ -276,22 +316,19 @@ E vos chama.
 
       const geometry=new THREE.PlaneGeometry(textCanvasObj.cssWidth,textCanvasObj.cssHeight);
       textMesh=new THREE.Mesh(geometry,material);
-
       crawlGroup=new THREE.Group();
       crawlGroup.add(textMesh);
       crawlGroup.rotation.x=0;
 
-      // Começa mais cedo
-      const startY = -textCanvasObj.cssHeight/2 - 260;  // -260 (ligeiro ajuste)
+      /* Começa mais cedo para garantir revelação no início */
+      const startY = -textCanvasObj.cssHeight/2 - 280;
       crawlGroup.position.y = startY;
 
-      // Margem extra no fim para não cortar “Cedam.” e o restante
+      /* Margem generosa no fim (não corta “Cedam.” e finais) */
       const baseEnd = (textCanvasObj.cssHeight*Math.cos(crawlGroup.rotation.x));
-      endThreshold = baseEnd * 1.24 + 120;  // +24% e +120px de folga
+      endThreshold = baseEnd * 1.28 + 140;
 
       scene.add(crawlGroup);
-
-      // Guarda para progress calc
       crawlGroup.userData = { startY, total: endThreshold - startY };
     }
 
@@ -299,7 +336,7 @@ E vos chama.
       const lines = text.split('\n');
       const isMobile = window.innerWidth <= 480;
 
-      // 20% menor no mobile
+      /* 20% menor no mobile */
       let fontSize = isMobile ? 22.4 : 32;
       let lineHeight = fontSize * 1.28;
       let cssWidth = 1024;
@@ -307,14 +344,14 @@ E vos chama.
       let cssHeight = Math.floor(lines.length * lineHeight + (fontSize * 2));
       const maxCssHeight = Math.floor(window.innerHeight * 0.82);
 
-      // Auto-scale proporcional (se ainda extrapolar)
+      /* Auto-scale proporcional, se necessário */
       if(cssHeight > maxCssHeight){
         const scale = maxCssHeight / cssHeight;
         fontSize *= scale; lineHeight *= scale; cssWidth *= scale;
         cssHeight = Math.floor(lines.length * lineHeight + (fontSize * 2));
       }
 
-      // Alta resolução
+      /* Alta resolução: DPR até 3× + supersampling 2× */
       const dpr = Math.min(window.devicePixelRatio || 1, 3);
       const ss  = 2.0;
 
@@ -326,7 +363,7 @@ E vos chama.
       ctx.imageSmoothingEnabled = false;
       ctx.scale(dpr * ss, dpr * ss);
 
-      // BOLD real
+      /* BOLD real */
       ctx.font = `700 ${fontSize}px 'Cinzel Decorative'`;
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
@@ -345,31 +382,39 @@ E vos chama.
       requestAnimationFrame(animate);
       if(!animationInProgress) return;
 
-      // Atualiza tempo
+      /* tempo p/ shader */
       if (textMesh && textMesh.material && textMesh.material.uniforms.time){
         textMesh.material.uniforms.time.value = clock.getElapsedTime();
       }
 
-      // Andar (30% mais devagar que 0.78)
+      /* scroll 30% mais lento */
       crawlGroup.position.y += 0.546;
 
-      // Revelação: move a janela de 0 -> 1 conforme o scroll real
+      /* Revelação: varre de -0.2 até 1.2 em UV.y, cobrindo todo o texto */
       const { startY, total } = crawlGroup.userData;
-      const current = crawlGroup.position.y - startY;
+      const current  = crawlGroup.position.y - startY;
       const progress = Math.min(1, Math.max(0, current / total));
+      const sweep = -0.20 + progress * 1.40; // cobre -0.2 .. 1.2
 
-      // Ajuste sutil na largura em telas muito altas/baixas (opcional)
-      const h = window.innerHeight;
-      const widthUV = (h < 640) ? 0.20 : (h > 1200 ? 0.16 : 0.18);
-
-      if (textMesh && textMesh.material && textMesh.material.uniforms.revealPos){
-        textMesh.material.uniforms.revealPos.value   = progress;
-        textMesh.material.uniforms.revealWidth.value = widthUV;
-        textMesh.material.uniforms.revealFeather.value = 0.06;
-        textMesh.material.uniforms.pulseBoost.value  = 0.35;
+      if (textMesh && textMesh.material){
+        const u = textMesh.material.uniforms;
+        if (u.revealPos)   u.revealPos.value   = sweep;
+        if (u.revealWidth) u.revealWidth.value = 0.20;   // marcado
+        if (u.revealFeather) u.revealFeather.value = 0.055;
+        if (u.pulseBoost)  u.pulseBoost.value  = 0.42;
       }
 
-      // Encerrar com folga suficiente
+      /* Batimento acelerando (curva moderada) */
+      if (sfx25Id !== null && sfx25.playing(sfx25Id)){
+        let rate = 1.0;
+        if      (progress > 0.40) rate = 1.10;
+        if      (progress > 0.60) rate = 1.20;
+        if      (progress > 0.80) rate = 1.30;
+        if      (progress > 0.92) rate = 1.38;
+        if      (progress > 0.98) rate = 1.45;
+        sfx25.rate(rate, sfx25Id);
+      }
+
       if(crawlGroup.position.y > endThreshold){
         finishAnimation();
       }
@@ -379,6 +424,17 @@ E vos chama.
 
     function finishAnimation(){
       animationInProgress=false;
+
+      /* Fade-out e stop imediato dos loops */
+      if (sfx2Id !== null && sfx2.playing(sfx2Id)){
+        sfx2.fade(sfx2.volume(sfx2Id), 0, 800, sfx2Id);
+        setTimeout(()=>{ try{sfx2.stop(sfx2Id);}catch(e){} }, 820);
+      }
+      if (sfx25Id !== null && sfx25.playing(sfx25Id)){
+        sfx25.fade(sfx25.volume(sfx25Id), 0, 800, sfx25Id);
+        setTimeout(()=>{ try{sfx25.stop(sfx25Id);}catch(e){} }, 820);
+      }
+
       if(crawlGroup){
         scene.remove(crawlGroup);
         if(textMesh.geometry) textMesh.geometry.dispose();
@@ -387,9 +443,18 @@ E vos chama.
           textMesh.material.dispose();
         }
       }
+
+      /* Assinatura + sfx3 */
       const signature=document.getElementById('signature-container');
       signature.style.display='block';
-      setTimeout(()=>{signature.style.opacity='1';},200);
+      setTimeout(()=>{ signature.style.opacity='1'; }, 200);
+
+      setTimeout(()=>{
+        try{ if (Howler.ctx && Howler.ctx.state !== 'running') Howler.ctx.resume(); }catch(e){}
+        if (!sfx3PreId) sfx3PreId = sfx3.play();
+        sfx3.seek(0, sfx3PreId);
+        sfx3.play(sfx3PreId);
+      }, 1000);
     }
 
     function onWindowResize(){
