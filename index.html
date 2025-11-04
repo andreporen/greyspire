@@ -36,7 +36,7 @@
     /* Canvas Three.js */
     #three-canvas{ position:fixed; top:0; left:0; z-index:1; }
 
-    /* Intersticial */
+    /* Intersticial (se desejar usar de novo, basta exibir) */
     #interstitial{
       display:none; opacity:0;
       position:fixed; inset:0; z-index:9;
@@ -44,24 +44,6 @@
       pointer-events:none;
       background:transparent;
       transition:opacity .5s ease;
-    }
-    #interstitial.show{ opacity:1; }
-    #interstitial.hide{ opacity:0; }
-
-    .interstitial-text{
-      max-width: 800px; padding:0 24px; text-align:center;
-      font-size: clamp(20px, 4vw, 36px);
-      color:#fff;
-      text-shadow: 0 0 10px var(--cor-arcana), 0 0 20px var(--cor-arcana);
-      animation: distortPulse 1.2s infinite;
-      filter: brightness(1.05);
-    }
-    @keyframes distortPulse{
-      0%{transform:skew(0deg,0deg);filter:blur(0px);}
-      25%{transform:skew(0.3deg,-0.4deg);filter:blur(0.4px);}
-      50%{transform:skew(-0.4deg,0.2deg);filter:blur(0.6px);}
-      75%{transform:skew(0.2deg,-0.2deg);filter:blur(0.3px);}
-      100%{transform:skew(0deg,0deg);filter:blur(0px);}
     }
 
     /* Assinatura final */
@@ -72,11 +54,7 @@
       transition:opacity 1s ease-in;
       max-width:600px; line-height:1.35;
     }
-    #signature{ color:#fff; animation:pulse-arcano 1.4s ease-in-out infinite; }
-    @keyframes pulse-arcano{
-      0%,100%{ text-shadow:0 0 6px #fff,0 0 12px var(--cor-arcana),0 0 18px var(--cor-arcana);}
-      50%{ text-shadow:0 0 10px #fff,0 0 22px var(--cor-arcana),0 0 32px var(--cor-arcana);}
-    }
+    #signature{ color:#fff; }
   </style>
 </head>
 <body>
@@ -112,18 +90,32 @@ Mas a sensação é de que você já está atrasado.
   <script type="x-shader/x-fragment" id="fragmentShader">
     uniform sampler2D map;
     uniform float time;
-    uniform vec3 glowColor;      // roxo arcano leve
+    uniform vec3 glowColor;        // roxo leve (pulsação sutil)
     uniform float distortionStrength;
+
+    // Uniforms de revelação
+    uniform float revealPos;       // 0..1 - posição da “janela” de revelação (anda junto com o scroll)
+    uniform float revealWidth;     // altura da banda de revelação (em UV Y)
+    uniform float revealFeather;   // suavização nas bordas da banda
+    uniform float pulseBoost;      // ganho quando a linha entra no “meio” da banda
 
     varying vec2 vUv;
 
-    // Ruído rápido para corrupção leve
     float rand(vec2 co){ return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
+
+    // janela suave (0..1) centrada em revealPos, com largura revealWidth e feather
+    float movingWindow(float y, float center, float width, float feather){
+      float halfW = width * 0.5;
+      float dist = abs(y - center);
+      float edge = halfW;
+      float t = smoothstep(edge + feather, edge - feather, dist);
+      return clamp(t, 0.0, 1.0);
+    }
 
     void main(){
       vec2 uv = vUv;
 
-      // Curvatura leve (sem "zoom" acumulado)
+      // Curvatura suave (sem zoom cumulativo)
       float bend = 0.35;
       vec2 p = uv * 2.0 - 1.0;
       p.y = p.y + bend * (p.y * p.y);
@@ -131,7 +123,7 @@ Mas a sensação é de que você já está atrasado.
       p /= perspective;
       vec2 warpedUv = p * 0.5 + 0.5;
 
-      // Distorção (aumentada ~15%)
+      // Distorção leve (+15%)
       vec2 distortedUv = warpedUv;
       float noise = (rand(warpedUv * 10.0 + time * 0.5) - 0.5) * distortionStrength;
       distortedUv.x += sin(warpedUv.y * 15.0 + time * 8.0) * noise;
@@ -139,25 +131,33 @@ Mas a sensação é de que você já está atrasado.
 
       vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
 
-      // Pulsação roxa leve sobre letras brancas (estilo original)
+      // Revelação por banda móvel
+      float w = movingWindow(warpedUv.y, revealPos, revealWidth, revealFeather);
+
+      // Base branca nas letras, modulada pela janela
+      vec3 base = vec3(1.0) * texel.a * w;
+
+      // Pulsação roxa sutil
       float pulse = 0.6 + 0.4 * sin(time * 0.9);
-      vec3 purpleGlow = glowColor * texel.a * pulse * 0.6;
+      vec3 glow = glowColor * texel.a * pulse * 0.5 * w;
 
-      // Base branca (onde há texto)
-      vec3 baseText = vec3(1.0) * texel.a;
-
-      // Micro-flash preto curtíssimo (apenas no texto)
-      // Intervalo ~1.2s, duração ~0.07s
+      // Micro-flash preto curtíssimo (apenas no texto) – estilo original
       float interval = 1.2;
       float width = 0.07;
       float phase = fract(time / interval);
-      float blackout = step(phase, width);     // 1 nos primeiros 'width' s de cada intervalo
-      float blackoutStrength = 0.45;           // reduz brilho mas mantém legível
+      float blackout = step(phase, width);       // 1 nos primeiros 70ms de cada 1.2s
+      float blackoutStrength = 0.45;
 
-      vec3 color = baseText + purpleGlow;
-      color = mix(color, vec3(0.0), blackout * blackoutStrength * texel.a);
+      // “Pulso arcano” extra no centro da janela (brilho breve e sutil)
+      float centerBoost = smoothstep(0.35, 0.0, abs(warpedUv.y - revealPos));
+      float pulseArc = centerBoost * pulseBoost;
 
-      gl_FragColor = vec4(color, texel.a);
+      vec3 color = base + glow + pulseArc * glowColor * texel.a * 0.35;
+
+      // Aplicar microblackout só onde há texto e janela (>0)
+      color = mix(color, vec3(0.0), blackout * blackoutStrength * texel.a * step(0.01, w));
+
+      gl_FragColor = vec4(color, texel.a * w);
     }
   </script>
 
@@ -207,10 +207,10 @@ E vos chama.
 
     /* ======= VARS ======= */
     let scene,camera,renderer,crawlGroup,textMesh,textHeight,animationInProgress=false,endThreshold=0,clock=new THREE.Clock();
-    const ARCANE_PURPLE=new THREE.Color('#b24cff');
+    const ARCANE_PURPLE = new THREE.Color('#b24cff');
 
     function init(){
-      setupScene();setupListeners();
+      setupScene(); setupListeners();
     }
 
     function setupScene(){
@@ -221,6 +221,7 @@ E vos chama.
       camera.position.set(0,130,480);
       camera.lookAt(0,0,0);
       scene.add(camera);
+
       renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
       renderer.setSize(window.innerWidth,window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio,3));
@@ -232,24 +233,25 @@ E vos chama.
     }
 
     function startExperience(){
-      if(animationInProgress)return;
+      if(animationInProgress) return;
       animationInProgress=true;
+
       const seal=document.getElementById('arcane-seal-img');
       seal.classList.add('clicked');
       setTimeout(()=>{ document.getElementById('seal-container').style.display='none'; },400);
-      // Intersticial (opcional: remover se não usar)
-      // showInterstitialAndThen(0, ()=>{ createCrawlText(); animate(); });
-      createCrawlText(); animate();
+
+      createCrawlText();
+      animate();
     }
 
     function createCrawlText(){
-      const textCanvasObj=createTextCanvas(LOREM_IPSUM_ARCANO);
-      const textCanvas=textCanvasObj.canvas;
-      textHeight=textCanvasObj.cssHeight;
+      const textCanvasObj = createTextCanvas(LOREM_IPSUM_ARCANO);
+      const textCanvas = textCanvasObj.canvas;
+      textHeight = textCanvasObj.cssHeight;
 
       const texture=new THREE.CanvasTexture(textCanvas);
       texture.minFilter=THREE.LinearFilter;
-      texture.magFilter=THREE.NearestFilter; // nitidez no upscaling
+      texture.magFilter=THREE.NearestFilter; // nitidez no magnify
       if (renderer && renderer.capabilities) {
         texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
       }
@@ -260,7 +262,12 @@ E vos chama.
           map:{value:texture},
           time:{value:0.0},
           glowColor:{value:ARCANE_PURPLE},
-          distortionStrength:{value:0.00605} // +15% de 0.00525
+          distortionStrength:{value:0.00605},   // +15%
+          // Revelação (valores iniciais)
+          revealPos:{value:0.0},
+          revealWidth:{value:0.18},
+          revealFeather:{value:0.06},
+          pulseBoost:{value:0.35}
         },
         vertexShader:document.getElementById('vertexShader').textContent,
         fragmentShader:document.getElementById('fragmentShader').textContent,
@@ -269,68 +276,100 @@ E vos chama.
 
       const geometry=new THREE.PlaneGeometry(textCanvasObj.cssWidth,textCanvasObj.cssHeight);
       textMesh=new THREE.Mesh(geometry,material);
+
       crawlGroup=new THREE.Group();
       crawlGroup.add(textMesh);
       crawlGroup.rotation.x=0;
 
-      const startY=-textCanvasObj.cssHeight/2-240;
-      crawlGroup.position.y=startY;
-      endThreshold=(textCanvasObj.cssHeight*Math.cos(crawlGroup.rotation.x))*1.1;
+      // Começa mais cedo
+      const startY = -textCanvasObj.cssHeight/2 - 260;  // -260 (ligeiro ajuste)
+      crawlGroup.position.y = startY;
+
+      // Margem extra no fim para não cortar “Cedam.” e o restante
+      const baseEnd = (textCanvasObj.cssHeight*Math.cos(crawlGroup.rotation.x));
+      endThreshold = baseEnd * 1.24 + 120;  // +24% e +120px de folga
 
       scene.add(crawlGroup);
+
+      // Guarda para progress calc
+      crawlGroup.userData = { startY, total: endThreshold - startY };
     }
 
     function createTextCanvas(text){
-      const lines=text.split('\n');
-      const isMobile=window.innerWidth<=480;
-      let fontSize=isMobile?22.4:32;         // 20% menor no mobile
-      let lineHeight=fontSize*1.28;
-      let cssWidth=1024;
+      const lines = text.split('\n');
+      const isMobile = window.innerWidth <= 480;
 
-      // Altura bruta
-      let cssHeight=Math.floor(lines.length*lineHeight+(fontSize*2));
-      const maxCssHeight=Math.floor(window.innerHeight*0.82);
+      // 20% menor no mobile
+      let fontSize = isMobile ? 22.4 : 32;
+      let lineHeight = fontSize * 1.28;
+      let cssWidth = 1024;
 
-      // Auto-scale proporcional (se precisar)
-      if(cssHeight>maxCssHeight){
-        const scale=maxCssHeight/cssHeight;
-        fontSize*=scale; lineHeight*=scale; cssWidth*=scale;
-        cssHeight=Math.floor(lines.length*lineHeight+(fontSize*2));
+      let cssHeight = Math.floor(lines.length * lineHeight + (fontSize * 2));
+      const maxCssHeight = Math.floor(window.innerHeight * 0.82);
+
+      // Auto-scale proporcional (se ainda extrapolar)
+      if(cssHeight > maxCssHeight){
+        const scale = maxCssHeight / cssHeight;
+        fontSize *= scale; lineHeight *= scale; cssWidth *= scale;
+        cssHeight = Math.floor(lines.length * lineHeight + (fontSize * 2));
       }
 
-      // Alta resolução: DPR (até 3x) + supersampling 2x
-      const dpr=Math.min(window.devicePixelRatio||1,3), ss=2.0;
-      const canvas=document.createElement('canvas');
-      canvas.width=Math.floor(cssWidth*dpr*ss);
-      canvas.height=Math.floor(cssHeight*dpr*ss);
+      // Alta resolução
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+      const ss  = 2.0;
 
-      const ctx=canvas.getContext('2d');
-      ctx.imageSmoothingEnabled=false;       // sem blur no raster
-      ctx.scale(dpr*ss,dpr*ss);
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.floor(cssWidth  * dpr * ss);
+      canvas.height = Math.floor(cssHeight * dpr * ss);
 
-      // Bold real
-      ctx.font=`700 ${fontSize}px 'Cinzel Decorative'`;
-      ctx.fillStyle='#FFFFFF';
-      ctx.textAlign='center';
-      ctx.textBaseline='alphabetic';
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.scale(dpr * ss, dpr * ss);
 
-      let y=fontSize*2;
-      for(const line of lines){ ctx.fillText(line,cssWidth/2,y); y+=lineHeight; }
+      // BOLD real
+      ctx.font = `700 ${fontSize}px 'Cinzel Decorative'`;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
 
-      return{canvas,cssWidth,cssHeight};
+      let y = fontSize * 2;
+      for (const line of lines){
+        ctx.fillText(line, cssWidth/2, y);
+        y += lineHeight;
+      }
+
+      return { canvas, cssWidth, cssHeight };
     }
 
     function animate(){
       requestAnimationFrame(animate);
       if(!animationInProgress) return;
 
-      if(textMesh && textMesh.material && textMesh.material.uniforms.time){
+      // Atualiza tempo
+      if (textMesh && textMesh.material && textMesh.material.uniforms.time){
         textMesh.material.uniforms.time.value = clock.getElapsedTime();
       }
 
-      // 30% mais devagar (antes ~0.78)
+      // Andar (30% mais devagar que 0.78)
       crawlGroup.position.y += 0.546;
 
+      // Revelação: move a janela de 0 -> 1 conforme o scroll real
+      const { startY, total } = crawlGroup.userData;
+      const current = crawlGroup.position.y - startY;
+      const progress = Math.min(1, Math.max(0, current / total));
+
+      // Ajuste sutil na largura em telas muito altas/baixas (opcional)
+      const h = window.innerHeight;
+      const widthUV = (h < 640) ? 0.20 : (h > 1200 ? 0.16 : 0.18);
+
+      if (textMesh && textMesh.material && textMesh.material.uniforms.revealPos){
+        textMesh.material.uniforms.revealPos.value   = progress;
+        textMesh.material.uniforms.revealWidth.value = widthUV;
+        textMesh.material.uniforms.revealFeather.value = 0.06;
+        textMesh.material.uniforms.pulseBoost.value  = 0.35;
+      }
+
+      // Encerrar com folga suficiente
       if(crawlGroup.position.y > endThreshold){
         finishAnimation();
       }
