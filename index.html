@@ -1,178 +1,199 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>O Pergaminho Arcano</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>O Pergaminho Arcano</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
 
-<style>
-:root { --cor-arcana:#b24cff; }
+  <style>
+    :root { --cor-arcana: #b24cff; }
 
-html, body {
-margin:0; padding:0; width:100%; height:100%;
-background:#000; color:#fff; font-family:'MedievalSharp', cursive;
-overflow:hidden;
-}
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      background: #000; color: #fff;
+      font-family: 'MedievalSharp', cursive;
+      overflow: hidden;
+    }
 
-#seal-container{
-position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-width:160px; height:160px; display:flex; justify-content:center; align-items:center;
-cursor:pointer; z-index:20; pointer-events:auto;
-}
-#arcane-seal-img{
-width:120px; height:auto; pointer-events:auto;
-filter:drop-shadow(0 0 22px var(--cor-arcana));
-transition:opacity .4s ease-out, filter .4s ease-out;
-}
-#arcane-seal-img.clicked{ opacity:0; filter:drop-shadow(0 0 5px var(--cor-arcana)); }
+    /* Selo */
+    #seal-container {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 160px; height: 160px;
+      display: flex; justify-content: center; align-items: center;
+      cursor: pointer; z-index: 20; pointer-events: auto;
+    }
+    #arcane-seal-img {
+      width: 120px; height: auto; pointer-events: auto;
+      filter: drop-shadow(0 0 22px var(--cor-arcana));
+      transition: opacity .4s ease-out, filter .4s ease-out;
+    }
+    #arcane-seal-img.clicked {
+      opacity: 0; filter: drop-shadow(0 0 5px var(--cor-arcana));
+    }
 
-#three-canvas{ position:fixed; top:0; left:0; z-index:1; }
+    /* Canvas */
+    #three-canvas {
+      position: fixed; top: 0; left: 0; z-index: 1;
+    }
 
-#interstitial{
-display:none; opacity:0;
-position:fixed; inset:0; z-index:9;
-display:flex; align-items:center; justify-content:center;
-pointer-events:none;
-background:transparent;
-transition:opacity .5s ease;
-}
-#interstitial.show{ opacity:1; }
-#interstitial.hide{ opacity:0; }
+    /* Interstitial */
+    #interstitial {
+      display: none; opacity: 0;
+      position: fixed; inset: 0; z-index: 9;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none; background: transparent;
+      transition: opacity .5s ease;
+    }
+    #interstitial.show { opacity: 1; }
+    #interstitial.hide { opacity: 0; }
 
-.interstitial-text{
-max-width: 800px; padding:0 24px; text-align:center;
-font-size: clamp(20px, 4vw, 36px);
-color:#fff;
-text-shadow: 
-  0 0 10px var(--cor-arcana),
-  0 0 20px var(--cor-arcana),
-  0 0 30px var(--cor-arcana);
-animation: interstitialGlow 2.8s ease-in-out infinite;
-filter: brightness(1.05);
-}
-@keyframes interstitialGlow {
-0%, 100% { 
-  text-shadow: 0 0 10px #fff, 0 0 18px var(--cor-arcana), 0 0 28px var(--cor-arcana); 
-}
-50% { 
-  text-shadow: 0 0 16px #fff, 0 0 32px var(--cor-arcana), 0 0 50px var(--cor-arcana), 0 0 70px var(--cor-arcana); 
-}
-}
+    .interstitial-text {
+      max-width: 800px; padding: 0 24px; text-align: center;
+      font-size: clamp(20px, 4vw, 36px); color: #fff;
+      text-shadow: 
+        0 0 10px var(--cor-arcana),
+        0 0 20px var(--cor-arcana),
+        0 0 30px var(--cor-arcana);
+      animation: interstitialGlow 2.8s ease-in-out infinite;
+      filter: brightness(1.05);
+    }
+    @keyframes interstitialGlow {
+      0%, 100% { 
+        text-shadow: 0 0 10px #fff, 0 0 18px var(--cor-arcana), 0 0 28px var(--cor-arcana); 
+      }
+      50% { 
+        text-shadow: 0 0 16px #fff, 0 0 32px var(--cor-arcana), 0 0 50px var(--cor-arcana), 0 0 70px var(--cor-arcana); 
+      }
+    }
 
-#signature-container{
-display:none; opacity:0; position:fixed; bottom:110px; left:50%;
-transform:translateX(-50%); z-index:10; text-align:center; font-size:1.2rem;
-font-family:'MedievalSharp', cursive; transition:opacity 1.2s ease-in;
-max-width:600px; line-height:1.35;
-}
-#signature{ color:#fff; animation:pulse-arcano 1.4s ease-in-out infinite; }
-@keyframes pulse-arcano{
-0%,100%{ text-shadow:0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana); }
-50% { text-shadow:0 0 10px #fff,0 0 22px var(--cor-arcana),0 0 32px var(--cor-arcana),0 0 45px var(--cor-arcana); }
-}
-</style>
+    /* Assinatura */
+    #signature-container {
+      display: none; opacity: 0;
+      position: fixed; bottom: 110px; left: 50%;
+      transform: translateX(-50%); z-index: 10;
+      text-align: center; font-size: 1.2rem;
+      font-family: 'MedievalSharp', cursive;
+      transition: opacity 1.2s ease-in;
+      max-width: 600px; line-height: 1.35;
+    }
+    #signature {
+      color: #fff;
+      animation: pulse-arcano 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse-arcano {
+      0%, 100% { text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana); }
+      50% { text-shadow: 0 0 10px #fff, 0 0 22px var(--cor-arcana), 0 0 32px var(--cor-arcana), 0 0 45px var(--cor-arcana); }
+    }
+  </style>
 </head>
 <body>
 
-<div id="seal-container">
-<img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo Arcano">
-</div>
+  <!-- Selo -->
+  <div id="seal-container">
+    <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo Arcano">
+  </div>
 
-<canvas id="three-canvas"></canvas>
+  <!-- Canvas 3D -->
+  <canvas id="three-canvas"></canvas>
 
-<div id="interstitial">
-<div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div>
-</div>
+  <!-- Interstitial -->
+  <div id="interstitial">
+    <div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div>
+  </div>
 
-<div id="signature-container">
-<p id="signature">
-O coração dispara antes que você perceba que deixou a carta cair. O papel atinge o chão, mas a sensação de contato não some com ele. Algo fica preso na sua cabeça, como se um pensamento entrasse sem pedir permissão. Não é visão, nem sonho. É lembrança de algo que você nunca viveu.<br><br>
-A imagem vem inteira, sem construção, sem origem: uma taverna que você nunca viu, mas reconhece. Tábuas escuras, cheiro de ferrugem, luz baixa demais para ser aconchegante, mesas que já desistiram de permanecer retas. Ferrugem & Ossos. Velha Chama. O nome surge pronto, como se sempre estivesse guardado em algum ponto da sua mente que não era seu.<br><br>
-Ninguém diz que você deve ir.<br>
-Mas a sensação é de que você já está atrasado.
-</p>
-</div>
+  <!-- Assinatura Final -->
+  <div id="signature-container">
+    <p id="signature">
+      O coração dispara antes que você perceba que deixou a carta cair. O papel atinge o chão, mas a sensação de contato não some com ele. Algo fica preso na sua cabeça, como se um pensamento entrasse sem pedir permissão. Não é visão, nem sonho. É lembrança de algo que você nunca viveu.<br><br>
+      A imagem vem inteira, sem construção, sem origem: uma taverna que você nunca viu, mas reconhece. Tábuas escuras, cheiro de ferrugem, luz baixa demais para ser aconchegante, mesas que já desistiram de permanecer retas. Ferrugem & Ossos. Velha Chama. O nome surge pronto, como se sempre estivesse guardado em algum ponto da sua mente que não era seu.<br><br>
+      Ninguém diz que você deve ir.<br>
+      Mas a sensação é de que você já está atrasado.
+    </p>
+  </div>
 
-<!-- Shaders -->
-<script type="x-shader/x-vertex" id="vertexShader">
-varying vec2 vUv;
-void main(){
-vUv = uv;
-gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
-}
-</script>
+  <!-- Shaders -->
+  <script type="x-shader/x-vertex" id="vertexShader">
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  </script>
 
-<script type="x-shader/x-fragment" id="fragmentShader">
-uniform sampler2D map;
-uniform float time;
-uniform vec3 glowColor;
-uniform float baseDistortion;
-uniform float baseNoise;
-uniform float beatLevel;
+  <script type="x-shader/x-fragment" id="fragmentShader">
+    uniform sampler2D map;
+    uniform float time;
+    uniform vec3 glowColor;
+    uniform float baseDistortion;
+    uniform float baseNoise;
+    uniform float beatLevel;
 
-varying vec2 vUv;
+    varying vec2 vUv;
 
-float rand(vec2 co){ return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
+    float rand(vec2 co) { return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453); }
 
-void main(){
-vec2 uv = vUv;
+    void main() {
+      vec2 uv = vUv;
 
-/* Curvatura leve */
-float bend = 0.35;
-vec2 p = uv * 2.0 - 1.0;
-p.y = p.y + bend * (p.y * p.y);
-float perspective = 1.0 + bend * (p.y + 1.0) * 0.5;
-p /= perspective;
-vec2 warpedUv = p * 0.5 + 0.5;
+      // Curvatura leve
+      float bend = 0.35;
+      vec2 p = uv * 2.0 - 1.0;
+      p.y = p.y + bend * (p.y * p.y);
+      float perspective = 1.0 + bend * (p.y + 1.0) * 0.5;
+      p /= perspective;
+      vec2 warpedUv = p * 0.5 + 0.5;
 
-/* === EFEITOS A 20% DA INTENSIDADE === */
-float intensity = 0.20;
+      // Efeitos a 20% da intensidade
+      float intensity = 0.20;
 
-/* Ondas sutis */
-float waveAmp = baseDistortion * intensity * (0.7 + 2.2 * beatLevel);
-float wave = waveAmp * sin(warpedUv.y * (18.0 + 10.0*beatLevel) + time * (1.6 + 1.5*beatLevel));
-vec2 distortedUv = warpedUv;
-distortedUv.x += wave;
+      // Ondas sutis
+      float waveAmp = baseDistortion * intensity * (0.7 + 2.2 * beatLevel);
+      float wave = waveAmp * sin(warpedUv.y * (18.0 + 10.0 * beatLevel) + time * (1.6 + 1.5 * beatLevel));
+      vec2 distortedUv = warpedUv;
+      distortedUv.x += wave;
 
-/* Ruído mínimo */
-float nAmp = baseNoise * intensity * (0.6 + 1.8 * beatLevel);
-float nSeed = rand(warpedUv * (18.0 + 6.0*beatLevel) + time * (0.6 + 0.9*beatLevel));
-float noise = (nSeed - 0.5) * nAmp;
-distortedUv.y += noise * 0.9;
-distortedUv.x += noise * 0.5;
+      // Ruído mínimo
+      float nAmp = baseNoise * intensity * (0.6 + 1.8 * beatLevel);
+      float nSeed = rand(warpedUv * (18.0 + 6.0 * beatLevel) + time * (0.6 + 0.9 * beatLevel));
+      float noise = (nSeed - 0.5) * nAmp;
+      distortedUv.y += noise * 0.9;
+      distortedUv.x += noise * 0.5;
 
-vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
+      vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
 
-/* Cor suave com leve pulsação */
-float b = clamp(beatLevel, 0.0, 1.2);
-float colorPulse = smoothstep(0.0, 1.0, b) * intensity;
+      // Cor suave com pulsação
+      float b = clamp(beatLevel, 0.0, 1.2);
+      float colorPulse = smoothstep(0.0, 1.0, b) * intensity;
 
-vec3 white = vec3(1.0);
-vec3 purple = normalize(glowColor) * 0.7 + vec3(0.35,0.0,0.65)*0.3;
-vec3 colorText = mix(white, purple, colorPulse);
+      vec3 white = vec3(1.0);
+      vec3 purple = normalize(glowColor) * 0.7 + vec3(0.35, 0.0, 0.65) * 0.3;
+      vec3 colorText = mix(white, purple, colorPulse);
 
-float blackout = smoothstep(0.93, 1.05, b) * intensity;
-colorText = mix(colorText, vec3(0.0), 0.38 * blackout);
+      float blackout = smoothstep(0.93, 1.05, b) * intensity;
+      colorText = mix(colorText, vec3(0.0), 0.38 * blackout);
 
-/* GLOW ROXO PULSANTE */
-vec3 glow = glowColor * texel.a * (0.6 + 0.8 * beatLevel) * 2.2;
+      // Glow roxo pulsante
+      vec3 glow = glowColor * texel.a * (0.6 + 0.8 * beatLevel) * 2.2;
 
-vec3 finalColor = colorText * texel.a + glow;
+      vec3 finalColor = colorText * texel.a + glow;
 
-gl_FragColor = vec4(finalColor, texel.a);
-}
-</script>
+      gl_FragColor = vec4(finalColor, texel.a);
+    }
+  </script>
 
-<script>
-/* ============ TEXTO ARCANO ============ */
-const LOREM_IPSUM_ARCANO = `
+  <script>
+    /* ==================== TEXTO ARCANO ==================== */
+    const LOREM_IPSUM_ARCANO = `
 Nas entranhas do real, onde a forma range,
 eles caminham sem saber que já foram colhidos.
 O mundo fede antes de morrer,
@@ -211,481 +232,497 @@ Retornem.
 A pele racha.
 O selo abre.
 A ruína respira.
-E vos chama.
-`;
+E vos chama.`.trim();
 
-/* ============ VOZ SUSSURRADA ============ */
-let whisperHowl = null;
+    /* ==================== VOZ SUSSURRADA ==================== */
+    let whisperHowl = null;
 
-function createWhisperAudio() {
-  const text = LOREM_IPSUM_ARCANO.replace(/\n/g, ' ').replace(/ +/g, ' ');
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'pt-BR';
-  utterance.rate = 0.65;
-  utterance.pitch = 0.75;
-  utterance.volume = 0.5;
+    function createWhisperAudio() {
+      const text = LOREM_IPSUM_ARCANO.replace(/\n/g, ' ').replace(/ +/g, ' ');
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 0.65;
+      utterance.pitch = 0.75;
+      utterance.volume = 0.5;
 
-  whisperHowl = {
-    play: () => speechSynthesis.speak(utterance),
-    stop: () => speechSynthesis.cancel()
-  };
-}
+      whisperHowl = {
+        play: () => speechSynthesis.speak(utterance),
+        stop: () => speechSynthesis.cancel()
+      };
+    }
 
-/* ============ RUNAS E PARTÍCULAS ============ */
-const RUNES = ['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᚾ','ᛁ','ᛃ','ᛇ','ᛈ','ᛉ','ᛊ','ᛏ','ᛒ','ᛖ','ᛗ','ᛚ','ᛜ','ᛞ','ᛟ'];
-let runeMeshes = [], particleSystem;
+    /* ==================== RUNAS E PARTÍCULAS ==================== */
+    const RUNES = ['F', 'U', 'TH', 'A', 'R', 'K', 'G', 'W', 'H', 'N', 'I', 'J', 'EI', 'P', 'Z', 'S', 'T', 'B', 'E', 'M', 'L', 'ING', 'D', 'O'];
+    let runeMeshes = [], particleSystem;
 
-/* ============ BEAT DETECTION ============ */
-let BEAT = { fps: 60, durationSec: 0, values: [], ready: false };
+    /* ==================== BEAT DETECTION ==================== */
+    let BEAT = { fps: 60, durationSec: 0, values: [], ready: false };
 
-async function precomputeBeat(url){
-  try{
-    const resp = await fetch(url, {cache:'force-cache'});
-    const arr = await resp.arrayBuffer();
-    const AC = window.AudioContext || window.webkitAudioContext;
-    const ctx = new AC({ sampleRate: 44100 });
-    const decoded = await ctx.decodeAudioData(arr);
+    async function precomputeBeat(url) {
+      try {
+        const resp = await fetch(url, { cache: 'force-cache' });
+        const arr = await resp.arrayBuffer();
+        const AC = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AC({ sampleRate: 44100 });
+        const decoded = await ctx.decodeAudioData(arr);
 
-    const chL = decoded.getChannelData(0);
-    const chR = decoded.numberOfChannels>1 ? decoded.getChannelData(1) : null;
-    const sr = decoded.sampleRate;
-    const hop = Math.max(1, Math.floor(sr / BEAT.fps));
+        const chL = decoded.getChannelData(0);
+        const chR = decoded.numberOfChannels > 1 ? decoded.getChannelData(1) : null;
+        const sr = decoded.sampleRate;
+        const hop = Math.max(1, Math.floor(sr / BEAT.fps));
 
-    const env = [];
-    for (let i=0; i<decoded.length; i+=hop){
-      let sum=0, count=0;
-      for (let j=0; j<hop && (i+j)<decoded.length; j++){
-        const sL = chL[i+j];
-        const sR = chR ? chR[i+j] : 0;
-        const m = chR ? (sL + sR)*0.5 : sL;
-        sum += m*m; count++;
+        const env = [];
+        for (let i = 0; i < decoded.length; i += hop) {
+          let sum = 0, count = 0;
+          for (let j = 0; j < hop && (i + j) < decoded.length; j++) {
+            const sL = chL[i + j];
+            const sR = chR ? chR[i + j] : 0;
+            const m = chR ? (sL + sR) * 0.5 : sL;
+            sum += m * m; count++;
+          }
+          const rms = Math.sqrt(sum / Math.max(1, count));
+          env.push(rms);
+        }
+
+        const smooth = (arr, k = 0.86) => {
+          const out = new Float32Array(arr.length);
+          let prev = 0;
+          for (let i = 0; i < arr.length; i++) { prev = prev * k + arr[i] * (1 - k); out[i] = prev; }
+          prev = 0;
+          for (let i = arr.length - 1; i >= 0; i--) { prev = prev * k + out[i] * (1 - k); out[i] = Math.max(out[i], prev); }
+          return Array.from(out);
+        };
+
+        let sm = smooth(env, 0.86);
+        const sorted = [...sm].sort((a, b) => a - b);
+        const p95 = sorted[Math.floor(sorted.length * 0.95)] || 1;
+        sm = sm.map(v => Math.min(1, v / (p95 || 1)));
+        sm = sm.map(v => Math.pow(v, 0.6));
+
+        BEAT.values = sm;
+        BEAT.durationSec = decoded.duration;
+        BEAT.ready = true;
+        ctx.close && ctx.close();
+      } catch (e) {
+        console.warn('Beat falhou, usando fallback.', e);
+        const total = 60 * 30;
+        const vals = [];
+        for (let i = 0; i < total; i++) {
+          vals.push((Math.sin(i / 60 * 2 * Math.PI * 1.1) * 0.5 + 0.5));
+        }
+        BEAT.values = vals;
+        BEAT.durationSec = total / 60;
+        BEAT.ready = true;
       }
-      const rms = Math.sqrt(sum / Math.max(1,count));
-      env.push(rms);
     }
 
-    const smooth = (arr,k=0.86)=>{
-      const out = new Float32Array(arr.length);
-      let prev=0; for (let i=0;i<arr.length;i++){ prev=prev*k+arr[i]*(1-k); out[i]=prev; }
-      prev=0; for (let i=arr.length-1;i>=0;i--){ prev=prev*k+out[i]*(1-k); out[i]=Math.max(out[i],prev); }
-      return Array.from(out);
-    };
-    let sm = smooth(env, 0.86);
-    const sorted = [...sm].sort((a,b)=>a-b);
-    const p95 = sorted[Math.floor(sorted.length*0.95)] || 1;
-    sm = sm.map(v => Math.min(1, v / (p95 || 1)));
-    sm = sm.map(v => Math.pow(v, 0.6));
-
-    BEAT.values = sm;
-    BEAT.durationSec = decoded.duration;
-    BEAT.ready = true;
-    ctx.close && ctx.close();
-  }catch(e){
-    console.warn('Beat falhou, usando fallback.', e);
-    const total = 60 * 30;
-    const vals = [];
-    for (let i=0;i<total;i++){
-      vals.push( (Math.sin(i/60*2*Math.PI*1.1)*0.5+0.5) );
+    function getBeatAt(timeSec) {
+      if (!BEAT.ready || BEAT.values.length === 0) {
+        return (Math.sin(timeSec * 2 * Math.PI * 1.0) * 0.5 + 0.5);
+      }
+      const t = timeSec % BEAT.durationSec;
+      const idx = Math.floor(t * BEAT.fps) % BEAT.values.length;
+      return BEAT.values[idx];
     }
-    BEAT.values = vals;
-    BEAT.durationSec = total/60;
-    BEAT.ready = true;
-  }
-}
 
-function getBeatAt(timeSec){
-  if (!BEAT.ready || BEAT.values.length===0) {
-    return (Math.sin(timeSec*2*Math.PI*1.0)*0.5+0.5);
-  }
-  const t = timeSec % BEAT.durationSec;
-  const idx = Math.floor(t * BEAT.fps) % BEAT.values.length;
-  return BEAT.values[idx];
-}
+    /* ==================== VARIAVEIS GLOBAIS ==================== */
+    let scene, camera, renderer;
+    let sfx1, sfx2, sfx25, sfx3;
+    let sfx2Id = null, sfx25Id = null;
+    let binauralTargets = [];
+    let crawlGroup, textMesh, textHeight;
+    let animationInProgress = false;
+    let endThreshold = 0;
+    let clock = new THREE.Clock();
+    let beatAccum = 0;
 
-/* ============ VARS ============ */
-let scene, camera, renderer;
-let sfx1, sfx2, sfx25, sfx3;
-let sfx2Id = null, sfx25Id = null;
-let binauralTargets = [];
-let crawlGroup, textMesh, textHeight;
-let animationInProgress = false;
-let endThreshold = 0;
-let clock = new THREE.Clock();
-let beatAccum = 0;
+    const ARCANE_PURPLE = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--cor-arcana').trim());
 
-const ARCANE_PURPLE = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--cor-arcana').trim());
+    /* ==================== INICIALIZAÇÃO ==================== */
+    function init() {
+      setupAudio();
+      setupScene();
+      createParticles();
+      createWhisperAudio();
+      precomputeBeat('./sfx2_5.mp3');
+      startBinauralLoop();
+      setupListeners();
+      animate(); // Inicia renderização imediatamente
+    }
 
-/* ============ INIT ============ */
-function init(){
-  setupAudio();
-  setupScene();
-  createParticles();
-  createWhisperAudio();
-  precomputeBeat('./sfx2_5.mp3');
-  startBinauralLoop();
-  animate(); // INICIA RENDERIZAÇÃO IMEDIATAMENTE
-}
+    function setupAudio() {
+      sfx1 = new Howl({ src: ['./sfx1.mp3'], volume: 0.8, loop: false, html5: false });
+      sfx2 = new Howl({ src: ['./sfx2.mp3'], volume: 0.6, loop: true, html5: false });
+      sfx25 = new Howl({ src: ['./sfx2_5.mp3'], volume: 1.0, loop: true, html5: false });
+      sfx3 = new Howl({ src: ['./sfx3.mp3'], volume: 0.6, loop: false, html5: false });
+    }
 
-function setupAudio(){
-  sfx1 = new Howl({ src:['./sfx1.mp3'], volume:0.8, loop:false, html5:false });
-  sfx2 = new Howl({ src:['./sfx2.mp3'], volume:0.6, loop:true, html5:false });
-  sfx25 = new Howl({ src:['./sfx2_5.mp3'], volume:1.0, loop:true, html5:false });
-  sfx3 = new Howl({ src:['./sfx3.mp3'], volume:0.6, loop:false, html5:false });
-}
+    function setupScene() {
+      const canvas = document.getElementById('three-canvas');
+      scene = new THREE.Scene();
 
-function setupScene(){
-  const canvas = document.getElementById('three-canvas');
-  scene = new THREE.Scene();
-  const aspect = window.innerWidth / window.innerHeight;
-  camera = new THREE.PerspectiveCamera(50, aspect, 1, 10000);
-  camera.position.set(0, 130, 480);
-  camera.lookAt(0, 0, 0);
-  scene.add(camera);
+      const aspect = window.innerWidth / window.innerHeight;
+      camera = new THREE.PerspectiveCamera(50, aspect, 1, 10000);
+      camera.position.set(0, 130, 480);
+      camera.lookAt(0, 0, 0);
+      scene.add(camera);
 
-  renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setClearColor(0x000000, 1);
-}
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setClearColor(0x000000, 1);
+    }
 
-/* ============ LISTENERS ============ */
-function setupListeners(){
-  document.getElementById('seal-container').addEventListener('click', startExperience, { once: true });
-  window.addEventListener('resize', onWindowResize);
-}
+    function setupListeners() {
+      document.getElementById('seal-container').addEventListener('click', startExperience, { once: true });
+      window.addEventListener('resize', onWindowResize);
+    }
 
-/* ============ START ============ */
-function startExperience(){
-  if (animationInProgress) return;
-  animationInProgress = true;
+    /* ==================== PARTÍCULAS ROXAS ==================== */
+    function createParticles() {
+      const geometry = new THREE.BufferGeometry();
+      const count = 400;
+      const positions = new Float32Array(count * 3);
+      const velocities = new Float32Array(count * 3);
+      const sizes = new Float32Array(count);
 
-  const sealImg = document.getElementById('arcane-seal-img');
-  sealImg.classList.add('clicked');
-  const id1 = sfx1.play();
-  makeBinaural(sfx1, id1, {speed:1.4, radius:0.9, jitter:0.35});
+      for (let i = 0; i < count; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 1200;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 1200;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 1200;
 
-  setTimeout(() => { document.getElementById('seal-container').style.display='none'; }, 400);
-  showInterstitial(3000);
+        velocities[i * 3] = (Math.random() - 0.5) * 0.3;
+        velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.3;
+        velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
 
-  setTimeout(() => {
-    sfx2Id = sfx2.play();
-    makeBinaural(sfx2, sfx2Id, {speed:1.3, radius:1.2, jitter:0.5});
-    setTimeout(() => { applyReverbToSound(sfx2, sfx2Id, {seconds:1.8, decay:3.0, wet:0.8}); }, 120);
+        sizes[i] = Math.random() * 2.5 + 0.8;
+      }
 
-    if (sfx25.state() === 'loaded') {
-      sfx25Id = sfx25.play();
-      makeBinaural(sfx25, sfx25Id, {speed:1.5, radius:1.0, jitter:0.45});
-    } else {
-      sfx25.once('load', () => {
-        sfx25Id = sfx25.play();
-        makeBinaural(sfx25, sfx25Id, {speed:1.5, radius:1.0, jitter:0.45});
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+      geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          color: { value: ARCANE_PURPLE },
+          time: { value: 0 }
+        },
+        vertexShader: `
+          attribute float size;
+          attribute vec3 velocity;
+          uniform float time;
+          varying float vAlpha;
+          void main() {
+            vec3 pos = position + velocity * time * 8.0;
+            vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+            gl_PointSize = size * (300.0 / -mvPosition.z);
+            vAlpha = sin(time * 1.5 + position.x * 0.01) * 0.5 + 0.5;
+            gl_Position = projectionMatrix * mvPosition;
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 color;
+          varying float vAlpha;
+          void main() {
+            if (length(gl_PointCoord - vec2(0.5)) > 0.5) discard;
+            gl_FragColor = vec4(color, vAlpha * 0.5);
+          }
+        `,
+        transparent: true,
+        blending: THREE.AdditiveBlending
       });
+
+      particleSystem = new THREE.Points(geometry, material);
+      scene.add(particleSystem);
     }
-  }, 4500);
 
-  setTimeout(() => {
-    createCrawlText();
-    createRunes();
-    if (whisperHowl) whisperHowl.play();
-  }, 3600);
-}
+    /* ==================== EXPERIÊNCIA ==================== */
+    function startExperience() {
+      if (animationInProgress) return;
+      animationInProgress = true;
 
-/* ============ CRAWL TEXT ============ */
-function createCrawlText(){
-  const textCanvas = createTextCanvas(LOREM_IPSUM_ARCANO);
-  textHeight = textCanvas.height;
+      const sealImg = document.getElementById('arcane-seal-img');
+      sealImg.classList.add('clicked');
+      const id1 = sfx1.play();
+      makeBinaural(sfx1, id1, { speed: 1.4, radius: 0.9, jitter: 0.35 });
 
-  const texture = new THREE.CanvasTexture(textCanvas);
-  texture.minFilter = THREE.LinearFilter;
-  texture.magFilter = THREE.LinearFilter;
+      setTimeout(() => { document.getElementById('seal-container').style.display = 'none'; }, 400);
+      showInterstitial(3000);
 
-  const material = new THREE.ShaderMaterial({
-    uniforms:{
-      map:{ value:texture },
-      time:{ value:0.0 },
-      glowColor:{ value:ARCANE_PURPLE },
-      baseDistortion:{ value:0.010 },
-      baseNoise:{ value:0.010 },
-      beatLevel:{ value:0.0 }
-    },
-    vertexShader: document.getElementById('vertexShader').textContent,
-    fragmentShader: document.getElementById('fragmentShader').textContent,
-    transparent:true, side:THREE.DoubleSide
-  });
+      setTimeout(() => {
+        sfx2Id = sfx2.play();
+        makeBinaural(sfx2, sfx2Id, { speed: 1.3, radius: 1.2, jitter: 0.5 });
+        setTimeout(() => { applyReverbToSound(sfx2, sfx2Id, { seconds: 1.8, decay: 3.0, wet: 0.8 }); }, 120);
 
-  const geometry = new THREE.PlaneGeometry(textCanvas.width, textHeight);
-  textMesh = new THREE.Mesh(geometry, material);
+        if (sfx25.state() === 'loaded') {
+          sfx25Id = sfx25.play();
+          makeBinaural(sfx25, sfx25Id, { speed: 1.5, radius: 1.0, jitter: 0.45 });
+        } else {
+          sfx25.once('load', () => {
+            sfx25Id = sfx25.play();
+            makeBinaural(sfx25, sfx25Id, { speed: 1.5, radius: 1.0, jitter: 0.45 });
+          });
+        }
+      }, 4500);
 
-  crawlGroup = new THREE.Group();
-  crawlGroup.add(textMesh);
-  crawlGroup.rotation.x = 0;
+      setTimeout(() => {
+        createCrawlText();
+        createRunes();
+        if (whisperHowl) whisperHowl.play();
+      }, 3600);
+    }
 
-  const fovRad = camera.fov * Math.PI / 180;
-  const visibleHeight = 2 * Math.tan(fovRad / 2) * camera.position.z;
-  const safeMargin = visibleHeight * 0.8;
+    function showInterstitial(ms) {
+      const inter = document.getElementById('interstitial');
+      inter.style.display = 'flex';
+      requestAnimationFrame(() => inter.classList.add('show'));
+      setTimeout(() => {
+        inter.classList.remove('show');
+        inter.classList.add('hide');
+        setTimeout(() => {
+          inter.style.display = 'none';
+          inter.classList.remove('hide');
+        }, 500);
+      }, ms);
+    }
 
-  const startY = -textHeight / 2 - visibleHeight / 2 - safeMargin;
-  crawlGroup.position.y = startY;
-  endThreshold = textHeight / 2 + visibleHeight / 2 + safeMargin;
+    /* ==================== TEXTO CRAWL ==================== */
+    function createCrawlText() {
+      const textCanvas = createTextCanvas(LOREM_IPSUM_ARCANO);
+      textHeight = textCanvas.height;
 
-  scene.add(crawlGroup);
-}
+      const texture = new THREE.CanvasTexture(textCanvas);
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
 
-function createTextCanvas(text){
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-  const fontSize = 32;
-  const lineHeight = fontSize * 1.45;
-  const canvasHeight = lines.length * lineHeight + fontSize * 8;
-  const canvasWidth = 1024;
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          map: { value: texture },
+          time: { value: 0.0 },
+          glowColor: { value: ARCANE_PURPLE },
+          baseDistortion: { value: 0.010 },
+          baseNoise: { value: 0.010 },
+          beatLevel: { value: 0.0 }
+        },
+        vertexShader: document.getElementById('vertexShader').textContent,
+        fragmentShader: document.getElementById('fragmentShader').textContent,
+        transparent: true,
+        side: THREE.DoubleSide
+      });
 
-  const canvas = document.createElement('canvas');
-  canvas.width = canvasWidth;
-  canvas.height = canvasHeight;
+      const geometry = new THREE.PlaneGeometry(textCanvas.width, textHeight);
+      textMesh = new THREE.Mesh(geometry, material);
 
-  const ctx = canvas.getContext('2d');
-  ctx.font = `${fontSize}px 'Cinzel Decorative'`;
-  ctx.fillStyle = '#FFFFFF';
-  ctx.textAlign = 'center';
+      crawlGroup = new THREE.Group();
+      crawlGroup.add(textMesh);
+      crawlGroup.rotation.x = 0;
 
-  let y = fontSize * 4.5;
-  for (const line of lines){
-    ctx.fillText(line, canvasWidth/2, y);
-    y += lineHeight;
-  }
-  return canvas;
-}
+      const fovRad = camera.fov * Math.PI / 180;
+      const visibleHeight = 2 * Math.tan(fovRad / 2) * camera.position.z;
+      const safeMargin = visibleHeight * 0.8;
 
-/* ============ RUNAS ============ */
-function createRunes() {
-  runeMeshes.forEach(m => scene.remove(m));
-  runeMeshes = [];
+      const startY = -textHeight / 2 - visibleHeight / 2 - safeMargin;
+      crawlGroup.position.y = startY;
+      endThreshold = textHeight / 2 + visibleHeight / 2 + safeMargin;
 
-  const lines = LOREM_IPSUM_ARCANO.split('\n').filter(l => l.trim());
-  const runeCount = Math.min(lines.length * 2, 50);
+      scene.add(crawlGroup);
+    }
 
-  for (let i = 0; i < runeCount; i++) {
-    const canvas = document.createElement('canvas');
-    canvas.width = 64; canvas.height = 64;
-    const ctx = canvas.getContext('2d');
-    ctx.font = '48px Arial';
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.fillText(RUNES[i % RUNES.length], 32, 48);
+    function createTextCanvas(text) {
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+      const fontSize = 32;
+      const lineHeight = fontSize * 1.45;
+      const canvasHeight = lines.length * lineHeight + fontSize * 8;
+      const canvasWidth = 1024;
 
-    const texture = new THREE.CanvasTexture(canvas);
-    const material = new THREE.SpriteMaterial({ map: texture, color: ARCANE_PURPLE, transparent: true });
-    const sprite = new THREE.Sprite(material);
-    sprite.scale.set(45, 45, 1);
+      const canvas = document.createElement('canvas');
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
 
-    const angle = (i / runeCount) * Math.PI * 2;
-    const radius = 320 + Math.random() * 180;
-    const yOffset = -textHeight/2 + (i % 12) * 70 - 500;
-    sprite.position.set(Math.cos(angle) * radius, yOffset, Math.sin(angle) * radius);
+      const ctx = canvas.getContext('2d');
+      ctx.font = `${fontSize}px 'Cinzel Decorative'`;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'center';
 
-    scene.add(sprite);
-    runeMeshes.push(sprite);
-  }
-}
-
-/* ============ PARTICLES ============ */
-function createParticles(){
-  const geometry = new THREE.BufferGeometry();
-  const count = 400;
-  const positions = new Float32Array(count * 3);
-  const velocities = new Float32Array(count * 3);
-  const sizes = new Float32Array(count);
-
-  for (let i = 0; i < count; i++) {
-    positions[i*3] = (Math.random() - 0.5) * 1200;
-    positions[i*3+1] = (Math.random() - 0.5) * 1200;
-    positions[i*3+2] = (Math.random() - 0.5) * 1200;
-
-    velocities[i*3] = (Math.random() - 0.5) * 0.3;
-    velocities[i*3+1] = (Math.random() - 0.5) * 0.3;
-    velocities[i*3+2] = (Math.random() - 0.5) * 0.3;
-
-    sizes[i] = Math.random() * 2.5 + 0.8;
-  }
-
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
-  geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-  const material = new THREE.ShaderMaterial({
-    uniforms: {
-      color: { value: ARCANE_PURPLE },
-      time: { value: 0 }
-    },
-    vertexShader: `
-      attribute float size;
-      attribute vec3 velocity;
-      uniform float time;
-      varying float vAlpha;
-      void main() {
-        vec3 pos = position + velocity * time * 8.0;
-        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-        gl_PointSize = size * (300.0 / -mvPosition.z);
-        vAlpha = sin(time * 1.5 + position.x * 0.01) * 0.5 + 0.5;
-        gl_Position = projectionMatrix * mvPosition;
+      let y = fontSize * 4.5;
+      for (const line of lines) {
+        ctx.fillText(line, canvasWidth / 2, y);
+        y += lineHeight;
       }
-    `,
-    fragmentShader: `
-      uniform vec3 color;
-      varying float vAlpha;
-      void main() {
-        if (length(gl_PointCoord - vec2(0.5)) > 0.5) discard;
-        gl_FragColor = vec4(color, vAlpha * 0.5);
+      return canvas;
+    }
+
+    /* ==================== RUNAS ROXAS ==================== */
+    function createRunes() {
+      runeMeshes.forEach(m => scene.remove(m));
+      runeMeshes = [];
+
+      const lines = LOREM_IPSUM_ARCANO.split('\n').filter(l => l.trim());
+      const runeCount = Math.min(lines.length * 2, 50);
+
+      for (let i = 0; i < runeCount; i++) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64; canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        ctx.font = '48px Arial';
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.fillText(RUNES[i % RUNES.length], 32, 48);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.SpriteMaterial({ map: texture, color: ARCANE_PURPLE, transparent: true });
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(45, 45, 1);
+
+        const angle = (i / runeCount) * Math.PI * 2;
+        const radius = 320 + Math.random() * 180;
+        const yOffset = -textHeight / 2 + (i % 12) * 70 - 500;
+        sprite.position.set(Math.cos(angle) * radius, yOffset, Math.sin(angle) * radius);
+
+        scene.add(sprite);
+        runeMeshes.push(sprite);
       }
-    `,
-    transparent: true,
-    blending: THREE.AdditiveBlending
-  });
-
-  particleSystem = new THREE.Points(geometry, material);
-  scene.add(particleSystem);
-}
-
-/* ============ ANIMATE ============ */
-function animate(){
-  requestAnimationFrame(animate);
-
-  const dt = clock.getDelta();
-  beatAccum += dt;
-  const beat = getBeatAt(beatAccum);
-
-  if (textMesh && textMesh.material.uniforms){
-    textMesh.material.uniforms.time.value = clock.getElapsedTime();
-    textMesh.material.uniforms.beatLevel.value = beat;
-  }
-
-  if (crawlGroup && animationInProgress) {
-    const scrollSpeed = 0.7;
-    crawlGroup.position.y += scrollSpeed;
-
-    runeMeshes.forEach((r, i) => {
-      r.material.opacity = 0.5 + 0.5 * beat;
-      r.position.y += scrollSpeed;
-    });
-
-    if (crawlGroup.position.y >= endThreshold) {
-      finishAnimation();
     }
-  }
 
-  if (particleSystem) {
-    particleSystem.material.uniforms.time.value = clock.getElapsedTime();
-  }
+    /* ==================== ANIMAÇÃO ==================== */
+    function animate() {
+      requestAnimationFrame(animate);
 
-  renderer.render(scene, camera);
-}
+      const dt = clock.getDelta();
+      beatAccum += dt;
+      const beat = getBeatAt(beatAccum);
 
-/* ============ FINAL ============ */
-function finishAnimation(){
-  if (!animationInProgress) return;
-  animationInProgress = false;
+      if (textMesh && textMesh.material.uniforms) {
+        textMesh.material.uniforms.time.value = clock.getElapsedTime();
+        textMesh.material.uniforms.beatLevel.value = beat;
+      }
 
-  if (crawlGroup) scene.remove(crawlGroup);
-  runeMeshes.forEach(m => scene.remove(m));
-  runeMeshes = [];
-  if (whisperHowl) whisperHowl.stop();
+      if (crawlGroup && animationInProgress) {
+        const scrollSpeed = 0.7;
+        crawlGroup.position.y += scrollSpeed;
 
-  if (sfx2Id !== null && sfx2.playing(sfx2Id)) sfx2.fade(sfx2.volume(sfx2Id), 0, 800, sfx2Id);
-  if (sfx25Id !== null && sfx25.playing(sfx25Id)) sfx25.fade(sfx25.volume(sfx25Id), 0, 800, sfx25Id);
+        runeMeshes.forEach((r, i) => {
+          r.material.opacity = 0.5 + 0.5 * beat;
+          r.position.y += scrollSpeed;
+        });
 
-  const signature = document.getElementById('signature-container');
-  signature.style.display = 'block';
-  requestAnimationFrame(() => signature.style.opacity = '1');
+        if (crawlGroup.position.y >= endThreshold) {
+          finishAnimation();
+        }
+      }
 
-  const id3 = sfx3.play();
-  makeBinaural(sfx3, id3, {speed:1.6, radius:0.8, jitter:0.4});
-}
+      if (particleSystem) {
+        particleSystem.material.uniforms.time.value = clock.getElapsedTime();
+      }
 
-/* ============ RESIZE ============ */
-function onWindowResize(){
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  if (crawlGroup) {
-    createCrawlText();
-    createRunes();
-  }
-}
-
-/* ============ AUDIO FX ============ */
-function makeBinaural(howl, soundId, opts={}){
-  const speed = opts.speed ?? 1.4;
-  const radius = opts.radius ?? 1.0;
-  const jitter = opts.jitter ?? 0.3;
-  howl.pannerAttr({ panningModel:'HRTF', refDistance:1, rolloffFactor:0.9 }, soundId);
-  howl.pos(0, 0, -0.3, soundId);
-  binauralTargets.push({ howl, soundId, speed, radius, jitter, t0: performance.now()/1000 });
-}
-
-function startBinauralLoop(){
-  function frame(){
-    const now = performance.now()/1000;
-    binauralTargets = binauralTargets.filter(target=>{
-      const { howl, soundId, speed, radius, jitter, t0 } = target;
-      if (!howl.playing(soundId)) return false;
-      const t = (now - t0) * (1.0 / Math.max(0.001, speed));
-      const a=2.3, b=1.7;
-      const x = Math.sin(a*t) * radius * (0.85 + 0.15*Math.sin(t*3.1));
-      const y = (Math.sin(b*t*0.7)*0.25) + (Math.random()-0.5)*0.02*jitter;
-      const z = (Math.cos(a*t*0.9)*0.7) - 0.3 + (Math.random()-0.5)*0.02*jitter;
-      howl.pos(x,y,z, soundId);
-      return true;
-    });
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-}
-
-function applyReverbToSound(howl, soundId, {seconds=1.8, decay=3.0, wet=0.8}={}){
-  try{
-    const ctx = Howler.ctx;
-    const sound = howl._soundById(soundId);
-    if (!sound || sound.__reverbApplied) return;
-    sound.__reverbApplied = true;
-
-    const sourceNode = sound._panner || sound._node;
-    if (!sourceNode) return;
-
-    const convolver = ctx.createConvolver();
-    convolver.buffer = createImpulseResponse(ctx, seconds, decay);
-
-    const wetGain = ctx.createGain(); wetGain.gain.value = wet;
-    const dryGain = ctx.createGain(); dryGain.gain.value = 1 - wet;
-
-    try{ sourceNode.disconnect(); }catch(e){}
-    sourceNode.connect(dryGain);
-    sourceNode.connect(convolver);
-    convolver.connect(wetGain);
-    dryGain.connect(Howler.masterGain);
-    wetGain.connect(Howler.masterGain);
-
-    sound.__reverb = { convolver, wetGain, dryGain };
-  }catch(e){
-    console.warn('Reverb falhou:', e);
-  }
-}
-
-function createImpulseResponse(ctx, seconds=1.8, decay=3.0){
-  const rate = ctx.sampleRate;
-  const length = Math.max(1, Math.floor(rate * seconds));
-  const impulse = ctx.createBuffer(2, length, rate);
-  for (let ch=0; ch<2; ch++){
-    const data = impulse.getChannelData(ch);
-    for (let i=0; i<length; i++){
-      const n = Math.random()*2 - 1;
-      data[i] = n * Math.pow(1 - i/length, decay);
+      renderer.render(scene, camera);
     }
-  }
-  return impulse;
-}
 
-/* ============ INICIALIZAÇÃO FINAL ============ */
-setupListeners(); // ← AQUI: ANTES DO INIT E ANIMATE
-init();
-</script>
+    /* ==================== FINAL ==================== */
+    function finishAnimation() {
+      if (!animationInProgress) return;
+      animationInProgress = false;
+
+      if (crawlGroup) scene.remove(crawlGroup);
+      runeMeshes.forEach(m => scene.remove(m));
+      runeMeshes = [];
+      if (whisperHowl) whisperHowl.stop();
+
+      if (sfx2Id !== null && sfx2.playing(sfx2Id)) sfx2.fade(sfx2.volume(sfx2Id), 0, 800, sfx2Id);
+      if (sfx25Id !== null && sfx25.playing(sfx25Id)) sfx25.fade(sfx25.volume(sfx25Id), 0, 800, sfx25Id);
+
+      const signature = document.getElementById('signature-container');
+      signature.style.display = 'block';
+      requestAnimationFrame(() => signature.style.opacity = '1');
+
+      const id3 = sfx3.play();
+      makeBinaural(sfx3, id3, { speed: 1.6, radius: 0.8, jitter: 0.4 });
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      if (crawlGroup) {
+        createCrawlText();
+        createRunes();
+      }
+    }
+
+    /* ==================== EFEITOS DE ÁUDIO ==================== */
+    function makeBinaural(howl, soundId, opts = {}) {
+      const speed = opts.speed ?? 1.4;
+      const radius = opts.radius ?? 1.0;
+      const jitter = opts.jitter ?? 0.3;
+      howl.pannerAttr({ panningModel: 'HRTF', refDistance: 1, rolloffFactor: 0.9 }, soundId);
+      howl.pos(0, 0, -0.3, soundId);
+      binauralTargets.push({ howl, soundId, speed, radius, jitter, t0: performance.now() / 1000 });
+    }
+
+    function startBinauralLoop() {
+      function frame() {
+        const now = performance.now() / 1000;
+        binauralTargets = binauralTargets.filter(target => {
+          const { howl, soundId, speed, radius, jitter, t0 } = target;
+          if (!howl.playing(soundId)) return false;
+          const t = (now - t0) * (1.0 / Math.max(0.001, speed));
+          const a = 2.3, b = 1.7;
+          const x = Math.sin(a * t) * radius * (0.85 + 0.15 * Math.sin(t * 3.1));
+          const y = (Math.sin(b * t * 0.7) * 0.25) + (Math.random() - 0.5) * 0.02 * jitter;
+          const z = (Math.cos(a * t * 0.9) * 0.7) - 0.3 + (Math.random() - 0.5) * 0.02 * jitter;
+          howl.pos(x, y, z, soundId);
+          return true;
+        });
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function applyReverbToSound(howl, soundId, { seconds = 1.8, decay = 3.0, wet = 0.8 } = {}) {
+      try {
+        const ctx = Howler.ctx;
+        const sound = howl._soundById(soundId);
+        if (!sound || sound.__reverbApplied) return;
+        sound.__reverbApplied = true;
+
+        const sourceNode = sound._panner || sound._node;
+        if (!sourceNode) return;
+
+        const convolver = ctx.createConvolver();
+        convolver.buffer = createImpulseResponse(ctx, seconds, decay);
+
+        const wetGain = ctx.createGain(); wetGain.gain.value = wet;
+        const dryGain = ctx.createGain(); dryGain.gain.value = 1 - wet;
+
+        try { sourceNode.disconnect(); } catch (e) {}
+        sourceNode.connect(dryGain);
+        sourceNode.connect(convolver);
+        convolver.connect(wetGain);
+        dryGain.connect(Howler.masterGain);
+        wetGain.connect(Howler.masterGain);
+
+        sound.__reverb = { convolver, wetGain, dryGain };
+      } catch (e) {
+        console.warn('Reverb falhou:', e);
+      }
+    }
+
+    function createImpulseResponse(ctx, seconds = 1.8, decay = 3.0) {
+      const rate = ctx.sampleRate;
+      const length = Math.max(1, Math.floor(rate * seconds));
+      const impulse = ctx.createBuffer(2, length, rate);
+      for (let ch = 0; ch < 2; ch++) {
+        const data = impulse.getChannelData(ch);
+        for (let i = 0; i < length; i++) {
+          const n = Math.random() * 2 - 1;
+          data[i] = n * Math.pow(1 - i / length, decay);
+        }
+      }
+      return impulse;
+    }
+
+    /* ==================== INICIALIZAÇÃO FINAL ==================== */
+    init();
+  </script>
 </body>
 </html>
