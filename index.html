@@ -37,7 +37,7 @@
     /* Canvas Three.js */
     #three-canvas{ position:fixed; top:0; left:0; z-index:1; }
 
-    /* Intersticial (primeira “assinatura”) */
+    /* Intersticial */
     #interstitial{
       display:none; opacity:0;
       position:fixed; inset:0; z-index:9;
@@ -65,7 +65,7 @@
       100% { transform: skew(0deg,0deg); filter: blur(0px); }
     }
 
-    /* Glitch G1 — linhas horizontais “rasgando” */
+    /* Glitch G1 */
     .glitch-lines{
       position:absolute; inset:0; display:none; z-index:10; pointer-events:none;
       background: repeating-linear-gradient(
@@ -88,7 +88,7 @@
       100% { transform: translateY(0px); opacity:0; }
     }
 
-    /* Assinatura/narrativa final */
+    /* Assinatura final */
     #signature-container{
       display:none; opacity:0; position:fixed; bottom:110px; left:50%;
       transform:translateX(-50%); z-index:10; text-align:center; font-size:1.2rem;
@@ -110,7 +110,7 @@
 
   <canvas id="three-canvas"></canvas>
 
-  <!-- Intersticial (primeira “assinatura”) -->
+  <!-- Intersticial -->
   <div id="interstitial">
     <div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div>
     <div class="glitch-lines" id="glitchLines"></div>
@@ -137,8 +137,8 @@ Mas a sensação é de que você já está atrasado.
   <script type="x-shader/x-fragment" id="fragmentShader">
     uniform sampler2D map;
     uniform float time;
-    uniform vec3 glowColor;     // mantém (não usado no mix principal, mas preservado)
-    uniform vec3 deepColor;     // NOVO: cor alvo #3C0061
+    uniform vec3 glowColor;
+    uniform vec3 deepColor;
     uniform float distortionStrength;
 
     varying vec2 vUv;
@@ -154,21 +154,16 @@ Mas a sensação é de que você já está atrasado.
       vec2 warpedUv = p * 0.5 + 0.5;
 
       vec2 distortedUv = warpedUv;
-      // tremor 30% menor via distortionStrength reduzido (valor passado pela uniform)
       float noise = (rand(warpedUv * 10.0 + time * 0.5) - 0.5) * distortionStrength;
       distortedUv.x += sin(warpedUv.y * 15.0 + time * 8.0) * noise;
       distortedUv.y += cos(warpedUv.x * 15.0 + time * 7.0) * noise;
 
       vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
 
-      // pulso mais lento e mistura suave: branco <-> #3C0061
-      float t = (sin(time * 0.9) * 0.5 + 0.5);      // 0..1 mais devagar
-      vec3 mixColor = mix(vec3(1.0), deepColor, t); // transição suave
+      float t = (sin(time * 0.9) * 0.5 + 0.5);
+      vec3 mixColor = mix(vec3(1.0), deepColor, t);
 
-      // aplica cor apenas onde há texto (alpha)
       vec3 finalColor = mix(vec3(1.0), mixColor, texel.a);
-
-      // um leve reforço de brilho para manter legibilidade
       finalColor += deepColor * texel.a * 0.10;
 
       gl_FragColor = vec4(finalColor, texel.a);
@@ -178,51 +173,56 @@ Mas a sensação é de que você já está atrasado.
   <script>
     /* ============ TEXTO ============ */
     const LOREM_IPSUM_ARCANO = `
-Nas entranhas do real, onde a forma range,
-eles caminham sem saber que já foram colhidos.
-O mundo fede antes de morrer,
-mas vós chamais isso de ordem.
+Nas veias do cosmo, onde a luz teme pisar,
+o Vazio pulsa em compasso ancestral.
+Ouve, neófito, o sussurro das eras:
+as engrenagens do destino rangem.
 
-Sob a pedra há dente,
-sob o dente há fome,
-sob a fome há ritmo,
-e o ritmo vos aguarda.
 
-Eles respiram, mas o ar não os quer.
-A carne permanece, mas a lembrança apodrece.
-O tempo só mastiga o que ainda resiste,
-e nada resiste por muito.
+A Sétima Estrela sangrou sobre o véu,
+tecendo a runa da Despossessão.
+E do pó de estrelas mortas,
+o Primeiro Selo foi forjado.
 
-O eixo tritura o que ousa lembrar.
-A cidade dorme sobre ossos que não consentem.
-Chama-se paz ao que sangra devagar,
-chama-se vida ao que ainda não cedeu.
 
-Vós sois as falhas do esquecimento,
-os nomes que o silêncio não digeriu.
-A Fenda não oferece escolha —
-apenas retorno.
+Não busque o poder que corrompe,
+mas o saber que liberta.
+Pois no coração do silêncio,
+a verdade aguarda, paciente.
 
-A vinda já começou
-antes do passo.
-A queda já vos guarda
-antes da borda.
 
-Ouçam.
-Desçam.
-Cedam.
-Retornem.
+A geometria do efêmero,
+a matemática da alma.
+Tudo se dobra à Vontade
+quando a Vontade é una com o Todo.
 
-A pele racha.
-O selo abre.
-A ruína respira.
-E vos chama.
+
+O Tempo é um rio que flui para trás,
+e a memória é a névoa em suas margens.
+Caminhamos sobre pontes de luar,
+buscando o que já foi perdido.
+
+
+Somente aqueles que ousam
+desvendar os nós do destino
+encontrarão a chave.
+
+
+A engrenagem gira.
+O coração bate.
+O caminho se revela.
+
+
+Contempla a Cifra.
+Entende o Padrão.
+O selo se abre.
+A jornada é tua.
     `;
-
-    /* ============ VARS ============ */
+    /* ============ VARIÁVEIS GERAIS ============ */
     let scene, camera, renderer;
     let sfx1, sfx2, sfx25, sfx3;
     let sfx2Id = null, sfx25Id = null;
+    let sfx2PreId = null, sfx25PreId = null, sfx3PreId = null;
     let binauralTargets = [];
     let crawlGroup, textMesh, textHeight;
     let animationInProgress = false;
@@ -268,7 +268,7 @@ E vos chama.
       window.addEventListener('resize', onWindowResize);
     }
 
-    /* ============ FLOW ============ */
+    /* ============ LÓGICA PRINCIPAL ============ */
     function startExperience(){
       if (animationInProgress) return;
       animationInProgress = true;
@@ -276,20 +276,24 @@ E vos chama.
       const sealImg = document.getElementById('arcane-seal-img');
       sealImg.classList.add('clicked');
 
-      // Áudio do selo (imediato)
+      /* 🔊 sfx1 toca no clique — permitido em iOS */
       const id1 = sfx1.play();
       makeBinaural(sfx1, id1, {speed:1.4, radius:0.9, jitter:0.35});
 
-      // Esconde o selo visualmente
+      /* ✅ Pré-desbloqueio iOS — sons tocam com volume 0 + pausa */
+      sfx2PreId = sfx2.play();   sfx2.volume(0, sfx2PreId);   sfx2.pause(sfx2PreId);
+      sfx25PreId = sfx25.play(); sfx25.volume(0, sfx25PreId); sfx25.pause(sfx25PreId);
+      sfx3PreId = sfx3.play();   sfx3.volume(0, sfx3PreId);   sfx3.pause(sfx3PreId);
+
+      /* remove selo após fade */
       setTimeout(() => { document.getElementById('seal-container').style.display='none'; }, 400);
 
-      // Intersticial + glitch; ao terminar, inicia áudio+texto
+      /* intersticial com glitch */
       showInterstitialAndThen(3000, () => {
         startTextAndAudio();
       });
     }
 
-    // Intersticial com glitch G1 sincronizado
     function showInterstitialAndThen(ms, cb){
       const inter = document.getElementById('interstitial');
       const glitch = document.getElementById('glitchLines');
@@ -298,7 +302,6 @@ E vos chama.
       requestAnimationFrame(() => inter.classList.add('show'));
 
       setTimeout(() => {
-        // roda o glitch (~450ms) e só então some e chama callback
         glitch.classList.add('glitch-run');
         setTimeout(() => {
           inter.classList.remove('show');
@@ -310,26 +313,29 @@ E vos chama.
     }
 
     function startTextAndAudio(){
-      // sfx2 (Rusty Wheel) + binaural + reverb metálico
-      sfx2Id = sfx2.play();
+      /* 🔊 sfx2 fade-in 3s */
+      if (!sfx2PreId) sfx2PreId = sfx2.play();
+      sfx2.seek(0, sfx2PreId);
+      sfx2.play(sfx2PreId);
+      sfx2.fade(0, 0.6, 3000, sfx2PreId);
+      sfx2Id = sfx2PreId;
       makeBinaural(sfx2, sfx2Id, {speed:1.3, radius:1.2, jitter:0.5});
       setTimeout(() => { applyReverbToSound(sfx2, sfx2Id, {seconds:1.8, decay:3.0, wet:0.8}); }, 120);
 
-      // sfx2_5 (garantindo tocar após load) + binaural
-      sfx25.once('load', () => {
-        sfx25Id = sfx25.play();
-        makeBinaural(sfx25, sfx25Id, {speed:1.5, radius:1.0, jitter:0.45});
-      });
-      if (sfx25.state() === 'loaded' && !sfx25Id) {
-        sfx25Id = sfx25.play();
-        makeBinaural(sfx25, sfx25Id, {speed:1.5, radius:1.0, jitter:0.45});
-      }
+      /* 🔊 sfx2_5 — batimento com aceleração progressiva */
+      if (!sfx25PreId) sfx25PreId = sfx25.play();
+      sfx25.seek(0, sfx25PreId);
+      sfx25.play(sfx25PreId);
+      sfx25.fade(0, 1.0, 3000, sfx25PreId);
+      sfx25Id = sfx25PreId;
+      makeBinaural(sfx25, sfx25Id, {speed:1.5, radius:1.0, jitter:0.45});
 
-      // Texto começa junto com os áudios
+      /* Texto sobe */
       createCrawlText();
       animate();
     }
 
+    /* ============ TEXTO EM CANVAS ============ */
     function createCrawlText(){
       const textCanvas = createTextCanvas(LOREM_IPSUM_ARCANO);
       textHeight = textCanvas.height;
@@ -343,8 +349,8 @@ E vos chama.
           map:{ value:texture },
           time:{ value:0.0 },
           glowColor:{ value: ARCANE_PURPLE },
-          deepColor:{ value: new THREE.Color(0x3C0061) },   // NOVO: alvo roxo profundo
-          distortionStrength:{ value:0.00525 }               // 30% menos
+          deepColor:{ value: new THREE.Color(0x3C0061) },
+          distortionStrength:{ value:0.00525 }
         },
         vertexShader: document.getElementById('vertexShader').textContent,
         fragmentShader: document.getElementById('fragmentShader').textContent,
@@ -358,17 +364,18 @@ E vos chama.
       crawlGroup.add(textMesh);
 
       crawlGroup.rotation.x = 0;
-      const startY = -textHeight / 2 - 280; /* aparece cedo */
+      const startY = -textHeight / 2 - 280;
       crawlGroup.position.y = startY;
 
-      endThreshold = (textHeight * Math.cos(crawlGroup.rotation.x)) * 1.20; /* não corta */
+      endThreshold = (textHeight * Math.cos(crawlGroup.rotation.x)) * 1.20;
 
       scene.add(crawlGroup);
     }
 
     function createTextCanvas(text){
       const lines = text.split('\n');
-      const fontSize = 32; /* leve redução p/ garantir */
+      const isMobile = window.innerWidth <= 480;
+      const fontSize = isMobile ? 28 : 32;
       const lineHeight = fontSize * 1.3;
 
       const canvasHeight = lines.length * lineHeight + (fontSize * 2);
@@ -391,19 +398,36 @@ E vos chama.
       return canvas;
     }
 
+    /* ============ ANIMAÇÃO ============ */
     function animate(){
       requestAnimationFrame(animate);
       if (!animationInProgress) return;
 
-      if (textMesh && textMesh.material && textMesh.material.uniforms && textMesh.material.uniforms.time){
+      if (textMesh && textMesh.material && textMesh.material.uniforms.time){
         textMesh.material.uniforms.time.value = clock.getElapsedTime();
       }
 
-      // 15% mais devagar
       const base = 0.68;
       const remaining = Math.max(0, endThreshold - crawlGroup.position.y);
       const slowFactor = remaining < 200 ? Math.max(0.4, remaining / 200) : 1.0;
       crawlGroup.position.y += base * slowFactor;
+
+      /* 🔊 ACELERA BATIMENTO (sfx2_5) CONFORME O FIM SE APROXIMA */
+      if (sfx25Id !== null && sfx25.playing(sfx25Id)){
+        const totalScroll = endThreshold - (-textHeight / 2 - 280);
+        const currentScroll = crawlGroup.position.y - (-textHeight / 2 - 280);
+        const progress = Math.min(1, Math.max(0, currentScroll / totalScroll));
+
+        /* curva moderada (B) */
+        let rate = 1.0;
+        if      (progress > 0.50) rate = 1.08;
+        if      (progress > 0.70) rate = 1.18;
+        if      (progress > 0.85) rate = 1.28;
+        if      (progress > 0.95) rate = 1.38;
+        if      (progress > 0.99) rate = 1.45;
+
+        sfx25.rate(rate, sfx25Id);
+      }
 
       if (crawlGroup.position.y > endThreshold){
         finishAnimation();
@@ -424,7 +448,7 @@ E vos chama.
         }
       }
 
-      // Fade-out sfx2 e sfx2_5
+      /* fade-out e STOP imediatos */
       if (sfx2Id !== null && sfx2.playing(sfx2Id)){
         sfx2.fade(sfx2.volume(sfx2Id), 0, 800, sfx2Id);
         setTimeout(() => { try{ sfx2.stop(sfx2Id); }catch(e){} }, 820);
@@ -434,14 +458,16 @@ E vos chama.
         setTimeout(() => { try{ sfx25.stop(sfx25Id); }catch(e){} }, 820);
       }
 
-      // Assinatura + sfx3 (inalterado; 1s depois)
+      /* assinatura final */
       const signature = document.getElementById('signature-container');
       signature.style.display = 'block';
       setTimeout(() => { signature.style.opacity = '1'; }, 100);
 
+      /* sfx3 agora seguro no iOS */
       setTimeout(() => {
-        const id3 = sfx3.play();
-        makeBinaural(sfx3, id3, {speed:1.6, radius:0.8, jitter:0.4});
+        sfx3.seek(0, sfx3PreId);
+        sfx3.play(sfx3PreId);
+        makeBinaural(sfx3, sfx3PreId, {speed:1.6, radius:0.8, jitter:0.4});
       }, 1000);
     }
 
@@ -472,7 +498,7 @@ E vos chama.
           const a=2.3, b=1.7;
           const x = Math.sin(a*t) * radius * (0.85 + 0.15*Math.sin(t*3.1));
           const y = (Math.sin(b*t*0.7)*0.25) + (Math.random()-0.5)*0.02*jitter;
-          const z = (Math.cos(a*t*0.9)*0.7) - 0.3 + (Math.random()-0.5)*0.02*jitter;
+          const z = (Math.cos(a*t*0.9)*0.7) - 0.3 + (Math.random()- 0.5)*0.02*jitter;
 
           howl.pos(x,y,z, soundId);
           return true;
@@ -497,8 +523,8 @@ E vos chama.
         const convolver = ctx.createConvolver();
         convolver.buffer = createImpulseResponse(ctx, seconds, decay);
 
-        const wetGain = ctx.createGain(); wetGain.gain.value = wet;      // 0.8
-        const dryGain = ctx.createGain(); dryGain.gain.value = 1 - wet;  // 0.2
+        const wetGain = ctx.createGain(); wetGain.gain.value = wet;
+        const dryGain = ctx.createGain(); dryGain.gain.value = 1 - wet;
 
         try{ sourceNode.disconnect(); }catch(e){}
 
@@ -533,4 +559,3 @@ E vos chama.
   </script>
 </body>
 </html>
-
