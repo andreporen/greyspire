@@ -50,16 +50,20 @@ transition:opacity .5s ease;
 max-width: 800px; padding:0 24px; text-align:center;
 font-size: clamp(20px, 4vw, 36px);
 color:#fff;
-text-shadow: 0 0 10px var(--cor-arcana), 0 0 20px var(--cor-arcana);
-animation: distortPulse 1.2s infinite;
+text-shadow: 
+  0 0 10px var(--cor-arcana),
+  0 0 20px var(--cor-arcana),
+  0 0 30px var(--cor-arcana);
+animation: interstitialGlow 2.8s ease-in-out infinite;
 filter: brightness(1.05);
 }
-@keyframes distortPulse{
-0% { transform: translateZ(0) skew(0deg,0deg); filter: blur(0px); }
-25% { transform: translateZ(0) skew(0.3deg,-0.4deg); filter: blur(0.4px); }
-50% { transform: translateZ(0) skew(-0.4deg,0.2deg); filter: blur(0.6px); }
-75% { transform: translateZ(0) skew(0.2deg,-0.2deg); filter: blur(0.3px); }
-100% { transform: translateZ(0) skew(0deg,0deg); filter: blur(0px); }
+@keyframes interstitialGlow {
+0%, 100% { 
+  text-shadow: 0 0 10px #fff, 0 0 18px var(--cor-arcana), 0 0 28px var(--cor-arcana); 
+}
+50% { 
+  text-shadow: 0 0 16px #fff, 0 0 32px var(--cor-arcana), 0 0 50px var(--cor-arcana), 0 0 70px var(--cor-arcana); 
+}
 }
 
 #signature-container{
@@ -409,12 +413,21 @@ crawlGroup = new THREE.Group();
 crawlGroup.add(textMesh);
 crawlGroup.rotation.x = 0;
 
-// Posição inicial
-const startY = -textHeight / 2 - 350;
+// === SISTEMA DE VERIFICAÇÃO DE ALTURA TOTAL ===
+const screenHeight = window.innerHeight;
+const cameraDistance = 480;
+const fov = camera.fov * Math.PI / 180;
+const visibleHeightAtCenter = 2 * Math.tan(fov / 2) * cameraDistance;
+
+// Margem de segurança: texto deve sair 100% da tela
+const safeMargin = visibleHeightAtCenter * 0.6;
+
+// Posição inicial: fundo da tela
+const startY = -textHeight / 2 - visibleHeightAtCenter / 2 - safeMargin;
 crawlGroup.position.y = startY;
 
-// GARANTE TEXTO 100% VISÍVEL
-endThreshold = textHeight / 2 + 500;
+// FIM: quando o topo do texto sair da tela
+endThreshold = textHeight / 2 + visibleHeightAtCenter / 2 + safeMargin;
 
 scene.add(crawlGroup);
 }
@@ -423,7 +436,7 @@ function createTextCanvas(text){
 const lines = text.split('\n').map(l => l.trim()).filter(l => l);
 const fontSize = 32;
 const lineHeight = fontSize * 1.4;
-const canvasHeight = lines.length * lineHeight + fontSize * 5;
+const canvasHeight = lines.length * lineHeight + fontSize * 6; // margem extra
 const canvasWidth = 1024;
 
 const canvas = document.createElement('canvas');
@@ -435,7 +448,7 @@ ctx.font = `${fontSize}px 'Cinzel Decorative'`;
 ctx.fillStyle = '#FFFFFF';
 ctx.textAlign = 'center';
 
-let y = fontSize * 3;
+let y = fontSize * 3.5;
 for (const line of lines){
 ctx.fillText(line, canvasWidth/2, y);
 y += lineHeight;
@@ -506,6 +519,11 @@ function onWindowResize(){
 camera.aspect = window.innerWidth / window.innerHeight;
 camera.updateProjectionMatrix();
 renderer.setSize(window.innerWidth, window.innerHeight);
+
+// Recalcula thresholds se necessário
+if (crawlGroup) {
+createCrawlText(); // recria com nova geometria
+}
 }
 
 /* ============ AUDIO FX ============ */
