@@ -226,8 +226,14 @@
       // Aplica a cor estroboscópica ao glow para manter sincronizado
       vec3 glow = glowBase * mix(vec3(1.0), colorText, 0.6);
 
-      // Texto principal mais visível - cor estroboscópica dominante
-      vec3 finalColor = colorText * texel.a * 1.5 + glow;
+      // COR DO TEXTO EM SI MUDANDO - aplica diretamente a cor estroboscópica ao texto
+      // Usa a cor do texel (branco) multiplicada pela cor estroboscópica
+      vec3 textColor = texel.rgb * colorText;
+      // Garante que o texto tenha a cor estroboscópica visível
+      textColor = mix(textColor, colorText, 0.8);
+      
+      // Texto principal com cor estroboscópica dominante
+      vec3 finalColor = textColor * texel.a * 2.5 + glow;
 
       gl_FragColor = vec4(finalColor, texel.a);
     }
@@ -361,6 +367,29 @@ E vos chama.`.trim();
 
     const ARCANE_PURPLE = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--cor-arcana').trim());
 
+    /* ==================== WAKE LOCK (PREVENIR TELA DORMIR) ==================== */
+    let wakeLock = null;
+    
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release', () => {
+            console.log('Wake Lock foi liberado');
+          });
+        }
+      } catch (err) {
+        console.warn('Wake Lock não disponível:', err);
+      }
+    }
+    
+    // Tenta manter wake lock ativo
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState === 'visible' && wakeLock === null) {
+        await requestWakeLock();
+      }
+    });
+
     /* ==================== INICIALIZAÇÃO ==================== */
     function init() {
       setupAudio();
@@ -370,6 +399,7 @@ E vos chama.`.trim();
       precomputeBeat('./sfx2_5.mp3');
       startBinauralLoop();
       setupListeners();
+      requestWakeLock(); // Previne tela dormir
       animate();
     }
 
@@ -408,6 +438,13 @@ E vos chama.`.trim();
     function setupListeners() {
       document.getElementById('seal-container').addEventListener('click', startExperience, { once: true });
       window.addEventListener('resize', onWindowResize);
+      
+      // Reativa wake lock quando a página ganha foco
+      window.addEventListener('focus', async () => {
+        if (wakeLock === null) {
+          await requestWakeLock();
+        }
+      });
     }
 
     /* ==================== VEIAS ROXAS PULSANTES NO FUNDO ==================== */
@@ -672,15 +709,39 @@ E vos chama.`.trim();
 
     function createTextCanvas(text) {
       const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-      // Ajustado para caber na tela vertical do celular - 25% menor
-      const isMobile = window.innerWidth < 768;
-      const maxWidth = isMobile ? window.innerWidth * 0.85 : 800;
-      // Reduzido 25% no mobile: de 20 para 15
-      const fontSize = isMobile ? Math.min(15, window.innerHeight / 45) : 24;
-      const lineHeight = fontSize * 1.3;
-      const canvasHeight = lines.length * lineHeight + fontSize * 2;
-      // Largura ajustada para mobile vertical
-      const canvasWidth = Math.min(maxWidth, window.innerWidth * 0.9);
+      
+      // Detecta se é mobile e orientação
+      const isMobile = window.innerWidth < 768 || window.innerHeight < 768;
+      const isPortrait = window.innerHeight > window.innerWidth;
+      
+      // Calcula dimensões baseadas no tamanho real da tela
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      
+      // Largura adaptativa: 90% da largura da tela, máximo 800px
+      const maxWidth = Math.min(screenWidth * 0.9, 800);
+      
+      // Fonte adaptativa baseada na altura da tela e número de linhas
+      const availableHeight = screenHeight * 0.85; // 85% da altura disponível
+      const minFontSize = 12;
+      const maxFontSize = isMobile ? 18 : 24;
+      
+      // Calcula tamanho ideal baseado no espaço disponível
+      let fontSize = Math.floor((availableHeight / lines.length) * 0.4);
+      fontSize = Math.max(minFontSize, Math.min(fontSize, maxFontSize));
+      
+      // Se ainda não cabe, reduz mais
+      const lineHeight = fontSize * 1.25;
+      const estimatedHeight = lines.length * lineHeight + fontSize * 2;
+      
+      if (estimatedHeight > availableHeight && isMobile) {
+        fontSize = Math.floor((availableHeight / lines.length) * 0.35);
+        fontSize = Math.max(minFontSize, fontSize);
+      }
+      
+      const lineHeightFinal = fontSize * 1.25;
+      const canvasHeight = lines.length * lineHeightFinal + fontSize * 1.5;
+      const canvasWidth = maxWidth;
 
       // Aumenta a resolução para melhor nitidez no Safari mobile
       const scale = 2;
@@ -705,10 +766,10 @@ E vos chama.`.trim();
       ctx.shadowOffsetY = 0;
 
       // Padding reduzido para mobile
-      let y = fontSize * 2;
+      let y = fontSize * 1.5;
       for (const line of lines) {
         ctx.fillText(line, canvasWidth / 2, y);
-        y += lineHeight;
+        y += lineHeightFinal;
       }
       return canvas;
     }
