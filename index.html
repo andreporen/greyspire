@@ -45,8 +45,8 @@
     #arcane-seal-img {
       width: 120px; height: auto; pointer-events: auto;
       filter: drop-shadow(0 0 22px var(--cor-arcana));
-      transition: opacity .2s ease-out, filter .2s ease-out;
-      -webkit-transition: opacity .2s ease-out, filter .2s ease-out;
+      transition: opacity .4s ease-out, filter .4s ease-out;
+      -webkit-transition: opacity .4s ease-out, filter .4s ease-out;
       -webkit-tap-highlight-color: transparent;
     }
     #arcane-seal-img.clicked {
@@ -64,8 +64,8 @@
       position: fixed; inset: 0; z-index: 9;
       display: flex; align-items: center; justify-content: center;
       pointer-events: none; background: transparent;
-      transition: opacity .25s ease;
-      -webkit-transition: opacity .25s ease;
+      transition: opacity .5s ease;
+      -webkit-transition: opacity .5s ease;
     }
     #interstitial.show { opacity: 1; }
     #interstitial.hide { opacity: 0; }
@@ -96,8 +96,8 @@
       transform: translateX(-50%); z-index: 10;
       text-align: center; font-size: 1.2rem;
       font-family: 'MedievalSharp', cursive;
-      transition: opacity .4s ease-in;
-      -webkit-transition: opacity .4s ease-in;
+      transition: opacity 1.2s ease-in;
+      -webkit-transition: opacity 1.2s ease-in;
       max-width: 600px; line-height: 1.35;
     }
     #signature {
@@ -204,8 +204,8 @@
       float blackout = smoothstep(0.93, 1.05, b) * intensity;
       colorText = mix(colorText, vec3(0.0), 0.38 * blackout);
 
-      // GLOW ROXO FORTE E NÍTIDO
-      vec3 glow = glowColor * texel.a * (1.5 + 1.2 * beatLevel) * 4.5;
+      // GLOW ROXO MUITO FORTE E NÍTIDO
+      vec3 glow = glowColor * texel.a * (2.0 + 1.8 * beatLevel) * 8.0;
 
       vec3 finalColor = colorText * texel.a + glow;
 
@@ -458,7 +458,7 @@ E vos chama.`.trim();
       const id1 = sfx1.play();
       makeBinaural(sfx1, id1, { speed: 1.4, radius: 0.9, jitter: 0.35 });
 
-      setTimeout(() => { document.getElementById('seal-container').style.display = 'none'; }, 200);
+      setTimeout(() => { document.getElementById('seal-container').style.display = 'none'; }, 400);
       showInterstitial(3000);
 
       setTimeout(() => {
@@ -477,9 +477,10 @@ E vos chama.`.trim();
         }
       }, 4500);
 
+      // Texto começa logo quando o interstitial começa a desaparecer (3000ms)
       setTimeout(() => {
         createCrawlText();
-      }, 3600);
+      }, 3000);
     }
 
     function showInterstitial(ms) {
@@ -492,7 +493,7 @@ E vos chama.`.trim();
         setTimeout(() => {
           inter.style.display = 'none';
           inter.classList.remove('hide');
-        }, 250);
+        }, 500);
       }, ms);
     }
 
@@ -535,13 +536,14 @@ E vos chama.`.trim();
 
       const fovRad = camera.fov * Math.PI / 180;
       const visibleHeight = 2 * Math.tan(fovRad / 2) * camera.position.z;
-      const safeMargin = visibleHeight * 0.8;
+      // Margin reduzida para mobile - texto aparece mais rápido
+      const safeMargin = visibleHeight * 0.3;
 
       const startY = -textHeight / 2 - visibleHeight / 2 - safeMargin;
       crawlGroup.position.y = startY;
 
-      // DISTÂNCIA TOTAL A SER PERCORRIDA
-      targetDistance = textHeight + visibleHeight + safeMargin * 2;
+      // DISTÂNCIA TOTAL A SER PERCORRIDA - ajustada para detectar quando última palavra sai
+      targetDistance = textHeight + visibleHeight + safeMargin;
 
       totalDistance = 0;
       scene.add(crawlGroup);
@@ -549,10 +551,12 @@ E vos chama.`.trim();
 
     function createTextCanvas(text) {
       const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-      const fontSize = 36;
-      const lineHeight = fontSize * 1.5;
-      const canvasHeight = lines.length * lineHeight + fontSize * 8;
-      const canvasWidth = 1024;
+      // Reduzido para caber na tela do celular
+      const fontSize = 24;
+      const lineHeight = fontSize * 1.4;
+      const canvasHeight = lines.length * lineHeight + fontSize * 2;
+      // Largura reduzida para mobile
+      const canvasWidth = Math.min(800, window.innerWidth * 0.9);
 
       // Aumenta a resolução para melhor nitidez no Safari mobile
       const scale = 2;
@@ -576,7 +580,8 @@ E vos chama.`.trim();
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
 
-      let y = fontSize * 4.5;
+      // Padding reduzido para mobile
+      let y = fontSize * 2;
       for (const line of lines) {
         ctx.fillText(line, canvasWidth / 2, y);
         y += lineHeight;
@@ -627,10 +632,14 @@ E vos chama.`.trim();
       const id3 = sfx3.play();
       makeBinaural(sfx3, id3, { speed: 1.6, radius: 0.8, jitter: 0.4 });
 
-      // ASSINATURA APARECE IMEDIATAMENTE
-      const signature = document.getElementById('signature-container');
-      signature.style.display = 'block';
-      signature.style.opacity = '1';
+      // ASSINATURA APARECE IMEDIATAMENTE após última palavra sair
+      requestAnimationFrame(() => {
+        const signature = document.getElementById('signature-container');
+        signature.style.display = 'block';
+        requestAnimationFrame(() => {
+          signature.style.opacity = '1';
+        });
+      });
     }
 
     function onWindowResize() {
