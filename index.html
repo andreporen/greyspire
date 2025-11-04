@@ -212,7 +212,8 @@
     <!-- O Selo (Gatilho) -->
     <div id="seal-container">
         <div id="seal-aura"></div>
-        <img id="arcane-seal-img" src="https://placehold.co/150x150/000000/b24cff?text=%E2%9C%93&font=lora" alt="Selo Arcano">
+        <!-- IMAGEM PLACEHOLDER: Substitua 'src' pelo caminho do seu 'selo-arcano.png' -->
+        <img id="arcane-seal-img" src="https://placehold.co/150x150/000000/b24cff/png?text=%E2%9C%93&font=lora" alt="Selo Arcano">
     </div>
 
     <!-- O Canvas para o Texto 3D -->
@@ -493,7 +494,8 @@ Quero que saibam que já fazem parte da revolução.
             
             const ctx = canvas.getContext('2d');
             
-            ctx.font = `${fontSize}px 'Lora'`; // Fonte mais legível para prosa
+            // CORREÇÃO: Adiciona fonte de fallback 'serif'
+            ctx.font = `${fontSize}px 'Lora', serif`; 
             ctx.fillStyle = '#FFFFFF'; 
             ctx.textAlign = 'center';
             
