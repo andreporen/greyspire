@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>O Pergaminho Arcano</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -162,7 +162,6 @@ Mas a sensação é de que você já está atrasado.
 
       float t = (sin(time * 0.9) * 0.5 + 0.5);
       vec3 mixColor = mix(vec3(1.0), deepColor, t);
-
       vec3 finalColor = mix(vec3(1.0), mixColor, texel.a);
       finalColor += deepColor * texel.a * 0.10;
 
@@ -171,54 +170,50 @@ Mas a sensação é de que você já está atrasado.
   </script>
 
   <script>
-    /* ============ TEXTO ============ */
+    /* ============ TEXTO (1 linha vazia entre blocos) ============ */
     const LOREM_IPSUM_ARCANO = `
-Nas veias do cosmo, onde a luz teme pisar,
-o Vazio pulsa em compasso ancestral.
-Ouve, neófito, o sussurro das eras:
-as engrenagens do destino rangem.
+Nas entranhas do real, onde a forma range,
+eles caminham sem saber que já foram colhidos.
+O mundo fede antes de morrer,
+mas vós chamais isso de ordem.
 
+Sob a pedra há dente,
+sob o dente há fome,
+sob a fome há ritmo,
+e o ritmo vos aguarda.
 
-A Sétima Estrela sangrou sobre o véu,
-tecendo a runa da Despossessão.
-E do pó de estrelas mortas,
-o Primeiro Selo foi forjado.
+Eles respiram, mas o ar não os quer.
+A carne permanece, mas a lembrança apodrece.
+O tempo só mastiga o que ainda resiste,
+e nada resiste por muito.
 
+O eixo tritura o que ousa lembrar.
+A cidade dorme sobre ossos que não consentem.
+Chama-se paz ao que sangra devagar,
+chama-se vida ao que ainda não cedeu.
 
-Não busque o poder que corrompe,
-mas o saber que liberta.
-Pois no coração do silêncio,
-a verdade aguarda, paciente.
+Vós sois as falhas do esquecimento,
+os nomes que o silêncio não digeriu.
+A Fenda não oferece escolha —
+apenas retorno.
 
+A vinda já começou
+antes do passo.
+A queda já vos guarda
+antes da borda.
 
-A geometria do efêmero,
-a matemática da alma.
-Tudo se dobra à Vontade
-quando a Vontade é una com o Todo.
+Ouçam.
+Desçam.
+Cedam.
+Retornem.
 
-
-O Tempo é um rio que flui para trás,
-e a memória é a névoa em suas margens.
-Caminhamos sobre pontes de luar,
-buscando o que já foi perdido.
-
-
-Somente aqueles que ousam
-desvendar os nós do destino
-encontrarão a chave.
-
-
-A engrenagem gira.
-O coração bate.
-O caminho se revela.
-
-
-Contempla a Cifra.
-Entende o Padrão.
-O selo se abre.
-A jornada é tua.
+A pele racha.
+O selo abre.
+A ruína respira.
+E vos chama.
     `;
-    /* ============ VARIÁVEIS GERAIS ============ */
+
+    /* ============ VARIÁVEIS ============ */
     let scene, camera, renderer;
     let sfx1, sfx2, sfx25, sfx3;
     let sfx2Id = null, sfx25Id = null;
@@ -233,6 +228,10 @@ A jornada é tua.
 
     /* ============ INIT ============ */
     function init(){
+      Howler.autoSuspend = false;
+      Howler.mute(false);
+      Howler.volume(1.0);
+
       setupAudio();
       setupScene();
       setupListeners();
@@ -245,6 +244,14 @@ A jornada é tua.
       sfx2  = new Howl({ src:['./sfx2.mp3'],   volume:0.6, loop:true,  html5:false });
       sfx25 = new Howl({ src:['./sfx2_5.mp3'], volume:1.0, loop:true,  html5:false });
       sfx3  = new Howl({ src:['./sfx3.mp3'],   volume:0.6, loop:false, html5:false });
+
+      // fallback de desbloqueio: se der playerror, tenta resumir ctx e tocar de novo
+      [sfx1, sfx2, sfx25, sfx3].forEach(h=>{
+        h.once('playerror', (id, err)=>{
+          try{ Howler.ctx.resume(); }catch(e){}
+          try{ h.play(id); }catch(e){}
+        });
+      });
     }
 
     /* ============ SCENE ============ */
@@ -265,30 +272,33 @@ A jornada é tua.
 
     function setupListeners(){
       document.getElementById('seal-container').addEventListener('click', startExperience, { once:true });
-      window.addEventListener('resize', onWindowResize);
+      window.addEventListener('resize', onWindowResize, { passive:true });
+      window.addEventListener('orientationchange', onWindowResize, { passive:true });
+      document.addEventListener('visibilitychange', ()=>{ if (Howler.ctx && Howler.ctx.state!=='running') Howler.ctx.resume(); });
     }
 
-    /* ============ LÓGICA PRINCIPAL ============ */
+    /* ============ FLUXO PRINCIPAL ============ */
     function startExperience(){
       if (animationInProgress) return;
       animationInProgress = true;
 
+      try{ if (Howler.ctx && Howler.ctx.state !== 'running') Howler.ctx.resume(); }catch(e){}
+
       const sealImg = document.getElementById('arcane-seal-img');
       sealImg.classList.add('clicked');
 
-      /* 🔊 sfx1 toca no clique — permitido em iOS */
+      // sfx1 toca no clique
       const id1 = sfx1.play();
       makeBinaural(sfx1, id1, {speed:1.4, radius:0.9, jitter:0.35});
 
-      /* ✅ Pré-desbloqueio iOS — sons tocam com volume 0 + pausa */
+      // Pré-desbloqueio iOS — todos
       sfx2PreId = sfx2.play();   sfx2.volume(0, sfx2PreId);   sfx2.pause(sfx2PreId);
       sfx25PreId = sfx25.play(); sfx25.volume(0, sfx25PreId); sfx25.pause(sfx25PreId);
       sfx3PreId = sfx3.play();   sfx3.volume(0, sfx3PreId);   sfx3.pause(sfx3PreId);
 
-      /* remove selo após fade */
       setTimeout(() => { document.getElementById('seal-container').style.display='none'; }, 400);
 
-      /* intersticial com glitch */
+      // Intersticial + glitch; ao terminar, inicia áudio+texto
       showInterstitialAndThen(3000, () => {
         startTextAndAudio();
       });
@@ -302,7 +312,7 @@ A jornada é tua.
       requestAnimationFrame(() => inter.classList.add('show'));
 
       setTimeout(() => {
-        glitch.classList.add('glitch-run');
+        glitch.classList.add('glitch-run'); // ~450ms
         setTimeout(() => {
           inter.classList.remove('show');
           inter.style.display = 'none';
@@ -313,7 +323,7 @@ A jornada é tua.
     }
 
     function startTextAndAudio(){
-      /* 🔊 sfx2 fade-in 3s */
+      // sfx2: fade-in 3s
       if (!sfx2PreId) sfx2PreId = sfx2.play();
       sfx2.seek(0, sfx2PreId);
       sfx2.play(sfx2PreId);
@@ -322,7 +332,7 @@ A jornada é tua.
       makeBinaural(sfx2, sfx2Id, {speed:1.3, radius:1.2, jitter:0.5});
       setTimeout(() => { applyReverbToSound(sfx2, sfx2Id, {seconds:1.8, decay:3.0, wet:0.8}); }, 120);
 
-      /* 🔊 sfx2_5 — batimento com aceleração progressiva */
+      // sfx2_5: batimento + fade-in 3s
       if (!sfx25PreId) sfx25PreId = sfx25.play();
       sfx25.seek(0, sfx25PreId);
       sfx25.play(sfx25PreId);
@@ -330,19 +340,21 @@ A jornada é tua.
       sfx25Id = sfx25PreId;
       makeBinaural(sfx25, sfx25Id, {speed:1.5, radius:1.0, jitter:0.45});
 
-      /* Texto sobe */
+      // Texto sobe
       createCrawlText();
       animate();
     }
 
-    /* ============ TEXTO EM CANVAS ============ */
+    /* ============ TEXTO EM CANVAS (DPR SAFE) ============ */
     function createCrawlText(){
-      const textCanvas = createTextCanvas(LOREM_IPSUM_ARCANO);
-      textHeight = textCanvas.height;
+      const textCanvasObj = createTextCanvas(LOREM_IPSUM_ARCANO);
+      const textCanvas = textCanvasObj.canvas;
+      textHeight = textCanvasObj.cssHeight; // altura lógica (em px CSS)
 
       const texture = new THREE.CanvasTexture(textCanvas);
       texture.minFilter = THREE.LinearFilter;
       texture.magFilter = THREE.LinearFilter;
+      texture.needsUpdate = true;
 
       const material = new THREE.ShaderMaterial({
         uniforms:{
@@ -357,48 +369,57 @@ A jornada é tua.
         transparent:true, side:THREE.DoubleSide
       });
 
-      const geometry = new THREE.PlaneGeometry(textCanvas.width, textHeight);
+      // geometria no tamanho em "px CSS" (não em pixels físicos do canvas)
+      const geometry = new THREE.PlaneGeometry(textCanvasObj.cssWidth, textCanvasObj.cssHeight);
       textMesh = new THREE.Mesh(geometry, material);
 
       crawlGroup = new THREE.Group();
       crawlGroup.add(textMesh);
 
       crawlGroup.rotation.x = 0;
-      const startY = -textHeight / 2 - 280;
+      const startY = -textCanvasObj.cssHeight / 2 - 240; // aparece mais cedo (texto menor)
       crawlGroup.position.y = startY;
 
-      endThreshold = (textHeight * Math.cos(crawlGroup.rotation.x)) * 1.20;
+      endThreshold = (textCanvasObj.cssHeight * Math.cos(crawlGroup.rotation.x)) * 1.10; // corta menos
 
       scene.add(crawlGroup);
     }
 
     function createTextCanvas(text){
       const lines = text.split('\n');
+
+      // MOBILE: ajuste leve de fonte
       const isMobile = window.innerWidth <= 480;
-      const fontSize = isMobile ? 28 : 32;
-      const lineHeight = fontSize * 1.3;
+      let fontSize = isMobile ? 28 : 32;
+      let lineHeight = fontSize * 1.28;
 
-      const canvasHeight = lines.length * lineHeight + (fontSize * 2);
-      const canvasWidth = 1024;
+      // Dimensões lógicas do canvas (CSS px)
+      const cssWidth = 1024;
+      const cssHeight = (lines.length * lineHeight + (fontSize * 2)) | 0;
 
+      // DPR scaling (retina-safe)
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const canvas = document.createElement('canvas');
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
+      canvas.width  = Math.floor(cssWidth  * dpr);
+      canvas.height = Math.floor(cssHeight * dpr);
 
       const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
       ctx.font = `${fontSize}px 'Cinzel Decorative'`;
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
 
       let y = fontSize * 2;
       for (const line of lines){
-        ctx.fillText(line, canvasWidth/2, y);
+        ctx.fillText(line, cssWidth/2, y);
         y += lineHeight;
       }
-      return canvas;
+
+      return { canvas, cssWidth, cssHeight };
     }
 
-    /* ============ ANIMAÇÃO ============ */
+    /* ============ ANIMAÇÃO & BATIMENTO ============ */
     function animate(){
       requestAnimationFrame(animate);
       if (!animationInProgress) return;
@@ -407,24 +428,25 @@ A jornada é tua.
         textMesh.material.uniforms.time.value = clock.getElapsedTime();
       }
 
-      const base = 0.68;
+      // +15% mais rápido que 0.68 -> 0.78
+      const base = 0.78;
       const remaining = Math.max(0, endThreshold - crawlGroup.position.y);
       const slowFactor = remaining < 200 ? Math.max(0.4, remaining / 200) : 1.0;
       crawlGroup.position.y += base * slowFactor;
 
-      /* 🔊 ACELERA BATIMENTO (sfx2_5) CONFORME O FIM SE APROXIMA */
+      // batimento acelera com o progresso (curva moderada B, ajustada p/ texto menor)
       if (sfx25Id !== null && sfx25.playing(sfx25Id)){
-        const totalScroll = endThreshold - (-textHeight / 2 - 280);
-        const currentScroll = crawlGroup.position.y - (-textHeight / 2 - 280);
+        const startY = -textHeight / 2 - 240;
+        const totalScroll = endThreshold - startY;
+        const currentScroll = crawlGroup.position.y - startY;
         const progress = Math.min(1, Math.max(0, currentScroll / totalScroll));
 
-        /* curva moderada (B) */
         let rate = 1.0;
-        if      (progress > 0.50) rate = 1.08;
-        if      (progress > 0.70) rate = 1.18;
-        if      (progress > 0.85) rate = 1.28;
-        if      (progress > 0.95) rate = 1.38;
-        if      (progress > 0.99) rate = 1.45;
+        if      (progress > 0.40) rate = 1.10;
+        if      (progress > 0.60) rate = 1.20;
+        if      (progress > 0.80) rate = 1.30;
+        if      (progress > 0.92) rate = 1.38;
+        if      (progress > 0.98) rate = 1.45;
 
         sfx25.rate(rate, sfx25Id);
       }
@@ -448,7 +470,7 @@ A jornada é tua.
         }
       }
 
-      /* fade-out e STOP imediatos */
+      // fade-out e STOP imediato
       if (sfx2Id !== null && sfx2.playing(sfx2Id)){
         sfx2.fade(sfx2.volume(sfx2Id), 0, 800, sfx2Id);
         setTimeout(() => { try{ sfx2.stop(sfx2Id); }catch(e){} }, 820);
@@ -458,13 +480,13 @@ A jornada é tua.
         setTimeout(() => { try{ sfx25.stop(sfx25Id); }catch(e){} }, 820);
       }
 
-      /* assinatura final */
+      // Assinatura + sfx3 (pré-desbloqueado)
       const signature = document.getElementById('signature-container');
       signature.style.display = 'block';
       setTimeout(() => { signature.style.opacity = '1'; }, 100);
 
-      /* sfx3 agora seguro no iOS */
       setTimeout(() => {
+        try{ if (Howler.ctx && Howler.ctx.state !== 'running') Howler.ctx.resume(); }catch(e){}
         sfx3.seek(0, sfx3PreId);
         sfx3.play(sfx3PreId);
         makeBinaural(sfx3, sfx3PreId, {speed:1.6, radius:0.8, jitter:0.4});
@@ -477,7 +499,7 @@ A jornada é tua.
       renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    /* ============ AUDIO FX (BINAURAL + REVERB) ============ */
+    /* ============ AUDIO FX ============ */
     function makeBinaural(howl, soundId, opts={}){
       const speed  = opts.speed  ?? 1.4;
       const radius = opts.radius ?? 1.0;
