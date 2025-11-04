@@ -59,7 +59,7 @@
 
   <div id="seal-container">
     <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo Arcano">
-    <div id="build-version">v0.94</div>
+    <div id="build-version">v0.97</div>
   </div>
 
   <canvas id="three-canvas"></canvas>
@@ -82,11 +82,16 @@ Mas a sensação é de que você já está atrasado.
     }
   </script>
 
+  <!-- fragment shader: distorção/cores dirigidas por beatLevel (pré-calculado) -->
   <script type="x-shader/x-fragment" id="fragmentShader">
     uniform sampler2D map;
     uniform float time;
     uniform vec3 glowColor;
-    uniform float distortionStrength;
+
+    uniform float baseDistortion;  // intensidade base das ondas
+    uniform float baseNoise;       // ruído base
+    uniform float beatLevel;       // 0..1.2 vindo da timeline
+
     varying vec2 vUv;
 
     float rand(vec2 co){ return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
@@ -102,36 +107,41 @@ Mas a sensação é de que você já está atrasado.
       p /= perspective;
       vec2 warpedUv = p * 0.5 + 0.5;
 
-      /* Distorção em ondas SUAVES (horizontal) + ruído leve */
+      /* ======= Ondas fortes + ruído, reativos ao beat ======= */
+      float waveAmp = baseDistortion * (0.7 + 2.2 * beatLevel);
+      float wave    = waveAmp * sin(warpedUv.y * (18.0 + 10.0*beatLevel) + time * (1.6 + 1.5*beatLevel));
       vec2 distortedUv = warpedUv;
-      float wave = 0.006 * sin(warpedUv.y * 20.0 + time * 1.6);   // onda suave horizontal
       distortedUv.x += wave;
-      float noise = (rand(warpedUv * 10.0 + time * 0.3) - 0.5) * distortionStrength * 0.6; // ruído mais leve
-      distortedUv.y += noise * 0.6;
+
+      float nAmp  = baseNoise * (0.6 + 1.8 * beatLevel);
+      float nSeed = rand(warpedUv * (18.0 + 6.0*beatLevel) + time * (0.6 + 0.9*beatLevel));
+      float noise = (nSeed - 0.5) * nAmp;
+      distortedUv.y += noise * 0.9;
+      distortedUv.x += noise * 0.5;
 
       vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
 
-      /* Base branca + pulso roxo sutil */
-      float pulse = 0.6 + 0.4 * sin(time * 0.9);
-      vec3 base = vec3(1.0) * texel.a;
-      vec3 glow = glowColor * texel.a * 0.40 * pulse;
+      /* ======= Cor/luminância no beat: branco → roxo → quase preto nos picos ======= */
+      float b = clamp(beatLevel, 0.0, 1.2);
+      float colorPulse = smoothstep(0.0, 1.0, b);
 
-      /* Micro-flash preto curtíssimo (apenas no texto) */
-      float interval = 1.2;
-      float widthF   = 0.07;
-      float phase    = fract(time / interval);
-      float blackout = step(phase, widthF);
-      float blackoutStrength = 0.35;
+      vec3 white  = vec3(1.0);
+      vec3 purple = normalize(glowColor) * 0.7 + vec3(0.35,0.0,0.65)*0.3;
 
-      vec3 color = base + glow;
-      color = mix(color, vec3(0.0), blackout * blackoutStrength * texel.a);
+      vec3 colorText = mix(white, purple, colorPulse);
+      float blackout = smoothstep(0.93, 1.05, b);
+      colorText = mix(colorText, vec3(0.0), 0.38 * blackout);
+
+      vec3 glow = glowColor * texel.a * (0.35 + 0.65 * colorPulse) * 0.55;
+
+      vec3 color = colorText * texel.a + glow;
 
       gl_FragColor = vec4(color, texel.a);
     }
   </script>
 
   <script>
-    /* ========= CONTEÚDO ========= */
+    /* ========= TEXTO ========= */
     const POEMA = `
 Nas entranhas do real, onde a forma range,
 eles caminham sem saber que já foram colhidos.
@@ -174,33 +184,113 @@ A ruína respira.
 E vos chama.
 `;
 
-    /* ========= VARS ========= */
-    let scene, camera, renderer, clock = new THREE.Clock();
+    /* ========= ÁUDIO ========= */
     let sfx1, sfx2, sfx25, sfx3;
-    let sfx2Id=null, sfx25Id=null;
+
+    /* ========= BEAT TIMELINE (pré-calculada) ========= */
+    let BEAT = { fps: 60, durationSec: 0, values: [], ready: false };
+
+    async function precomputeBeat(url){
+      try{
+        const resp = await fetch(url, {cache:'force-cache'});
+        const arr  = await resp.arrayBuffer();
+
+        const AC = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AC({ sampleRate: 44100 });
+        const decoded = await ctx.decodeAudioData(arr);
+
+        const chL = decoded.getChannelData(0);
+        const chR = decoded.numberOfChannels>1 ? decoded.getChannelData(1) : null;
+
+        const sr   = decoded.sampleRate;
+        const hop  = Math.max(1, Math.floor(sr / BEAT.fps));
+
+        const env = [];
+        let peak = 0;
+
+        for (let i=0; i<decoded.length; i+=hop){
+          let sum=0, count=0;
+          for (let j=0; j<hop && (i+j)<decoded.length; j++){
+            const sL = chL[i+j];
+            const sR = chR ? chR[i+j] : 0;
+            const m  = chR ? (sL + sR) * 0.5 : sL;
+            sum += m*m; count++;
+          }
+          const rms = Math.sqrt(sum / Math.max(1,count));
+          env.push(rms); if (rms>peak) peak=rms;
+        }
+
+        const smooth = (arr,k=0.85)=>{
+          const out = new Float32Array(arr.length);
+          let prev=0; for (let i=0;i<arr.length;i++){ prev=prev*k+arr[i]*(1-k); out[i]=prev; }
+          prev=0; for (let i=arr.length-1;i>=0;i--){ prev=prev*k+out[i]*(1-k); out[i]=Math.max(out[i],prev); }
+          return Array.from(out);
+        };
+        let sm = smooth(env, 0.86);
+
+        const sorted = [...sm].sort((a,b)=>a-b);
+        const p95 = sorted[Math.floor(sorted.length*0.95)] || (peak || 1);
+        sm = sm.map(v => Math.min(1, v / (p95 || 1)));
+        sm = sm.map(v => Math.pow(v, 0.6));
+
+        BEAT.values = sm;
+        BEAT.durationSec = decoded.duration;
+        BEAT.ready = true;
+
+        ctx.close && ctx.close();
+      }catch(e){
+        console.warn('Pré-cálculo do beat falhou, usando fallback.', e);
+        const total = 60 * 30;
+        const vals = [];
+        for (let i=0;i<total;i++){
+          const t=i/60;
+          vals.push( (Math.sin(t*2*Math.PI*1.1)*0.5+0.5) );
+        }
+        BEAT.values = vals;
+        BEAT.durationSec = total/60;
+        BEAT.ready = true;
+      }
+    }
+
+    function getBeatAt(timeSec){
+      if (!BEAT.ready || BEAT.values.length===0) {
+        return (Math.sin(timeSec*2*Math.PI*1.0)*0.5+0.5);
+      }
+      const t = timeSec % BEAT.durationSec;
+      const idx = Math.floor(t * BEAT.fps) % BEAT.values.length;
+      return BEAT.values[idx];
+    }
+
+    /* ========= THREE / TYPING ========= */
+    let scene, camera, renderer, clock = new THREE.Clock();
     let crawlGroup, textMesh;
     let animationInProgress=false;
+
     const ARCANE_PURPLE = new THREE.Color('#b24cff');
 
-    /* Typing mais lento + sem sobreposição */
     const TYPING_MODE = {
-      perWordMs: 220,              // mais devagar (A1)
-      perWordJitter: 50,           // leve variação
-      materializeMs: 240,          // fade curto por palavra
-      driftPerFrame: 0.04,         // deslocamento MUITO sutil
-      spaceFactor: 1.15            // espaço extra entre palavras (anti-overlap)
+      perWordMs: 220,
+      perWordJitter: 50,
+      materializeMs: 240,
+      driftPerFrame: 0.04,
+      spaceFactor: 1.15
     };
 
-    // Estrutura de palavras com timestamp
     let lines = [];
-    let tokens = [];  // [{text, lineIndex, x, y, t0}...]
+    let tokens = [];
     let typingTimer = null;
     let startedAt = null;
+
+    // sincronização de aceleração (áudio + visual)
+    let beatAccum = 0;         // tempo "comprimido" do beat
+    let lastFrameMs = null;    // para dt
 
     function init(){
       Howler.autoSuspend = false;
       Howler.mute(false);
       Howler.volume(1.0);
+
+      precomputeBeat('./sfx2_5.mp3'); // iOS-safe
 
       setupAudio();
       setupScene();
@@ -210,7 +300,7 @@ E vos chama.
     function setupAudio(){
       sfx1  = new Howl({src:['./sfx1.mp3'],  volume:0.8, loop:false});
       sfx2  = new Howl({src:['./sfx2.mp3'],  volume:0.6, loop:true});
-      sfx25 = new Howl({src:['./sfx2_5.mp3'],volume:1.0, loop:true});
+      sfx25 = new Howl({src:['./sfx2_5.mp3'],volume:1.0, loop:true}); // batimento
       sfx3  = new Howl({src:['./sfx3.mp3'],  volume:0.6, loop:false});
       [sfx1,sfx2,sfx25,sfx3].forEach(h=>h.once('playerror',(id)=>{try{Howler.ctx.resume()}catch(e){} try{h.play(id)}catch(e){}}));
     }
@@ -239,19 +329,24 @@ E vos chama.
       animationInProgress = true;
 
       try{Howler.ctx?.resume()}catch(e){}
-      const seal=document.getElementById('arcane-seal-img');
-      seal.classList.add('clicked');
+      document.getElementById('arcane-seal-img').classList.add('clicked');
       document.getElementById('build-version').classList.add('hide');
       setTimeout(()=>{ document.getElementById('seal-container').style.display='none'; }, 280);
 
       // Áudio imediato
       sfx1.play();
-      sfx2Id  = sfx2.play();  sfx2.fade(0, 0.6, 3000, sfx2Id);
-      sfx25Id = sfx25.play(); sfx25.fade(0, 1.0, 3000, sfx25Id);
+      sfx2.play();
+      sfx25.play();
 
-      // Prepara texto/texture e inicia digitação
+      // Prepara texto e digitação
       createTypingCanvasAndMesh();
       startTyping();
+
+      // reseta relógios
+      clock = new THREE.Clock(true);
+      beatAccum = 0;
+      lastFrameMs = performance.now();
+
       animate();
     }
 
@@ -259,12 +354,11 @@ E vos chama.
       lines = POEMA.trim().split('\n');
 
       const isMobile = innerWidth <= 480;
-      let fontSize   = isMobile ? 22.4 : 32;         // 20% menor no mobile
+      let fontSize   = isMobile ? 22.4 : 32;
       let lineHeight = fontSize * 1.28;
       let cssWidth   = 1024;
       let cssHeight  = Math.floor(lines.length * lineHeight + (fontSize * 2));
 
-      // autoscale vertical se necessário
       const maxCssHeight = Math.floor(innerHeight * 0.84);
       if(cssHeight > maxCssHeight){
         const s = maxCssHeight / cssHeight;
@@ -272,7 +366,6 @@ E vos chama.
         cssHeight = Math.floor(lines.length * lineHeight + (fontSize * 2));
       }
 
-      // canvas de alta resolução
       const dpr = Math.min(devicePixelRatio||1, 3), ss = 2.0;
       const canvas = document.createElement('canvas');
       canvas.width  = Math.floor(cssWidth  * dpr * ss);
@@ -284,7 +377,6 @@ E vos chama.
       const textConf = { canvas, ctx, dpr, ss, cssWidth, cssHeight, fontSize, lineHeight };
       canvas._textConf = textConf;
 
-      // plano + textura
       const texture=new THREE.CanvasTexture(canvas);
       texture.minFilter=THREE.LinearFilter;
       texture.magFilter=THREE.NearestFilter;
@@ -295,7 +387,9 @@ E vos chama.
           map:{value:texture},
           time:{value:0.0},
           glowColor:{value:ARCANE_PURPLE},
-          distortionStrength:{value:0.00605}
+          baseDistortion:{value:0.010},
+          baseNoise:{value:0.010},
+          beatLevel:{value:0.0}
         },
         vertexShader:document.getElementById('vertexShader').textContent,
         fragmentShader:document.getElementById('fragmentShader').textContent,
@@ -309,14 +403,11 @@ E vos chama.
       crawlGroup.add(textMesh);
       crawlGroup.rotation.x=0;
 
-      // Posição inicial alta (visível) e drift sutil
       const startY = -textConf.cssHeight/2 - 90;
       crawlGroup.position.y = startY;
-      crawlGroup.userData = { startY };
 
       scene.add(crawlGroup);
 
-      // preparar tokens (palavras + posições) sem jitter de posição
       prepareTokensForTyping(textConf, lines);
       redrawTypingCanvas(textConf, performance.now(), true);
       texture.needsUpdate = true;
@@ -333,21 +424,14 @@ E vos chama.
 
       tokens = [];
       let y = fontSize * 2;
-
       for (let i=0;i<linesArr.length;i++){
         const raw = linesArr[i];
-        if (!raw.trim()){
-          y += lineHeight;
-          continue;
-        }
+        if (!raw.trim()){ y += lineHeight; continue; }
         const words = raw.split(' ');
 
-        // medida precisa de cada palavra
         const widths = words.map(w => ctx.measureText(w).width);
         const spaceBase = ctx.measureText(' ').width * TYPING_MODE.spaceFactor;
         const totalWidth = widths.reduce((a,b)=>a+b,0) + (words.length-1)*spaceBase;
-
-        // centraliza total
         let x = (cssWidth - totalWidth)/2;
 
         for (let j=0;j<words.length;j++){
@@ -367,41 +451,34 @@ E vos chama.
       const step = () => {
         if (idx >= tokens.length){
           typingTimer = null;
-          // espera um pouco e finaliza para a assinatura
           setTimeout(finishAnimation, 1200);
           return;
         }
-        const now = performance.now();
-        tokens[idx].t0 = now; // palavra nasce agora
+        tokens[idx].t0 = performance.now();
         idx++;
 
-        // agenda próxima palavra (mais devagar)
         const jitter = (Math.random()*2 - 1) * TYPING_MODE.perWordJitter;
         const delay = Math.max(60, TYPING_MODE.perWordMs + jitter);
         typingTimer = setTimeout(step, delay);
       };
 
-      step(); // mostra a primeira palavra já
+      step();
     }
 
-    function redrawTypingCanvas(conf, nowMs, firstFrame=false){
+    function redrawTypingCanvas(conf, nowMs){
       const { ctx, cssWidth, cssHeight, fontSize } = conf;
-
       ctx.clearRect(0,0,cssWidth,cssHeight);
       ctx.font = `700 ${conf.fontSize}px 'Cinzel Decorative'`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
 
-      // desenha palavras já "nascidas" (materialização sem deslocar posição)
       let lastX = null, lastY = null;
 
       for (const tk of tokens){
         if (!tk.t0) break;
+        const age = nowMs - tk.t0;
+        const k = Math.min(1, age / TYPING_MODE.materializeMs);
 
-        const age = nowMs - tk.t0;              // ms desde que apareceu
-        const k = Math.min(1, age / TYPING_MODE.materializeMs); // 0→1
-
-        // fade-in + leve blur de contorno (sem mexer x/y)
         ctx.globalAlpha = 0.15 + 0.85 * k;
         ctx.shadowColor = `rgba(178,76,255,${(0.20*(1-k)).toFixed(3)})`;
         ctx.shadowBlur  = 5*(1-k);
@@ -416,7 +493,6 @@ E vos chama.
         lastY = tk.y;
       }
 
-      // cursor piscando ao final da última palavra
       if (lastX!==null && lastY!==null){
         const blink = (Math.sin((nowMs - startedAt)/280) > 0) ? 1 : 0.3;
         ctx.globalAlpha = blink;
@@ -425,26 +501,62 @@ E vos chama.
       }
     }
 
+    function currentTypingProgress(){
+      // fração de palavras já exibidas
+      const shown = tokens.filter(t=>t.t0 !== null).length;
+      const total = tokens.length || 1;
+      return shown / total;
+    }
+
+    function rateByProgress(p){
+      let rate = 1;
+      if (p > 0.40) rate = 1.10;
+      if (p > 0.60) rate = 1.20;
+      if (p > 0.80) rate = 1.30;
+      if (p > 0.92) rate = 1.38;
+      if (p > 0.98) rate = 1.45;
+      return rate;
+    }
+
     function animate(){
       requestAnimationFrame(animate);
       if (!animationInProgress) return;
 
-      const t = clock.getElapsedTime();
+      const nowMs = performance.now();
+      const dt = lastFrameMs ? (nowMs - lastFrameMs)/1000 : 0;
+      lastFrameMs = nowMs;
 
-      // tempo do shader (ondas)
-      if (textMesh && textMesh.material && textMesh.material.uniforms.time){
-        textMesh.material.uniforms.time.value = t;
+      // progresso pela digitação (palavras mostradas)
+      const p = currentTypingProgress();
+      const rate = rateByProgress(p);
+
+      // sincroniza áudio (garantia) com a mesma curva
+      try{
+        if (sfx25 && sfx25._sounds && sfx25._sounds.length>0){
+          const id = sfx25._sounds[0]._id;
+          if (id) sfx25.rate(rate, id);
+        }
+      }catch(e){}
+
+      // acumula tempo de batimento "comprimido"
+      beatAccum += dt * rate;
+
+      // uniforms do shader
+      if (textMesh && textMesh.material){
+        const u = textMesh.material.uniforms;
+        u.time.value = clock.getElapsedTime();
+        u.beatLevel.value = getBeatAt(beatAccum);
       }
 
-      // drift sutil (quase imperceptível)
+      // drift sutil
       if (crawlGroup){
         crawlGroup.position.y += TYPING_MODE.driftPerFrame;
       }
 
-      // redesenha canvas
+      // redesenha canvas (typing)
       if (textMesh && textMesh.userData && textMesh.userData.textConf){
         const conf = textMesh.userData.textConf;
-        redrawTypingCanvas(conf, performance.now());
+        redrawTypingCanvas(conf, nowMs);
         textMesh.material.uniforms.map.value.needsUpdate = true;
       }
 
@@ -457,17 +569,14 @@ E vos chama.
 
       if (typingTimer) { clearTimeout(typingTimer); typingTimer=null; }
 
-      // fade-out loops
-      if (sfx2Id !== null && sfx2.playing(sfx2Id)){
-        sfx2.fade(sfx2.volume(sfx2Id), 0, 600, sfx2Id);
-        setTimeout(()=>{ try{sfx2.stop(sfx2Id);}catch(e){} }, 620);
-      }
-      if (sfx25Id !== null && sfx25.playing(sfx25Id)){
-        sfx25.fade(sfx25.volume(sfx25Id), 0, 600, sfx25Id);
-        setTimeout(()=>{ try{sfx25.stop(sfx25Id);}catch(e){} }, 620);
-      }
+      [sfx2, sfx25].forEach(s=>{
+        try{
+          const id = s._sounds[0]? s._sounds[0]._id : null;
+          if (id!==null) s.fade(s.volume(id), 0, 600, id);
+          setTimeout(()=>{ try{s.stop()}catch(e){} }, 620);
+        }catch(e){}
+      });
 
-      // Assinatura + sfx3
       const sig=document.getElementById('signature-container');
       sig.style.display='block';
       setTimeout(()=>{ sig.style.opacity='1'; },200);
@@ -484,13 +593,14 @@ E vos chama.
       renderer.setSize(innerWidth, innerHeight);
     }
 
-    /* === Selo / versão === */
+    // Esconde selo/versão no clique
     document.getElementById('seal-container').addEventListener('click', ()=>{
       document.getElementById('arcane-seal-img').classList.add('clicked');
       document.getElementById('build-version').classList.add('hide');
       setTimeout(()=>{ document.getElementById('seal-container').style.display='none'; }, 280);
     }, { once:true });
 
+    // Boot
     init();
   </script>
 </body>
