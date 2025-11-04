@@ -221,10 +221,13 @@
       float blackout = smoothstep(0.93, 1.05, b) * intensity;
       colorText = mix(colorText, vec3(0.0), 0.38 * blackout);
 
-      // GLOW ROXO MUITO FORTE E NÍTIDO
-      vec3 glow = glowColor * texel.a * (2.0 + 1.8 * beatLevel) * 8.0;
+      // GLOW ROXO - reduzido e com cor variando para o estroboscópico funcionar
+      vec3 glowBase = glowColor * texel.a * (1.5 + 1.2 * beatLevel) * 4.0;
+      // Aplica a cor estroboscópica ao glow para manter sincronizado
+      vec3 glow = glowBase * mix(vec3(1.0), colorText, 0.6);
 
-      vec3 finalColor = colorText * texel.a + glow;
+      // Texto principal mais visível - cor estroboscópica dominante
+      vec3 finalColor = colorText * texel.a * 1.5 + glow;
 
       gl_FragColor = vec4(finalColor, texel.a);
     }
@@ -479,6 +482,18 @@ E vos chama.`.trim();
       veinMesh.position.set(0, 0, -400);
       scene.add(veinMesh);
       
+      // MÁSCARA SEMITRANSPARENTE PRETA (vidro fumê) sobre as veias
+      const maskGeometry = new THREE.PlaneGeometry(2000, 2000);
+      const maskMaterial = new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.6,
+        depthWrite: false
+      });
+      const maskMesh = new THREE.Mesh(maskGeometry, maskMaterial);
+      maskMesh.position.set(0, 0, -399); // Logo na frente das veias
+      scene.add(maskMesh);
+      
       // Atualiza o tempo no shader
       function updateVeins(time, beat) {
         if (veinMaterial.uniforms) {
@@ -490,7 +505,7 @@ E vos chama.`.trim();
       // Inicializa com tempo 0
       updateVeins(0, 0);
       
-      return { mesh: veinMesh, material: veinMaterial, update: updateVeins };
+      return { mesh: veinMesh, mask: maskMesh, material: veinMaterial, update: updateVeins };
     }
     
     let veinsBackground = null;
