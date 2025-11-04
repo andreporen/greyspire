@@ -1,39 +1,480 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Carta de Greyspire — Crawl 3D</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Pergaminho Arcano</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
 
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=MedievalSharp&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="css/estilo.css" />
+    <style>
+        :root {
+            --cor-arcana: #b24cff; 
+            --cor-arcana-escura: #5a009d; 
+            --cor-arcana-clara: #E0B2FF; 
+            --cor-pergaminho: #f7e6c9; 
+            --cor-tinta: #3d3a33; 
+
+            --tempo-explosao-selo: 0.8s;
+            --tempo-materializacao: 2.5s;
+            --tempo-revelacao-texto: 1.5s;
+            --tempo-assinatura: 2.0s;
+        }
+
+        /* Converte HEX para RGB para uso em RGBA */
+        body::before {
+            content: '';
+            display: none;
+            --cor-arcana-rgb: 178, 76, 255; /* #b24cff */
+            --cor-arcana-escura-rgb: 90, 0, 157; /* #5a009d */
+        }
+
+        /* --- ESTILOS GERAIS E LAYOUT MOBILE-FIRST --- */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+            color: var(--cor-tinta);
+            font-family: 'Lora', serif;
+            overflow: hidden; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* --- FUNDO ABSTRATO (CSS puro para aura e movimento sutil) --- */
+        #background-chaos {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: radial-gradient(circle at center, rgba(var(--cor-arcana-escura-rgb), 0.1) 0%, rgba(0,0,0,0) 70%), 
+                        radial-gradient(circle at top left, rgba(var(--cor-arcana-rgb), 0.05) 0%, rgba(0,0,0,0) 50%);
+            animation: bg-pulse 10s ease-in-out infinite alternate;
+            filter: blur(0.5px); 
+        }
+        
+        @keyframes bg-pulse {
+            0% { background-position: 0% 0%; filter: blur(0.5px) brightness(1); }
+            50% { background-position: 100% 100%; filter: blur(1.5px) brightness(1.1); }
+            100% { background-position: 0% 0%; filter: blur(0.5px) brightness(1); }
+        }
+
+        /* --- CONTÊINER PRINCIPAL (Apenas para o Pergaminho) --- */
+        #main-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+        }
+
+        /* --- SELO ARCANO (FORA do main-container para maior z-index) --- */
+        #seal-container {
+            position: absolute; 
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); 
+            width: 150px; 
+            height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 99; 
+            cursor: pointer;
+            transition: opacity var(--tempo-explosao-selo) ease-out;
+            opacity: 1; 
+        }
+        
+        #arcane-seal-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 10px var(--cor-arcana-escura));
+            position: absolute;
+            z-index: 2; 
+            /* FIX: Animação de pulso definida diretamente no CSS */
+            animation: pulse-seal 2s ease-in-out infinite alternate;
+        }
+
+        /* Aura Pulsante do Selo */
+        #seal-aura {
+            position: absolute;
+            width: 150%; 
+            height: 150%;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, var(--cor-arcana-clara) 0%, var(--cor-arcana) 20%, rgba(var(--cor-arcana-rgb), 0.5) 40%, rgba(var(--cor-arcana-rgb), 0) 70%);
+            filter: blur(15px);
+            /* FIX: Animação de pulso definida diretamente no CSS */
+            animation: aura-pulse 2s ease-in-out infinite alternate;
+            z-index: 1; 
+        }
+
+        @keyframes pulse-seal {
+            0% { filter: drop-shadow(0 0 10px var(--cor-arcana)) brightness(1.0); }
+            100% { filter: drop-shadow(0 0 25px var(--cor-arcana)) brightness(1.2); }
+        }
+
+        @keyframes aura-pulse {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            100% { transform: scale(1.05); opacity: 1; }
+        }
+
+        /* Efeito de Explosão do Selo (SOBREPÕE as animações de pulso) */
+        #seal-container.clicked #seal-aura {
+            animation: seal-explode-aura var(--tempo-explosao-selo) forwards;
+        }
+        #seal-container.clicked #arcane-seal-img {
+            animation: seal-explode-img var(--tempo-explosao-selo) forwards;
+        }
+
+        @keyframes seal-explode-aura {
+            0% { transform: scale(1); opacity: 1; filter: blur(15px); }
+            100% { transform: scale(5); opacity: 0; filter: blur(50px); }
+        }
+        @keyframes seal-explode-img {
+            0% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 10px var(--cor-arcana-escura)); }
+            50% { transform: scale(1.2); opacity: 0.8; filter: drop-shadow(0 0 50px var(--cor-arcana-clara)); }
+            100% { transform: scale(0.5); opacity: 0; filter: drop-shadow(0 0 10px var(--cor-arcana)); }
+        }
+
+        /* --- PERGAMINHO (Materializado) --- */
+        #pergaminho-container {
+            position: absolute;
+            width: 90%; 
+            max-width: 600px; 
+            height: 80vh; 
+            max-height: 800px;
+            background-color: var(--cor-pergaminho);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); 
+            padding: 5vh 3vw; 
+            text-align: left;
+            opacity: 0; 
+            z-index: 11; 
+            transition: 
+                opacity var(--tempo-materializacao) ease-in-out,
+                box-shadow var(--tempo-materializacao) ease-in-out,
+                transform var(--tempo-materializacao) ease-in-out;
+            
+            color: var(--cor-tinta);
+            transform: scale(0.8); 
+        }
+
+        #pergaminho-container.materializing {
+            opacity: 1;
+            transform: scale(1);
+            box-shadow: 0 0 50px var(--cor-arcana), 0 0 100px var(--cor-arcana-escura), inset 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        #pergaminho-container.materialized {
+            opacity: 1;
+            transform: scale(1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #pergaminho-texto {
+            font-family: 'Lora', serif; 
+            font-size: 2.2vh;
+            line-height: 1.6;
+            color: var(--cor-tinta); 
+            opacity: 0;
+            position: relative; 
+            z-index: 7; 
+            transition: opacity var(--tempo-revelacao-texto) ease-in 0.5s; 
+            white-space: pre-wrap; 
+            text-shadow: 0 0 1px rgba(0,0,0,0.1); 
+        }
+        
+        #pergaminho-texto.revealed {
+            opacity: 1;
+        }
+
+        /* --- ASSINATURA CORROMPIDA --- */
+        #signature-container {
+            position: absolute;
+            bottom: 3vh; 
+            right: 3vw;
+            text-align: right;
+            font-family: 'Cinzel Decorative', serif; 
+            font-size: 2.2vh;
+            opacity: 0;
+            z-index: 6;
+            transition: opacity var(--tempo-assinatura) ease-in;
+            color: var(--cor-tinta);
+        }
+        
+        #signature-container.corrupting {
+            opacity: 1;
+        }
+
+        #signature-text {
+            position: relative;
+            display: inline-block;
+            transition: filter 0.5s ease-out; 
+        }
+
+        /* --- Efeito de Corrupção (Glitch/Brilho/Borramento) --- */
+        .corrupted-name {
+            animation: 
+                glitch-anim 0.4s linear infinite alternate, 
+                pulse-arcano-sig 1.2s ease-in-out infinite alternate;
+            filter: blur(1.5px) saturate(150%); 
+        }
+        
+        .corrupted-name::before, .corrupted-name::after {
+            content: "Arcanista-mor Amaris Solun"; 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            clip-path: inset(0 0 0 0); 
+            filter: blur(0.5px);
+        }
+        
+        .corrupted-name::before {
+            color: #ff00ff; 
+            text-shadow: 0 0 3px #ff00ff;
+            animation: glitch-clip-1 0.2s steps(2, end) infinite;
+        }
+        
+        .corrupted-name::after {
+            color: #00ffff; 
+            text-shadow: 0 0 3px #00ffff;
+            animation: glitch-clip-2 0.3s steps(2, end) infinite;
+        }
+
+        @keyframes glitch-clip-1 {
+            0% { clip-path: inset(10% 0 85% 0); transform: translateX(5px); }
+            50% { clip-path: inset(50% 0 30% 0); transform: translateX(-5px); }
+            100% { clip-path: inset(20% 0 70% 0); transform: translateX(5px); }
+        }
+        
+        @keyframes glitch-clip-2 {
+            0% { clip-path: inset(30% 0 65% 0); transform: translateX(-3px); }
+            50% { clip-path: inset(60% 0 20% 0); transform: translateX(3px); }
+            100% { clip-path: inset(45% 0 45% 0); transform: translateX(-3px); }
+        }
+
+        @keyframes pulse-arcano-sig {
+            0% { text-shadow: 0 0 5px var(--cor-arcana); filter: brightness(1); }
+            100% { text-shadow: 0 0 15px var(--cor-arcana-clara), 0 0 20px var(--cor-arcana); filter: brightness(1.3); }
+        }
+
+        /* --- Media Query para Desktop --- */
+        @media (min-width: 768px) {
+            #seal-container {
+                width: 200px;
+                height: 200px;
+            }
+            #pergaminho-container {
+                width: 600px; 
+                height: 80vh; 
+                padding: 6vh 4vw;
+            }
+            #pergaminho-texto {
+                font-size: 2vh; 
+            }
+            #signature-container {
+                font-size: 2.5vh;
+                bottom: 5vh;
+                right: 5vw;
+            }
+        }
+    </style>
 </head>
 <body>
 
-  <!-- Selo (sempre visível, fundo preto) -->
-  <button id="seloBtn" class="selo-btn" aria-label="Iniciar ritual">
-    <img src="img/selo.png" alt="Selo arcano" class="selo-img" />
-  </button>
+    <div id="background-chaos"></div>
 
-  <!-- Canvas do Three.js -->
-  <canvas id="stage"></canvas>
+    <!-- O SELO ESTÁ FORA DO MAIN-CONTAINER PARA GARANTIR Z-INDEX ALTO -->
+    <div id="seal-container">
+        <div id="seal-aura"></div>
+        <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo Arcano">
+    </div>
 
-  <!-- Assinatura final (fica oculta até o fim do crawl) -->
-  <div id="assinatura" class="assinatura" aria-hidden="true">
-    Arcanista-mor Amaris Solun
-  </div>
+    <div id="main-container">
+        
+        <div id="pergaminho-container">
+            <p id="pergaminho-texto">
+                </p>
+            
+            <div id="signature-container">
+                <p id="signature-text">Arcanista-mor Amaris Solun</p>
+            </div>
+        </div>
+    </div>
 
-  <!-- Áudio (inicia no clique) -->
-  <audio id="ritualAudio" src="audio/ritual.mp3" preload="auto" loop></audio>
+    <script>
+        // --- TEXTO LONGO (Estilo Pergaminho) ---
+        const LOREM_IPSUM_ARCANO = `
+Nas veias do cosmo, onde a luz teme pisar,
+o Vazio pulsa em compasso ancestral.
+Ouve, neófito, o sussurro das eras:
+as engrenagens do destino rangem.
 
-  <!-- Libs externas -->
-  <script type="module" src="https://unpkg.com/three@0.159.0/build/three.module.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" integrity="sha512-aqk0z0f4x1a6j0iP2hZy0Jbtq+0n6zQ5M8iLk2vVbXwEfo7c0a2p2mQm9d2o5hVQnI8oQd1oJQf2Gm0Y3pQZ4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+A Sétima Estrela sangrou sobre o véu,
+tecendo a runa da Despossessão.
+E do pó de estrelas mortas,
+o Primeiro Selo foi forjado.
 
-  <!-- App -->
-  <script type="module" src="js/ritual.js"></script>
+Não busque o poder que corrompe,
+mas o saber que liberta.
+Pois no coração do silêncio,
+a verdade aguarda, paciente.
+
+A geometria do efêmero,
+a matemática da alma.
+Tudo se dobra à Vontade
+quando a Vontade é una com o Todo.
+
+O Tempo é um rio que flui para trás,
+e a memória é a névoa em suas margens.
+Caminhamos sobre pontes de luar,
+buscando o que já foi perdido.
+
+Somente aqueles que ousam
+desvendar os nós do destino
+encontrarão a chave.
+`;
+        const SIGNATURE_NAME = "Arcanista-mor Amaris Solun";
+
+
+        // --- VARIÁVEIS GLOBAIS ---
+        let sound;
+        let animationStarted = false;
+        
+        // Tempos em milissegundos, baseados nas variáveis CSS
+        const TEMPO_EXPLOSAO_SELO_MS = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tempo-explosao-selo')) * 1000;
+        const TEMPO_MATERIALIZACAO_MS = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tempo-materializacao')) * 1000;
+        const TEMPO_REVELACAO_TEXTO_MS = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tempo-revelacao-texto')) * 1000;
+        const TEMPO_ASSINATURA_MS = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tempo-assinatura')) * 1000;
+        const TEMPO_CORRUPCAO_GLITCH_MS = 500; 
+
+        // --- FUNÇÕES DE SETUP ---
+        function init() {
+            setupAudio();
+            setupText();
+            setupListeners();
+            // Garante que a assinatura e o pergaminho comecem ocultos
+            document.getElementById('signature-container').style.opacity = '0';
+            document.getElementById('pergaminho-container').style.opacity = '0';
+            
+            // FIX: REMOVIDAS as linhas que definiam 'animationName' via JS.
+            // A animação de pulso agora é controlada 100% pelo CSS.
+            // document.getElementById('arcane-seal-img').style.animationName = 'pulse-seal'; 
+            // document.getElementById('seal-aura').style.animationName = 'aura-pulse';
+        }
+
+        function setupAudio() {
+            sound = new Howl({
+                src: ['./ritual.wav'], 
+                loop: true,
+                volume: 0.8
+            });
+        }
+        
+        function setupText() {
+            document.getElementById('pergaminho-texto').innerText = LOREM_IPSUM_ARCANO.trim();
+        }
+
+
+        // --- CONTROLE DE EVENTOS E SEQUENCIAMENTO ---
+        function setupListeners() {
+            document.getElementById('seal-container').addEventListener('click', startRitualSequence, { once: true });
+        }
+
+        function startRitualSequence() {
+            if (animationStarted) return;
+            animationStarted = true;
+
+            // 1. Inicia o Áudio (Permitido pelo clique)
+            sound.play();
+            
+            // 2. Transição do Selo (Explosão e Desaparecimento)
+            const sealContainer = document.getElementById('seal-container');
+            sealContainer.classList.add('clicked'); // Aciona as animações de explosão no CSS
+            sealContainer.style.pointerEvents = 'none'; 
+
+            // FIX: REMOVIDAS as linhas que anulavam a animação.
+            // A classe .clicked agora sobrepõe a animação de pulso corretamente.
+            // document.getElementById('arcane-seal-img').style.animation = 'none';
+            // document.getElementById('seal-aura').style.animation = 'none';
+
+            // O tempo total deve ser a duração da animação de explosão
+            const totalExplosionTime = TEMPO_EXPLOSAO_SELO_MS; // 800ms
+            
+            // FIX: REMOVIDO o setTimeout extra que definia a opacidade.
+            // A animação CSS (seal-explode-aura/img) já define opacity: 0 com 'forwards'.
+
+            // Aguarda a animação de explosão (0.8s) terminar
+            setTimeout(() => {
+                sealContainer.style.display = 'none'; // Esconde o selo permanentemente
+                
+                // 3. Inicia a Materialização do Pergaminho
+                materializePergaminho();
+                
+            }, totalExplosionTime); // Espera 0.8s (o tempo da explosão)
+        }
+
+        function materializePergaminho() {
+            const pergaminho = document.getElementById('pergaminho-container');
+            
+            // Ativa o estado de materialização (brilho roxo)
+            pergaminho.classList.add('materializing');
+            
+            // Aguarda o tempo de materialização
+            setTimeout(() => {
+                pergaminho.classList.remove('materializing');
+                pergaminho.classList.add('materialized'); 
+                
+                // 4. Revelação do Texto
+                revealText();
+
+            }, TEMPO_MATERIALIZACAO_MS);
+        }
+
+        function revealText() {
+            const texto = document.getElementById('pergaminho-texto');
+            texto.classList.add('revealed');
+            
+            // 5. Inicia a Assinatura após a revelação completa do texto
+            setTimeout(() => {
+                revealSignatureAndCorrupt();
+            }, TEMPO_REVELACAO_TEXTO_MS + 500); 
+        }
+
+        function revealSignatureAndCorrupt() {
+            const signatureContainer = document.getElementById('signature-container');
+            const signatureText = document.getElementById('signature-text');
+            
+            signatureContainer.classList.add('corrupting'); 
+            
+            // Inicia o efeito de corrupção/glitch após um pequeno atraso
+            setTimeout(() => {
+                signatureText.classList.add('corrupted-name');
+                
+            }, TEMPO_CORRUPCAO_GLITCH_MS); 
+            
+            // Fade-out sutil do áudio após a corrupção total
+            setTimeout(() => {
+                sound.fade(sound.volume(), 0, 5000); 
+            }, TEMPO_ASSINATURA_MS * 3); 
+        }
+
+        init();
+    </script>
 </body>
 </html>
+
