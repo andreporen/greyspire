@@ -137,8 +137,8 @@ Mas a sensação é de que você já está atrasado.
   <script type="x-shader/x-fragment" id="fragmentShader">
     uniform sampler2D map;
     uniform float time;
-    uniform vec3 glowColor;
-    uniform vec3 deepColor;
+    uniform vec3 glowColor;     /* mantido */
+    uniform vec3 deepColor;     /* #3C0061 */
     uniform float distortionStrength;
 
     varying vec2 vUv;
@@ -160,8 +160,10 @@ Mas a sensação é de que você já está atrasado.
 
       vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
 
-      float t = (sin(time * 0.9) * 0.5 + 0.5);
+      /* 🔥 alternância 20% mais rápida: 0.9 -> 1.08 */
+      float t = (sin(time * 1.08) * 0.5 + 0.5);
       vec3 mixColor = mix(vec3(1.0), deepColor, t);
+
       vec3 finalColor = mix(vec3(1.0), mixColor, texel.a);
       finalColor += deepColor * texel.a * 0.10;
 
@@ -245,7 +247,6 @@ E vos chama.
       sfx25 = new Howl({ src:['./sfx2_5.mp3'], volume:1.0, loop:true,  html5:false });
       sfx3  = new Howl({ src:['./sfx3.mp3'],   volume:0.6, loop:false, html5:false });
 
-      // fallback de desbloqueio: se der playerror, tenta resumir ctx e tocar de novo
       [sfx1, sfx2, sfx25, sfx3].forEach(h=>{
         h.once('playerror', (id, err)=>{
           try{ Howler.ctx.resume(); }catch(e){}
@@ -345,11 +346,11 @@ E vos chama.
       animate();
     }
 
-    /* ============ TEXTO EM CANVAS (DPR SAFE) ============ */
+    /* ============ TEXTO EM CANVAS (AUTO-SCALE + ALTA RES) ============ */
     function createCrawlText(){
       const textCanvasObj = createTextCanvas(LOREM_IPSUM_ARCANO);
       const textCanvas = textCanvasObj.canvas;
-      textHeight = textCanvasObj.cssHeight; // altura lógica (em px CSS)
+      textHeight = textCanvasObj.cssHeight; // altura lógica (px CSS)
 
       const texture = new THREE.CanvasTexture(textCanvas);
       texture.minFilter = THREE.LinearFilter;
@@ -369,7 +370,6 @@ E vos chama.
         transparent:true, side:THREE.DoubleSide
       });
 
-      // geometria no tamanho em "px CSS" (não em pixels físicos do canvas)
       const geometry = new THREE.PlaneGeometry(textCanvasObj.cssWidth, textCanvasObj.cssHeight);
       textMesh = new THREE.Mesh(geometry, material);
 
@@ -377,10 +377,10 @@ E vos chama.
       crawlGroup.add(textMesh);
 
       crawlGroup.rotation.x = 0;
-      const startY = -textCanvasObj.cssHeight / 2 - 240; // aparece mais cedo (texto menor)
+      const startY = -textCanvasObj.cssHeight / 2 - 240;
       crawlGroup.position.y = startY;
 
-      endThreshold = (textCanvasObj.cssHeight * Math.cos(crawlGroup.rotation.x)) * 1.10; // corta menos
+      endThreshold = (textCanvasObj.cssHeight * Math.cos(crawlGroup.rotation.x)) * 1.10;
 
       scene.add(crawlGroup);
     }
@@ -388,28 +388,47 @@ E vos chama.
     function createTextCanvas(text){
       const lines = text.split('\n');
 
-      // MOBILE: ajuste leve de fonte
+      // Base (desktop vs mobile)
       const isMobile = window.innerWidth <= 480;
       let fontSize = isMobile ? 28 : 32;
       let lineHeight = fontSize * 1.28;
 
-      // Dimensões lógicas do canvas (CSS px)
-      const cssWidth = 1024;
-      const cssHeight = (lines.length * lineHeight + (fontSize * 2)) | 0;
+      // Largura base em px CSS (vai ser escalonada se precisar)
+      let cssWidth = 1024;
 
-      // DPR scaling (retina-safe)
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Calcula o tamanho lógico bruto
+      let cssHeight = Math.floor(lines.length * lineHeight + (fontSize * 2));
+
+      // Alvo de altura máxima (82% da viewport) para nunca cortar
+      const maxCssHeight = Math.floor(window.innerHeight * 0.82);
+
+      // AUTO-SCALE (opção B): reduz fonte **e largura** proporcionalmente
+      if (cssHeight > maxCssHeight){
+        const scale = maxCssHeight / cssHeight;
+        fontSize = fontSize * scale;
+        lineHeight = lineHeight * scale;
+        cssWidth = cssWidth * scale;
+        cssHeight = Math.floor(lines.length * lineHeight + (fontSize * 2));
+      }
+
+      // ALTA RES: DPR até 3x + super-sampling 1.25x
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+      const ss  = 1.25;
+
       const canvas = document.createElement('canvas');
-      canvas.width  = Math.floor(cssWidth  * dpr);
-      canvas.height = Math.floor(cssHeight * dpr);
+      canvas.width  = Math.floor(cssWidth  * dpr * ss);
+      canvas.height = Math.floor(cssHeight * dpr * ss);
 
       const ctx = canvas.getContext('2d');
-      ctx.scale(dpr, dpr);
+      ctx.scale(dpr * ss, dpr * ss);
+
+      // BOLD REAL
       ctx.font = `700 ${fontSize}px 'Cinzel Decorative'`;
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
 
+      // Render das linhas
       let y = fontSize * 2;
       for (const line of lines){
         ctx.fillText(line, cssWidth/2, y);
@@ -428,13 +447,12 @@ E vos chama.
         textMesh.material.uniforms.time.value = clock.getElapsedTime();
       }
 
-      // +15% mais rápido que 0.68 -> 0.78
       const base = 0.78;
       const remaining = Math.max(0, endThreshold - crawlGroup.position.y);
       const slowFactor = remaining < 200 ? Math.max(0.4, remaining / 200) : 1.0;
       crawlGroup.position.y += base * slowFactor;
 
-      // batimento acelera com o progresso (curva moderada B, ajustada p/ texto menor)
+      // batimento acelera com o progresso (curva moderada B)
       if (sfx25Id !== null && sfx25.playing(sfx25Id)){
         const startY = -textHeight / 2 - 240;
         const totalScroll = endThreshold - startY;
@@ -581,4 +599,3 @@ E vos chama.
   </script>
 </body>
 </html>
-
