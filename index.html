@@ -94,6 +94,16 @@
       0%, 100% { text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana); }
       50% { text-shadow: 0 0 10px #fff, 0 0 22px var(--cor-arcana), 0 0 32px var(--cor-arcana), 0 0 45px var(--cor-arcana); }
     }
+
+    /* Máscara de Desfoque (sobre o texto) */
+    #blur-mask {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 2;
+      backdrop-filter: blur(3px);
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+    #blur-mask.active { opacity: 1; }
   </style>
 </head>
 <body>
@@ -105,6 +115,9 @@
 
   <!-- Canvas 3D -->
   <canvas id="three-canvas"></canvas>
+
+  <!-- Máscara de Desfoque -->
+  <div id="blur-mask"></div>
 
   <!-- Interstitial -->
   <div id="interstitial">
@@ -234,25 +247,11 @@ O selo abre.
 A ruína respira.
 E vos chama.`.trim();
 
-    /* ==================== VOZ SUSSURRADA ==================== */
-    let whisperHowl = null;
-
-    function createWhisperAudio() {
-      const text = LOREM_IPSUM_ARCANO.replace(/\n/g, ' ').replace(/ +/g, ' ');
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'pt-BR';
-      utterance.rate = 0.65;
-      utterance.pitch = 0.75;
-      utterance.volume = 0.5;
-
-      whisperHowl = {
-        play: () => speechSynthesis.speak(utterance),
-        stop: () => speechSynthesis.cancel()
-      };
-    }
-
-    /* ==================== RUNAS E PARTÍCULAS ==================== */
-    const RUNES = ['F', 'U', 'TH', 'A', 'R', 'K', 'G', 'W', 'H', 'N', 'I', 'J', 'EI', 'P', 'Z', 'S', 'T', 'B', 'E', 'M', 'L', 'ING', 'D', 'O'];
+    /* ==================== RUNAS DO CODEPEN (SUBSTITUÍDAS) ==================== */
+    const RUNES = [
+      'ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ', 'ᛃ', 'ᛇ', 'ᛈ', 'ᛉ', 'ᛊ',
+      'ᛏ', 'ᛒ', 'ᛖ', 'ᛗ', 'ᛚ', 'ᛜ', 'ᛞ', 'ᛟ', 'ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ'
+    ];
     let runeMeshes = [], particleSystem;
 
     /* ==================== BEAT DETECTION ==================== */
@@ -342,8 +341,7 @@ E vos chama.`.trim();
     function init() {
       setupAudio();
       setupScene();
-      createParticles();
-      createWhisperAudio();
+      createParticles(); // NÉVOA ROXA
       precomputeBeat('./sfx2_5.mp3');
       startBinauralLoop();
       setupListeners();
@@ -378,24 +376,24 @@ E vos chama.`.trim();
       window.addEventListener('resize', onWindowResize);
     }
 
-    /* ==================== PARTÍCULAS ROXAS ==================== */
+    /* ==================== NÉVOA ROXA (PARTÍCULAS) ==================== */
     function createParticles() {
       const geometry = new THREE.BufferGeometry();
-      const count = 400;
+      const count = 600;
       const positions = new Float32Array(count * 3);
       const velocities = new Float32Array(count * 3);
       const sizes = new Float32Array(count);
 
       for (let i = 0; i < count; i++) {
-        positions[i * 3] = (Math.random() - 0.5) * 1200;
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 1200;
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 1200;
+        positions[i * 3] = (Math.random() - 0.5) * 2000;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 2000;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 2000;
 
-        velocities[i * 3] = (Math.random() - 0.5) * 0.3;
-        velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.3;
-        velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
+        velocities[i * 3] = (Math.random() - 0.5) * 0.2;
+        velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.2;
+        velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.2;
 
-        sizes[i] = Math.random() * 2.5 + 0.8;
+        sizes[i] = Math.random() * 4 + 1;
       }
 
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -413,10 +411,10 @@ E vos chama.`.trim();
           uniform float time;
           varying float vAlpha;
           void main() {
-            vec3 pos = position + velocity * time * 8.0;
+            vec3 pos = position + velocity * time * 6.0;
             vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
             gl_PointSize = size * (300.0 / -mvPosition.z);
-            vAlpha = sin(time * 1.5 + position.x * 0.01) * 0.5 + 0.5;
+            vAlpha = sin(time * 1.2 + position.y * 0.01) * 0.5 + 0.5;
             gl_Position = projectionMatrix * mvPosition;
           }
         `,
@@ -425,11 +423,12 @@ E vos chama.`.trim();
           varying float vAlpha;
           void main() {
             if (length(gl_PointCoord - vec2(0.5)) > 0.5) discard;
-            gl_FragColor = vec4(color, vAlpha * 0.5);
+            gl_FragColor = vec4(color, vAlpha * 0.4);
           }
         `,
         transparent: true,
-        blending: THREE.AdditiveBlending
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
       });
 
       particleSystem = new THREE.Points(geometry, material);
@@ -468,7 +467,7 @@ E vos chama.`.trim();
       setTimeout(() => {
         createCrawlText();
         createRunes();
-        if (whisperHowl) whisperHowl.play();
+        document.getElementById('blur-mask').classList.add('active'); // Ativa desfoque
       }, 3600);
     }
 
@@ -552,13 +551,13 @@ E vos chama.`.trim();
       return canvas;
     }
 
-    /* ==================== RUNAS ROXAS ==================== */
+    /* ==================== RUNAS DO CODEPEN ==================== */
     function createRunes() {
       runeMeshes.forEach(m => scene.remove(m));
       runeMeshes = [];
 
       const lines = LOREM_IPSUM_ARCANO.split('\n').filter(l => l.trim());
-      const runeCount = Math.min(lines.length * 2, 50);
+      const runeCount = Math.min(lines.length * 2, 60);
 
       for (let i = 0; i < runeCount; i++) {
         const canvas = document.createElement('canvas');
@@ -572,11 +571,11 @@ E vos chama.`.trim();
         const texture = new THREE.CanvasTexture(canvas);
         const material = new THREE.SpriteMaterial({ map: texture, color: ARCANE_PURPLE, transparent: true });
         const sprite = new THREE.Sprite(material);
-        sprite.scale.set(45, 45, 1);
+        sprite.scale.set(50, 50, 1);
 
         const angle = (i / runeCount) * Math.PI * 2;
-        const radius = 320 + Math.random() * 180;
-        const yOffset = -textHeight / 2 + (i % 12) * 70 - 500;
+        const radius = 350 + Math.random() * 200;
+        const yOffset = -textHeight / 2 + (i % 15) * 60 - 600;
         sprite.position.set(Math.cos(angle) * radius, yOffset, Math.sin(angle) * radius);
 
         scene.add(sprite);
@@ -626,7 +625,7 @@ E vos chama.`.trim();
       if (crawlGroup) scene.remove(crawlGroup);
       runeMeshes.forEach(m => scene.remove(m));
       runeMeshes = [];
-      if (whisperHowl) whisperHowl.stop();
+      document.getElementById('blur-mask').classList.remove('active');
 
       if (sfx2Id !== null && sfx2.playing(sfx2Id)) sfx2.fade(sfx2.volume(sfx2Id), 0, 800, sfx2Id);
       if (sfx25Id !== null && sfx25.playing(sfx25Id)) sfx25.fade(sfx25.volume(sfx25Id), 0, 800, sfx25Id);
