@@ -21,11 +21,10 @@
       overflow:hidden;
     }
 
-    /* Selo central */
+    /* Selo + versão */
     #seal-container{
       position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-      width:160px; height:180px; /* extra altura só para a versão */
-      display:flex; flex-direction:column; gap:6px;
+      width:160px; height:190px; display:flex; flex-direction:column; gap:6px;
       justify-content:center; align-items:center;
       cursor:pointer; z-index:20; pointer-events:auto;
     }
@@ -36,18 +35,11 @@
     }
     #arcane-seal-img:active{ transform: scale(0.97); }
     #arcane-seal-img.clicked{ opacity:0; filter:drop-shadow(0 0 5px var(--cor-arcana)); }
-
-    /* Versão */
     #build-version{
-      font-size:0.7rem;
-      opacity:0.4;
-      color:#fff;
-      pointer-events:none;
+      font-size:0.7rem; opacity:0.4; color:#fff; pointer-events:none;
       transition:opacity .35s ease-out;
     }
-    #build-version.hide{
-      opacity:0;
-    }
+    #build-version.hide{ opacity:0; }
 
     /* Canvas Three.js */
     #three-canvas{ position:fixed; top:0; left:0; z-index:1; }
@@ -67,7 +59,7 @@
 
   <div id="seal-container">
     <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo Arcano">
-    <div id="build-version">v0.91</div>
+    <div id="build-version">v0.92</div>
   </div>
 
   <canvas id="three-canvas"></canvas>
@@ -95,10 +87,13 @@ Mas a sensação é de que você já está atrasado.
     uniform float time;
     uniform vec3 glowColor;
     uniform float distortionStrength;
-    uniform float revealPos;
+
+    /* Janela de revelação */
+    uniform float revealPos;        // 0..1 base->topo (após warp)
     uniform float revealWidth;
     uniform float revealFeather;
     uniform float pulseBoost;
+
     varying vec2 vUv;
 
     float rand(vec2 co){ return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
@@ -112,6 +107,7 @@ Mas a sensação é de que você já está atrasado.
     void main(){
       vec2 uv = vUv;
 
+      /* Curvatura leve (sem zoom acumulado) */
       float bend = 0.35;
       vec2 p = uv * 2.0 - 1.0;
       p.y = p.y + bend * (p.y * p.y);
@@ -119,6 +115,7 @@ Mas a sensação é de que você já está atrasado.
       p /= perspective;
       vec2 warpedUv = p * 0.5 + 0.5;
 
+      /* Distorção (+15%) */
       vec2 distortedUv = warpedUv;
       float noise = (rand(warpedUv * 10.0 + time * 0.5) - 0.5) * distortionStrength;
       distortedUv.x += sin(warpedUv.y * 15.0 + time * 8.0) * noise;
@@ -126,18 +123,24 @@ Mas a sensação é de que você já está atrasado.
 
       vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
 
+      /* Janela já cobrindo o texto no primeiro frame */
       float w = movingWindow(warpedUv.y, revealPos, revealWidth, revealFeather);
 
+      /* Base branca nas letras (modulada pela janela) */
       vec3 base = vec3(1.0) * texel.a * w;
+
+      /* Pulso roxo + pico no centro da janela */
       float pulse = 0.6 + 0.4 * sin(time * 0.9);
       float centerBoost = smoothstep(0.22, 0.0, abs(warpedUv.y - revealPos));
       vec3 glow = glowColor * texel.a * (0.45 * pulse + pulseBoost * centerBoost);
 
+      /* Micro-flash preto – desativado nos primeiros 0.25s */
       float interval = 1.2;
       float widthF   = 0.07;
       float phase    = fract(time / interval);
       float blackout = step(phase, widthF);
-      float blackoutStrength = 0.45;
+      float boot    = smoothstep(0.0, 0.25, time); // 0→1 nos primeiros 0.25s
+      float blackoutStrength = 0.45 * boot;
 
       vec3 color = base + glow;
       color = mix(color, vec3(0.0), blackout * blackoutStrength * texel.a * step(0.01, w));
@@ -207,6 +210,7 @@ E vos chama.
       sfx2  = new Howl({src:['./sfx2.mp3'],  volume:0.6, loop:true});
       sfx25 = new Howl({src:['./sfx2_5.mp3'],volume:1.0, loop:true});
       sfx3  = new Howl({src:['./sfx3.mp3'],  volume:0.6, loop:false});
+      [sfx1,sfx2,sfx25,sfx3].forEach(h=>h.once('playerror',(id)=>{try{Howler.ctx.resume()}catch(e){} try{h.play(id)}catch(e){}}));
     }
 
     function setupScene(){
@@ -222,7 +226,9 @@ E vos chama.
 
     function setupListeners(){
       document.getElementById('seal-container').addEventListener('click', startExperience, {once:true});
-      addEventListener('resize', onWindowResize);
+      addEventListener('resize', onWindowResize, {passive:true});
+      addEventListener('orientationchange', onWindowResize, {passive:true});
+      document.addEventListener('visibilitychange', ()=>{ if (Howler.ctx && Howler.ctx.state!=='running') Howler.ctx.resume(); });
     }
 
     function startExperience(){
@@ -233,20 +239,25 @@ E vos chama.
       const seal=document.getElementById('arcane-seal-img');
       seal.classList.add('clicked');
       document.getElementById('build-version').classList.add('hide');
-      setTimeout(()=>{ document.getElementById('seal-container').style.display='none'; }, 350);
+      setTimeout(()=>{ document.getElementById('seal-container').style.display='none'; }, 320);
 
+      /* Áudio começa já (sua escolha B) */
       sfx1.play();
       sfx2Id  = sfx2.play();  sfx2.fade(0, 0.6, 3000, sfx2Id);
       sfx25Id = sfx25.play(); sfx25.fade(0, 1.0, 3000, sfx25Id);
 
-      createCrawlText(true);
+      /* Reset do clock para “time=0” (bloqueia blackout inicial) */
+      clock = new THREE.Clock(true);
+
+      createCrawlText();
       animate();
     }
 
     function createCrawlText(){
       const lines = POEMA.trim().split('\n');
+
       const isMobile = innerWidth <= 480;
-      let fontSize   = isMobile ? 22.4 : 32;
+      let fontSize   = isMobile ? 22.4 : 32;      // 20% menor no mobile
       let lineHeight = fontSize * 1.28;
       let cssWidth   = 1024;
       let cssHeight  = Math.floor(lines.length * lineHeight + (fontSize * 2));
@@ -263,6 +274,7 @@ E vos chama.
       canvas.width  = Math.floor(cssWidth  * dpr * ss);
       canvas.height = Math.floor(cssHeight * dpr * ss);
       const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
       ctx.scale(dpr*ss, dpr*ss);
       ctx.font = `700 ${fontSize}px 'Cinzel Decorative'`;
       ctx.fillStyle = '#FFFFFF';
@@ -283,9 +295,10 @@ E vos chama.
           time:{value:0.0},
           glowColor:{value:ARCANE_PURPLE},
           distortionStrength:{value:0.00605},
-          revealPos:{value:0.06},     // ⬅️ revelação começa já visível
-          revealWidth:{value:0.23},   // ⬅️ largura maior = ~4 linhas
-          revealFeather:{value:0.065},
+          /* ⬇️ Revelação começa cobrindo a base do texto já no frame 1 */
+          revealPos:{value:0.18},     // mais alto que antes
+          revealWidth:{value:0.30},   // ~4–5 linhas visíveis
+          revealFeather:{value:0.07},
           pulseBoost:{value:0.42}
         },
         vertexShader:document.getElementById('vertexShader').textContent,
@@ -300,13 +313,14 @@ E vos chama.
       crawlGroup.add(textMesh);
       crawlGroup.rotation.x=0;
 
-      const startY = -cssHeight/2 - 150; // ⬅️ mais alto = texto começa visível
+      /* ⬅️ Mais alto: garante texto no enquadramento já no início */
+      const startY = -cssHeight/2 - 100;
       crawlGroup.position.y = startY;
 
       const baseEnd = (cssHeight*Math.cos(crawlGroup.rotation.x));
       endThreshold = baseEnd * 1.26 + 140;
-      scene.add(crawlGroup);
 
+      scene.add(crawlGroup);
       crawlGroup.userData = { startY, total: endThreshold - startY };
     }
 
@@ -319,19 +333,22 @@ E vos chama.
         textMesh.material.uniforms.time.value = t;
       }
 
+      /* 30% mais devagar que ~0.78 */
       crawlGroup.position.y += 0.546;
 
+      /* Janela varre toda a altura; começa já visível */
       const { startY, total } = crawlGroup.userData;
       const current  = crawlGroup.position.y - startY;
       const progress = Math.min(1, Math.max(0, current / total));
-      const sweep = 0.06 + progress * 1.10;
 
+      const sweep = 0.18 + progress * 1.05; // 0.18 → ~1.23
       const u = textMesh.material.uniforms;
       u.revealPos.value   = sweep;
-      u.revealWidth.value = 0.23;
-      u.revealFeather.value = 0.065;
+      u.revealWidth.value = 0.30;
+      u.revealFeather.value = 0.07;
       u.pulseBoost.value  = 0.42;
 
+      /* Batimento acelera ao final */
       if (sfx25Id !== null && sfx25.playing(sfx25Id)){
         let rate = 1.0;
         if      (progress > 0.40) rate = 1.10;
@@ -350,7 +367,7 @@ E vos chama.
     }
 
     function finishAnimation(){
-      animationInProgress = false;
+      animationInProgress=false;
 
       if (sfx2Id !== null && sfx2.playing(sfx2Id)){
         sfx2.fade(sfx2.volume(sfx2Id), 0, 800, sfx2Id);
@@ -375,7 +392,7 @@ E vos chama.
       setTimeout(()=>{ sig.style.opacity='1'; },200);
 
       setTimeout(()=>{
-        try{if(Howler.ctx && Howler.ctx.state!=='running') Howler.ctx.resume();}catch(e){}
+        try{ if (Howler.ctx && Howler.ctx.state!=='running') Howler.ctx.resume(); }catch(e){}
         sfx3.play();
       },1000);
     }
