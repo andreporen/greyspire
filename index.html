@@ -109,9 +109,13 @@ gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
 uniform sampler2D map;
 uniform float time;
 uniform vec3 glowColor;
+uniform float baseDistortion;
+uniform float baseNoise;
 uniform float beatLevel;
 
 varying vec2 vUv;
+
+float rand(vec2 co){ return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
 
 void main(){
 vec2 uv = vUv;
@@ -124,14 +128,39 @@ float perspective = 1.0 + bend * (p.y + 1.0) * 0.5;
 p /= perspective;
 vec2 warpedUv = p * 0.5 + 0.5;
 
-vec4 texel = texture2D(map, warpedUv);
+/* === EFEITOS A 20% DA INTENSIDADE === */
+float intensity = 0.20;
 
-/* GLOW ROXO PULSANTE — moderado e bonito */
-float pulse = 0.6 + 0.4 * beatLevel; // 60% a 100%
-vec3 glow = glowColor * texel.a * pulse * 1.8; // brilho intenso mas controlado
-vec3 baseColor = vec3(1.0, 1.0, 1.0) * texel.a; // texto sempre branco
+/* Ondas sutis */
+float waveAmp = baseDistortion * intensity * (0.7 + 2.2 * beatLevel);
+float wave = waveAmp * sin(warpedUv.y * (18.0 + 10.0*beatLevel) + time * (1.6 + 1.5*beatLevel));
+vec2 distortedUv = warpedUv;
+distortedUv.x += wave;
 
-vec3 finalColor = baseColor + glow;
+/* Ruído mínimo */
+float nAmp = baseNoise * intensity * (0.6 + 1.8 * beatLevel);
+float nSeed = rand(warpedUv * (18.0 + 6.0*beatLevel) + time * (0.6 + 0.9*beatLevel));
+float noise = (nSeed - 0.5) * nAmp;
+distortedUv.y += noise * 0.9;
+distortedUv.x += noise * 0.5;
+
+vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
+
+/* Cor suave com leve pulsação */
+float b = clamp(beatLevel, 0.0, 1.2);
+float colorPulse = smoothstep(0.0, 1.0, b) * intensity;
+
+vec3 white = vec3(1.0);
+vec3 purple = normalize(glowColor) * 0.7 + vec3(0.35,0.0,0.65)*0.3;
+vec3 colorText = mix(white, purple, colorPulse);
+
+float blackout = smoothstep(0.93, 1.05, b) * intensity;
+colorText = mix(colorText, vec3(0.0), 0.38 * blackout);
+
+/* GLOW ROXO PULSANTE — moderado, bonito e visível */
+vec3 glow = glowColor * texel.a * (0.6 + 0.8 * beatLevel) * 2.2;
+
+vec3 finalColor = colorText * texel.a + glow;
 
 gl_FragColor = vec4(finalColor, texel.a);
 }
@@ -364,6 +393,8 @@ uniforms:{
 map:{ value:texture },
 time:{ value:0.0 },
 glowColor:{ value:ARCANE_PURPLE },
+baseDistortion:{ value:0.010 },
+baseNoise:{ value:0.010 },
 beatLevel:{ value:0.0 }
 },
 vertexShader: document.getElementById('vertexShader').textContent,
@@ -378,12 +409,12 @@ crawlGroup = new THREE.Group();
 crawlGroup.add(textMesh);
 crawlGroup.rotation.x = 0;
 
-// Posição inicial: fundo da tela
+// Posição inicial
 const startY = -textHeight / 2 - 350;
 crawlGroup.position.y = startY;
 
-// GARANTE 100% DO TEXTO NA TELA
-endThreshold = textHeight / 2 + 500; // topo sai da tela com folga
+// GARANTE TEXTO 100% VISÍVEL
+endThreshold = textHeight / 2 + 500;
 
 scene.add(crawlGroup);
 }
@@ -392,7 +423,7 @@ function createTextCanvas(text){
 const lines = text.split('\n').map(l => l.trim()).filter(l => l);
 const fontSize = 32;
 const lineHeight = fontSize * 1.4;
-const canvasHeight = lines.length * lineHeight + fontSize * 5; // margem extra
+const canvasHeight = lines.length * lineHeight + fontSize * 5;
 const canvasWidth = 1024;
 
 const canvas = document.createElement('canvas');
@@ -428,11 +459,10 @@ textMesh.material.uniforms.time.value = clock.getElapsedTime();
 textMesh.material.uniforms.beatLevel.value = beat;
 }
 
-// SCROLL SUAVE E CONSTANTE
+// SCROLL SUAVE
 const scrollSpeed = 1.3;
 crawlGroup.position.y += scrollSpeed;
 
-// FINALIZA QUANDO O TOPO SAI DA TELA
 if (crawlGroup.position.y >= endThreshold) {
 finishAnimation();
 }
@@ -444,7 +474,6 @@ function finishAnimation(){
 if (!animationInProgress) return;
 animationInProgress = false;
 
-// Remove texto
 if (crawlGroup){
 scene.remove(crawlGroup);
 if (textMesh.geometry) textMesh.geometry.dispose();
@@ -454,7 +483,6 @@ textMesh.material.dispose();
 }
 }
 
-// Fade dos áudios
 if (sfx2Id !== null && sfx2.playing(sfx2Id)){
 sfx2.fade(sfx2.volume(sfx2Id), 0, 800, sfx2Id);
 setTimeout(() => { try{ sfx2.stop(sfx2Id); }catch(e){} }, 820);
@@ -464,7 +492,6 @@ sfx25.fade(sfx25.volume(sfx25Id), 0, 800, sfx25Id);
 setTimeout(() => { try{ sfx25.stop(sfx25Id); }catch(e){} }, 820);
 }
 
-// ASSINATURA + SFX3
 const signature = document.getElementById('signature-container');
 signature.style.display = 'block';
 requestAnimationFrame(() => {
