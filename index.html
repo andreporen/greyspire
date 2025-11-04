@@ -64,7 +64,7 @@ filter: brightness(1.05);
 
 #signature-container{
 display:none; opacity:0; position:fixed; bottom:110px; left:50%;
-transform:translateX(-50%); z-index:10; text-align:center; font胶-size:1.2rem;
+transform:translateX(-50%); z-index:10; text-align:center; font-size:1.2rem;
 font-family:'MedievalSharp', cursive; transition:opacity 1.2s ease-in;
 max-width:600px; line-height:1.35;
 }
@@ -109,13 +109,9 @@ gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
 uniform sampler2D map;
 uniform float time;
 uniform vec3 glowColor;
-uniform float baseDistortion;
-uniform float baseNoise;
 uniform float beatLevel;
 
 varying vec2 vUv;
-
-float rand(vec2 co){ return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
 
 void main(){
 vec2 uv = vUv;
@@ -128,84 +124,61 @@ float perspective = 1.0 + bend * (p.y + 1.0) * 0.5;
 p /= perspective;
 vec2 warpedUv = p * 0.5 + 0.5;
 
-/* === EFEITOS A 20% DA INTENSIDADE === */
-float intensity = 0.20;
+vec4 texel = texture2D(map, warpedUv);
 
-/* Ondas sutis */
-float waveAmp = baseDistortion * intensity * (0.7 + 2.2 * beatLevel);
-float wave = waveAmp * sin(warpedUv.y * (18.0 + 10.0*beatLevel) + time * (1.6 + 1.5*beatLevel));
-vec2 distortedUv = warpedUv;
-distortedUv.x += wave;
+/* GLOW ROXO PULSANTE — moderado e bonito */
+float pulse = 0.6 + 0.4 * beatLevel; // 60% a 100%
+vec3 glow = glowColor * texel.a * pulse * 1.8; // brilho intenso mas controlado
+vec3 baseColor = vec3(1.0, 1.0, 1.0) * texel.a; // texto sempre branco
 
-/* Ruído mínimo */
-float nAmp = baseNoise * intensity * (0.6 + 1.8 * beatLevel);
-float nSeed = rand(warpedUv * (18.0 + 6.0*beatLevel) + time * (0.6 + 0.9*beatLevel));
-float noise = (nSeed - 0.5) * nAmp;
-distortedUv.y += noise * 0.9;
-distortedUv.x += noise * 0.5;
-
-vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
-
-/* Cor suave com leve pulsação */
-float b = clamp(beatLevel, 0.0, 1.2);
-float colorPulse = smoothstep(0.0, 1.0, b) * intensity;
-
-vec3 white = vec3(1.0);
-vec3 purple = normalize(glowColor) * 0.7 + vec3(0.35,0.0,0.65)*0.3;
-vec3 colorText = mix(white, purple, colorPulse);
-
-float blackout = smoothstep(0.93, 1.05, b) * intensity;
-colorText = mix(colorText, vec3(0.0), 0.38 * blackout);
-
-/* Glow reduzido */
-vec3 glow = glowColor * texel.a * (0.35 + 0.65 * colorPulse) * intensity * 2.0;
-
-vec3 finalColor = colorText * texel.a + glow;
+vec3 finalColor = baseColor + glow;
 
 gl_FragColor = vec4(finalColor, texel.a);
 }
 </script>
 
 <script>
-/* ============ TEXTO ============ */
+/* ============ TEXTO ARCANO ============ */
 const LOREM_IPSUM_ARCANO = `
-Nas veias do cosmo, onde a luz teme pisar,
-o Vazio pulsa em compasso ancestral.
-Ouve, neófito, o sussurro das eras:
-as engrenagens do destino rangem.
+Nas entranhas do real, onde a forma range,
+eles caminham sem saber que já foram colhidos.
+O mundo fede antes de morrer,
+mas vós chamais isso de ordem.
 
-A Sétima Estrela sangrou sobre o véu,
-tecendo a runa da Despossessão.
-E do pó de estrelas mortas,
-o Primeiro Selo foi forjado.
+Sob a pedra há dente,
+sob o dente há fome,
+sob a fome há ritmo,
+e o ritmo vos aguarda.
 
-Não busque o poder que corrompe,
-mas o saber que liberta.
-Pois no coração do silêncio,
-a verdade aguarda, paciente.
+Eles respiram, mas o ar não os quer.
+A carne permanece, mas a lembrança apodrece.
+O tempo só mastiga o que ainda resiste,
+e nada resiste por muito.
 
-A geometria do efêmero,
-a matemática da alma.
-Tudo se dobra à Vontade
-quando a Vontade é una com o Todo.
+O eixo tritura o que ousa lembrar.
+A cidade dorme sobre ossos que não consentem.
+Chama-se paz ao que sangra devagar,
+chama-se vida ao que ainda não cedeu.
 
-O Tempo é um rio que flui para trás,
-e a memória é a névoa em suas margens.
-Caminhamos sobre pontes de luar,
-buscando o que já foi perdido.
+Vós sois as falhas do esquecimento,
+os nomes que o silêncio não digeriu.
+A Fenda não oferece escolha —
+apenas retorno.
 
-Somente aqueles que ousam
-desvendar os nós do destino
-encontrarão a chave.
+A vinda já começou
+antes do passo.
+A queda já vos guarda
+antes da borda.
 
-A engrenagem gira.
-O coração bate.
-O caminho se revela.
+Ouçam.
+Desçam.
+Cedam.
+Retornem.
 
-Contempla a Cifra.
-Entende o Padrão.
-O selo se abre.
-A jornada é tua.
+A pele racha.
+O selo abre.
+A ruína respira.
+E vos chama.
 `;
 
 /* ============ BEAT DETECTION ============ */
@@ -391,8 +364,6 @@ uniforms:{
 map:{ value:texture },
 time:{ value:0.0 },
 glowColor:{ value:ARCANE_PURPLE },
-baseDistortion:{ value:0.010 },
-baseNoise:{ value:0.010 },
 beatLevel:{ value:0.0 }
 },
 vertexShader: document.getElementById('vertexShader').textContent,
@@ -408,11 +379,11 @@ crawlGroup.add(textMesh);
 crawlGroup.rotation.x = 0;
 
 // Posição inicial: fundo da tela
-const startY = -textHeight / 2 - 300;
+const startY = -textHeight / 2 - 350;
 crawlGroup.position.y = startY;
 
-// CORREÇÃO FINAL: endThreshold = topo do texto + margem
-endThreshold = textHeight / 2 + 400; // Garante que o topo saia da tela
+// GARANTE 100% DO TEXTO NA TELA
+endThreshold = textHeight / 2 + 500; // topo sai da tela com folga
 
 scene.add(crawlGroup);
 }
@@ -420,8 +391,8 @@ scene.add(crawlGroup);
 function createTextCanvas(text){
 const lines = text.split('\n').map(l => l.trim()).filter(l => l);
 const fontSize = 32;
-const lineHeight = fontSize * 1.3;
-const canvasHeight = lines.length * lineHeight + fontSize * 4; // margem extra
+const lineHeight = fontSize * 1.4;
+const canvasHeight = lines.length * lineHeight + fontSize * 5; // margem extra
 const canvasWidth = 1024;
 
 const canvas = document.createElement('canvas');
@@ -433,7 +404,7 @@ ctx.font = `${fontSize}px 'Cinzel Decorative'`;
 ctx.fillStyle = '#FFFFFF';
 ctx.textAlign = 'center';
 
-let y = fontSize * 2.5;
+let y = fontSize * 3;
 for (const line of lines){
 ctx.fillText(line, canvasWidth/2, y);
 y += lineHeight;
@@ -457,11 +428,11 @@ textMesh.material.uniforms.time.value = clock.getElapsedTime();
 textMesh.material.uniforms.beatLevel.value = beat;
 }
 
-// SCROLL CONSTANTE (sem desaceleração)
-const scrollSpeed = 1.2; // Ajuste fino
+// SCROLL SUAVE E CONSTANTE
+const scrollSpeed = 1.3;
 crawlGroup.position.y += scrollSpeed;
 
-// FINALIZA QUANDO O TOPO DO TEXTO SAI DA TELA
+// FINALIZA QUANDO O TOPO SAI DA TELA
 if (crawlGroup.position.y >= endThreshold) {
 finishAnimation();
 }
@@ -493,7 +464,7 @@ sfx25.fade(sfx25.volume(sfx25Id), 0, 800, sfx25Id);
 setTimeout(() => { try{ sfx25.stop(sfx25Id); }catch(e){} }, 820);
 }
 
-// ASSINATURA + SFX3 IMEDIATAMENTE
+// ASSINATURA + SFX3
 const signature = document.getElementById('signature-container');
 signature.style.display = 'block';
 requestAnimationFrame(() => {
