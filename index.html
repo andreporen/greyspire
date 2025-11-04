@@ -76,7 +76,7 @@
       }
     }
 
-    /* Assinatura */
+    /* Assinatura Final */
     #signature-container {
       display: none; opacity: 0;
       position: fixed; bottom: 110px; left: 50%;
@@ -88,22 +88,20 @@
     }
     #signature {
       color: #fff;
+      text-shadow: 
+        0 0 6px #fff, 
+        0 0 12px var(--cor-arcana), 
+        0 0 18px var(--cor-arcana);
       animation: pulse-arcano 1.4s ease-in-out infinite;
     }
     @keyframes pulse-arcano {
-      0%, 100% { text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana); }
-      50% { text-shadow: 0 0 10px #fff, 0 0 22px var(--cor-arcana), 0 0 32px var(--cor-arcana), 0 0 45px var(--cor-arcana); }
+      0%, 100% { 
+        text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana); 
+      }
+      50% { 
+        text-shadow: 0 0 10px #fff, 0 0 22px var(--cor-arcana), 0 0 32px var(--cor-arcana), 0 0 45px var(--cor-arcana); 
+      }
     }
-
-    /* Máscara de Desfoque (sobre o texto) */
-    #blur-mask {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none; z-index: 2;
-      backdrop-filter: blur(3px);
-      opacity: 0;
-      transition: opacity 1s ease;
-    }
-    #blur-mask.active { opacity: 1; }
   </style>
 </head>
 <body>
@@ -115,9 +113,6 @@
 
   <!-- Canvas 3D -->
   <canvas id="three-canvas"></canvas>
-
-  <!-- Máscara de Desfoque -->
-  <div id="blur-mask"></div>
 
   <!-- Interstitial -->
   <div id="interstitial">
@@ -195,8 +190,8 @@
       float blackout = smoothstep(0.93, 1.05, b) * intensity;
       colorText = mix(colorText, vec3(0.0), 0.38 * blackout);
 
-      // Glow roxo pulsante
-      vec3 glow = glowColor * texel.a * (0.6 + 0.8 * beatLevel) * 2.2;
+      // GLOW ROXO FORTE E NÍTIDO
+      vec3 glow = glowColor * texel.a * (1.2 + 1.0 * beatLevel) * 3.0;
 
       vec3 finalColor = colorText * texel.a + glow;
 
@@ -246,13 +241,6 @@ A pele racha.
 O selo abre.
 A ruína respira.
 E vos chama.`.trim();
-
-    /* ==================== RUNAS DO CODEPEN (SUBSTITUÍDAS) ==================== */
-    const RUNES = [
-      'ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ', 'ᛃ', 'ᛇ', 'ᛈ', 'ᛉ', 'ᛊ',
-      'ᛏ', 'ᛒ', 'ᛖ', 'ᛗ', 'ᛚ', 'ᛜ', 'ᛞ', 'ᛟ', 'ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ'
-    ];
-    let runeMeshes = [], particleSystem;
 
     /* ==================== BEAT DETECTION ==================== */
     let BEAT = { fps: 60, durationSec: 0, values: [], ready: false };
@@ -345,7 +333,7 @@ E vos chama.`.trim();
       precomputeBeat('./sfx2_5.mp3');
       startBinauralLoop();
       setupListeners();
-      animate(); // Inicia renderização imediatamente
+      animate();
     }
 
     function setupAudio() {
@@ -431,7 +419,7 @@ E vos chama.`.trim();
         depthWrite: false
       });
 
-      particleSystem = new THREE.Points(geometry, material);
+      const particleSystem = new THREE.Points(geometry, material);
       scene.add(particleSystem);
     }
 
@@ -466,8 +454,6 @@ E vos chama.`.trim();
 
       setTimeout(() => {
         createCrawlText();
-        createRunes();
-        document.getElementById('blur-mask').classList.add('active'); // Ativa desfoque
       }, 3600);
     }
 
@@ -485,7 +471,7 @@ E vos chama.`.trim();
       }, ms);
     }
 
-    /* ==================== TEXTO CRAWL ==================== */
+    /* ==================== TEXTO CRAWL (NÍTIDO + GLOW) ==================== */
     function createCrawlText() {
       const textCanvas = createTextCanvas(LOREM_IPSUM_ARCANO);
       textHeight = textCanvas.height;
@@ -529,8 +515,8 @@ E vos chama.`.trim();
 
     function createTextCanvas(text) {
       const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-      const fontSize = 32;
-      const lineHeight = fontSize * 1.45;
+      const fontSize = 36; // Aumentado para maior nitidez
+      const lineHeight = fontSize * 1.5;
       const canvasHeight = lines.length * lineHeight + fontSize * 8;
       const canvasWidth = 1024;
 
@@ -539,7 +525,7 @@ E vos chama.`.trim();
       canvas.height = canvasHeight;
 
       const ctx = canvas.getContext('2d');
-      ctx.font = `${fontSize}px 'Cinzel Decorative'`;
+      ctx.font = `bold ${fontSize}px 'Cinzel Decorative'`;
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
 
@@ -549,38 +535,6 @@ E vos chama.`.trim();
         y += lineHeight;
       }
       return canvas;
-    }
-
-    /* ==================== RUNAS DO CODEPEN ==================== */
-    function createRunes() {
-      runeMeshes.forEach(m => scene.remove(m));
-      runeMeshes = [];
-
-      const lines = LOREM_IPSUM_ARCANO.split('\n').filter(l => l.trim());
-      const runeCount = Math.min(lines.length * 2, 60);
-
-      for (let i = 0; i < runeCount; i++) {
-        const canvas = document.createElement('canvas');
-        canvas.width = 64; canvas.height = 64;
-        const ctx = canvas.getContext('2d');
-        ctx.font = '48px Arial';
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.fillText(RUNES[i % RUNES.length], 32, 48);
-
-        const texture = new THREE.CanvasTexture(canvas);
-        const material = new THREE.SpriteMaterial({ map: texture, color: ARCANE_PURPLE, transparent: true });
-        const sprite = new THREE.Sprite(material);
-        sprite.scale.set(50, 50, 1);
-
-        const angle = (i / runeCount) * Math.PI * 2;
-        const radius = 350 + Math.random() * 200;
-        const yOffset = -textHeight / 2 + (i % 15) * 60 - 600;
-        sprite.position.set(Math.cos(angle) * radius, yOffset, Math.sin(angle) * radius);
-
-        scene.add(sprite);
-        runeMeshes.push(sprite);
-      }
     }
 
     /* ==================== ANIMAÇÃO ==================== */
@@ -600,42 +554,34 @@ E vos chama.`.trim();
         const scrollSpeed = 0.7;
         crawlGroup.position.y += scrollSpeed;
 
-        runeMeshes.forEach((r, i) => {
-          r.material.opacity = 0.5 + 0.5 * beat;
-          r.position.y += scrollSpeed;
-        });
-
         if (crawlGroup.position.y >= endThreshold) {
           finishAnimation();
         }
       }
 
-      if (particleSystem) {
-        particleSystem.material.uniforms.time.value = clock.getElapsedTime();
-      }
-
       renderer.render(scene, camera);
     }
 
-    /* ==================== FINAL ==================== */
+    /* ==================== FINAL (IMEDIATO) ==================== */
     function finishAnimation() {
       if (!animationInProgress) return;
       animationInProgress = false;
 
+      // Remove texto do poema
       if (crawlGroup) scene.remove(crawlGroup);
-      runeMeshes.forEach(m => scene.remove(m));
-      runeMeshes = [];
-      document.getElementById('blur-mask').classList.remove('active');
 
-      if (sfx2Id !== null && sfx2.playing(sfx2Id)) sfx2.fade(sfx2.volume(sfx2Id), 0, 800, sfx2Id);
-      if (sfx25Id !== null && sfx25.playing(sfx25Id)) sfx25.fade(sfx25.volume(sfx25Id), 0, 800, sfx25Id);
+      // PARA SFX2 E SFX2_5
+      if (sfx2Id !== null && sfx2.playing(sfx2Id)) sfx2.stop(sfx2Id);
+      if (sfx25Id !== null && sfx25.playing(sfx25Id)) sfx25.stop(sfx25Id);
 
-      const signature = document.getElementById('signature-container');
-      signature.style.display = 'block';
-      requestAnimationFrame(() => signature.style.opacity = '1');
-
+      // Toca SFX3
       const id3 = sfx3.play();
       makeBinaural(sfx3, id3, { speed: 1.6, radius: 0.8, jitter: 0.4 });
+
+      // ASSINATURA FINAL APARECE IMEDIATAMENTE
+      const signature = document.getElementById('signature-container');
+      signature.style.display = 'block';
+      signature.style.opacity = '1';
     }
 
     function onWindowResize() {
@@ -644,7 +590,6 @@ E vos chama.`.trim();
       renderer.setSize(window.innerWidth, window.innerHeight);
       if (crawlGroup) {
         createCrawlText();
-        createRunes();
       }
     }
 
