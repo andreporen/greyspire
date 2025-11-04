@@ -24,7 +24,9 @@
     /* Selo central */
     #seal-container{
       position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-      width:160px; height:160px; display:flex; justify-content:center; align-items:center;
+      width:160px; height:180px; /* extra altura só para a versão */
+      display:flex; flex-direction:column; gap:6px;
+      justify-content:center; align-items:center;
       cursor:pointer; z-index:20; pointer-events:auto;
     }
     #arcane-seal-img{
@@ -32,8 +34,20 @@
       filter:drop-shadow(0 0 22px var(--cor-arcana));
       transition:opacity .35s ease-out, filter .35s ease-out, transform .2s ease-out;
     }
-    #arcane-seal-img:active{ transform: scale(0.98); }
+    #arcane-seal-img:active{ transform: scale(0.97); }
     #arcane-seal-img.clicked{ opacity:0; filter:drop-shadow(0 0 5px var(--cor-arcana)); }
+
+    /* Versão */
+    #build-version{
+      font-size:0.7rem;
+      opacity:0.4;
+      color:#fff;
+      pointer-events:none;
+      transition:opacity .35s ease-out;
+    }
+    #build-version.hide{
+      opacity:0;
+    }
 
     /* Canvas Three.js */
     #three-canvas{ position:fixed; top:0; left:0; z-index:1; }
@@ -53,6 +67,7 @@
 
   <div id="seal-container">
     <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo Arcano">
+    <div id="build-version">v0.91</div>
   </div>
 
   <canvas id="three-canvas"></canvas>
@@ -78,15 +93,12 @@ Mas a sensação é de que você já está atrasado.
   <script type="x-shader/x-fragment" id="fragmentShader">
     uniform sampler2D map;
     uniform float time;
-    uniform vec3 glowColor;         // roxo leve
+    uniform vec3 glowColor;
     uniform float distortionStrength;
-
-    /* Janela de revelação */
-    uniform float revealPos;        // posição vertical (0..1), 0 = base do pergaminho
-    uniform float revealWidth;      // largura da banda
-    uniform float revealFeather;    // suavização das bordas
-    uniform float pulseBoost;       // brilho extra no centro (efeito marcado)
-
+    uniform float revealPos;
+    uniform float revealWidth;
+    uniform float revealFeather;
+    uniform float pulseBoost;
     varying vec2 vUv;
 
     float rand(vec2 co){ return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
@@ -100,7 +112,6 @@ Mas a sensação é de que você já está atrasado.
     void main(){
       vec2 uv = vUv;
 
-      /* Curvatura leve (sem “zoom” acumulado) */
       float bend = 0.35;
       vec2 p = uv * 2.0 - 1.0;
       p.y = p.y + bend * (p.y * p.y);
@@ -108,7 +119,6 @@ Mas a sensação é de que você já está atrasado.
       p /= perspective;
       vec2 warpedUv = p * 0.5 + 0.5;
 
-      /* Distorção leve (+15%) */
       vec2 distortedUv = warpedUv;
       float noise = (rand(warpedUv * 10.0 + time * 0.5) - 0.5) * distortionStrength;
       distortedUv.x += sin(warpedUv.y * 15.0 + time * 8.0) * noise;
@@ -116,18 +126,13 @@ Mas a sensação é de que você já está atrasado.
 
       vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
 
-      /* Janela de revelação já ativa no frame 0 */
       float w = movingWindow(warpedUv.y, revealPos, revealWidth, revealFeather);
 
-      /* Base branca nas letras (modulada pela janela) */
       vec3 base = vec3(1.0) * texel.a * w;
-
-      /* Pulsação roxa sutil + pico no centro da janela */
       float pulse = 0.6 + 0.4 * sin(time * 0.9);
       float centerBoost = smoothstep(0.22, 0.0, abs(warpedUv.y - revealPos));
       vec3 glow = glowColor * texel.a * (0.45 * pulse + pulseBoost * centerBoost);
 
-      /* Micro-flash preto curtíssimo (apenas no texto visível) */
       float interval = 1.2;
       float widthF   = 0.07;
       float phase    = fract(time / interval);
@@ -142,7 +147,6 @@ Mas a sensação é de que você já está atrasado.
   </script>
 
   <script>
-    /* ======= TEXTO ======= */
     const POEMA = `
 Nas entranhas do real, onde a forma range,
 eles caminham sem saber que já foram colhidos.
@@ -185,30 +189,24 @@ A ruína respira.
 E vos chama.
 `;
 
-    /* ======= VARS ======= */
     let scene, camera, renderer, clock = new THREE.Clock();
     let sfx1, sfx2, sfx25, sfx3;
     let sfx2Id = null, sfx25Id = null;
-    let crawlGroup, textMesh, textHeight, endThreshold=0, animationInProgress=false;
-
+    let crawlGroup, textMesh, endThreshold=0, animationInProgress=false;
     const ARCANE_PURPLE = new THREE.Color('#b24cff');
 
     function init(){
       Howler.autoSuspend = false;
-      Howler.mute(false);
-      Howler.volume(1.0);
-
       setupAudio();
       setupScene();
       setupListeners();
     }
 
     function setupAudio(){
-      sfx1  = new Howl({src:['./sfx1.mp3'],  volume:0.8, loop:false, html5:false});
-      sfx2  = new Howl({src:['./sfx2.mp3'],  volume:0.6, loop:true,  html5:false});
-      sfx25 = new Howl({src:['./sfx2_5.mp3'],volume:1.0, loop:true,  html5:false});
-      sfx3  = new Howl({src:['./sfx3.mp3'],  volume:0.6, loop:false, html5:false});
-      [sfx1,sfx2,sfx25,sfx3].forEach(h=>h.once('playerror',(id)=>{try{Howler.ctx.resume()}catch(e){} try{h.play(id)}catch(e){}}));
+      sfx1  = new Howl({src:['./sfx1.mp3'],  volume:0.8, loop:false});
+      sfx2  = new Howl({src:['./sfx2.mp3'],  volume:0.6, loop:true});
+      sfx25 = new Howl({src:['./sfx2_5.mp3'],volume:1.0, loop:true});
+      sfx3  = new Howl({src:['./sfx3.mp3'],  volume:0.6, loop:false});
     }
 
     function setupScene(){
@@ -217,7 +215,6 @@ E vos chama.
       camera=new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 1, 10000);
       camera.position.set(0,130,480);
       camera.lookAt(0,0,0);
-
       renderer=new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
       renderer.setSize(innerWidth, innerHeight);
       renderer.setPixelRatio(Math.min(devicePixelRatio,3));
@@ -225,9 +222,7 @@ E vos chama.
 
     function setupListeners(){
       document.getElementById('seal-container').addEventListener('click', startExperience, {once:true});
-      addEventListener('resize', onWindowResize, {passive:true});
-      addEventListener('orientationchange', onWindowResize, {passive:true});
-      document.addEventListener('visibilitychange', ()=>{ if (Howler.ctx && Howler.ctx.state!=='running') Howler.ctx.resume(); });
+      addEventListener('resize', onWindowResize);
     }
 
     function startExperience(){
@@ -235,25 +230,23 @@ E vos chama.
       animationInProgress = true;
 
       try{Howler.ctx?.resume()}catch(e){}
-      const seal = document.getElementById('arcane-seal-img');
+      const seal=document.getElementById('arcane-seal-img');
       seal.classList.add('clicked');
+      document.getElementById('build-version').classList.add('hide');
       setTimeout(()=>{ document.getElementById('seal-container').style.display='none'; }, 350);
 
-      /* Áudio imediato (gesto do usuário) */
       sfx1.play();
       sfx2Id  = sfx2.play();  sfx2.fade(0, 0.6, 3000, sfx2Id);
       sfx25Id = sfx25.play(); sfx25.fade(0, 1.0, 3000, sfx25Id);
 
-      createCrawlText(/*revealImmediately=*/true);
+      createCrawlText(true);
       animate();
     }
 
-    function createCrawlText(revealImmediately=false){
+    function createCrawlText(){
       const lines = POEMA.trim().split('\n');
-
-      /* Base tipográfica com autoscale proporcional */
       const isMobile = innerWidth <= 480;
-      let fontSize   = isMobile ? 22.4 : 32;  // 20% menor no mobile
+      let fontSize   = isMobile ? 22.4 : 32;
       let lineHeight = fontSize * 1.28;
       let cssWidth   = 1024;
       let cssHeight  = Math.floor(lines.length * lineHeight + (fontSize * 2));
@@ -265,13 +258,11 @@ E vos chama.
         cssHeight = Math.floor(lines.length * lineHeight + (fontSize * 2));
       }
 
-      /* Canvas de alta resolução */
       const dpr = Math.min(devicePixelRatio||1, 3), ss = 2.0;
       const canvas = document.createElement('canvas');
       canvas.width  = Math.floor(cssWidth  * dpr * ss);
       canvas.height = Math.floor(cssHeight * dpr * ss);
       const ctx = canvas.getContext('2d');
-      ctx.imageSmoothingEnabled = false;
       ctx.scale(dpr*ss, dpr*ss);
       ctx.font = `700 ${fontSize}px 'Cinzel Decorative'`;
       ctx.fillStyle = '#FFFFFF';
@@ -281,21 +272,20 @@ E vos chama.
       let y = fontSize * 2;
       for (const line of lines){ ctx.fillText(line, cssWidth/2, y); y += lineHeight; }
 
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.minFilter = THREE.LinearFilter;
-      texture.magFilter = THREE.NearestFilter;
-      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-      texture.needsUpdate = true;
+      const texture=new THREE.CanvasTexture(canvas);
+      texture.minFilter=THREE.LinearFilter;
+      texture.magFilter=THREE.NearestFilter;
+      texture.anisotropy=renderer.capabilities.getMaxAnisotropy();
 
-      const material = new THREE.ShaderMaterial({
+      const material=new THREE.ShaderMaterial({
         uniforms:{
           map:{value:texture},
           time:{value:0.0},
           glowColor:{value:ARCANE_PURPLE},
-          distortionStrength:{value:0.00605},   // +15%
-          revealPos:{value: revealImmediately ? 0.06 : -0.2}, // ⬅️ começa já mostrando a base
-          revealWidth:{value:0.20},
-          revealFeather:{value:0.055},
+          distortionStrength:{value:0.00605},
+          revealPos:{value:0.06},     // ⬅️ revelação começa já visível
+          revealWidth:{value:0.23},   // ⬅️ largura maior = ~4 linhas
+          revealFeather:{value:0.065},
           pulseBoost:{value:0.42}
         },
         vertexShader:document.getElementById('vertexShader').textContent,
@@ -303,22 +293,20 @@ E vos chama.
         transparent:true
       });
 
-      const geometry = new THREE.PlaneGeometry(cssWidth, cssHeight);
-      textMesh = new THREE.Mesh(geometry, material);
+      const geometry=new THREE.PlaneGeometry(cssWidth, cssHeight);
+      textMesh=new THREE.Mesh(geometry, material);
 
-      crawlGroup = new THREE.Group();
+      crawlGroup=new THREE.Group();
       crawlGroup.add(textMesh);
-      crawlGroup.rotation.x = 0;
+      crawlGroup.rotation.x=0;
 
-      /* ⬅️ Começa mais alto para revelar logo */
-      const startY = -cssHeight/2 - 180;
+      const startY = -cssHeight/2 - 150; // ⬅️ mais alto = texto começa visível
       crawlGroup.position.y = startY;
 
-      /* Margem generosa para não cortar o final */
       const baseEnd = (cssHeight*Math.cos(crawlGroup.rotation.x));
       endThreshold = baseEnd * 1.26 + 140;
-
       scene.add(crawlGroup);
+
       crawlGroup.userData = { startY, total: endThreshold - startY };
     }
 
@@ -331,22 +319,19 @@ E vos chama.
         textMesh.material.uniforms.time.value = t;
       }
 
-      /* 30% mais devagar que ~0.78 */
       crawlGroup.position.y += 0.546;
 
-      /* Varredura da janela de revelação: começa em 0.06 imediatamente */
       const { startY, total } = crawlGroup.userData;
       const current  = crawlGroup.position.y - startY;
       const progress = Math.min(1, Math.max(0, current / total));
-      const sweep = 0.06 + progress * 1.10;   // 0.06 → 1.16
+      const sweep = 0.06 + progress * 1.10;
 
       const u = textMesh.material.uniforms;
       u.revealPos.value   = sweep;
-      u.revealWidth.value = 0.20;
-      u.revealFeather.value = 0.055;
+      u.revealWidth.value = 0.23;
+      u.revealFeather.value = 0.065;
       u.pulseBoost.value  = 0.42;
 
-      /* Batimento acelera suavemente */
       if (sfx25Id !== null && sfx25.playing(sfx25Id)){
         let rate = 1.0;
         if      (progress > 0.40) rate = 1.10;
@@ -367,7 +352,6 @@ E vos chama.
     function finishAnimation(){
       animationInProgress = false;
 
-      /* Fade-out rápido e stop dos ambientes */
       if (sfx2Id !== null && sfx2.playing(sfx2Id)){
         sfx2.fade(sfx2.volume(sfx2Id), 0, 800, sfx2Id);
         setTimeout(()=>{ try{sfx2.stop(sfx2Id);}catch(e){} }, 820);
@@ -386,15 +370,14 @@ E vos chama.
         }
       }
 
-      /* Assinatura + sfx3 */
-      const sig = document.getElementById('signature-container');
-      sig.style.display = 'block';
-      setTimeout(()=>{ sig.style.opacity='1'; }, 200);
+      const sig=document.getElementById('signature-container');
+      sig.style.display='block';
+      setTimeout(()=>{ sig.style.opacity='1'; },200);
 
       setTimeout(()=>{
-        try{ if (Howler.ctx && Howler.ctx.state !== 'running') Howler.ctx.resume(); }catch(e){}
+        try{if(Howler.ctx && Howler.ctx.state!=='running') Howler.ctx.resume();}catch(e){}
         sfx3.play();
-      }, 1000);
+      },1000);
     }
 
     function onWindowResize(){
