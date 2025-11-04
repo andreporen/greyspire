@@ -24,20 +24,20 @@
     /* Selo + versão */
     #seal-container{
       position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-      width:160px; height:190px; display:flex; flex-direction:column; gap:6px;
+      width:180px; height:200px; display:flex; flex-direction:column; gap:6px;
       justify-content:center; align-items:center;
       cursor:pointer; z-index:20; pointer-events:auto;
     }
     #arcane-seal-img{
-      width:120px; height:auto; pointer-events:auto;
+      width:128px; height:auto; pointer-events:auto;
       filter:drop-shadow(0 0 22px var(--cor-arcana));
-      transition:opacity .35s ease-out, filter .35s ease-out, transform .2s ease-out;
+      transition:opacity .28s ease-out, filter .28s ease-out, transform .18s ease-out;
     }
-    #arcane-seal-img:active{ transform: scale(0.97); }
+    #arcane-seal-img:active{ transform: scale(0.98); }
     #arcane-seal-img.clicked{ opacity:0; filter:drop-shadow(0 0 5px var(--cor-arcana)); }
     #build-version{
       font-size:0.7rem; opacity:0.4; color:#fff; pointer-events:none;
-      transition:opacity .35s ease-out;
+      transition:opacity .28s ease-out;
     }
     #build-version.hide{ opacity:0; }
 
@@ -59,7 +59,7 @@
 
   <div id="seal-container">
     <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo Arcano">
-    <div id="build-version">v0.92</div>
+    <div id="build-version">v0.94</div>
   </div>
 
   <canvas id="three-canvas"></canvas>
@@ -87,22 +87,9 @@ Mas a sensação é de que você já está atrasado.
     uniform float time;
     uniform vec3 glowColor;
     uniform float distortionStrength;
-
-    /* Janela de revelação */
-    uniform float revealPos;        // 0..1 base->topo (após warp)
-    uniform float revealWidth;
-    uniform float revealFeather;
-    uniform float pulseBoost;
-
     varying vec2 vUv;
 
     float rand(vec2 co){ return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
-
-    float movingWindow(float y, float center, float width, float feather){
-      float halfW = width * 0.5;
-      float dist  = abs(y - center);
-      return clamp(smoothstep(halfW + feather, halfW, dist), 0.0, 1.0);
-    }
 
     void main(){
       vec2 uv = vUv;
@@ -115,41 +102,36 @@ Mas a sensação é de que você já está atrasado.
       p /= perspective;
       vec2 warpedUv = p * 0.5 + 0.5;
 
-      /* Distorção (+15%) */
+      /* Distorção em ondas SUAVES (horizontal) + ruído leve */
       vec2 distortedUv = warpedUv;
-      float noise = (rand(warpedUv * 10.0 + time * 0.5) - 0.5) * distortionStrength;
-      distortedUv.x += sin(warpedUv.y * 15.0 + time * 8.0) * noise;
-      distortedUv.y += cos(warpedUv.x * 15.0 + time * 7.0) * noise;
+      float wave = 0.006 * sin(warpedUv.y * 20.0 + time * 1.6);   // onda suave horizontal
+      distortedUv.x += wave;
+      float noise = (rand(warpedUv * 10.0 + time * 0.3) - 0.5) * distortionStrength * 0.6; // ruído mais leve
+      distortedUv.y += noise * 0.6;
 
       vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
 
-      /* Janela já cobrindo o texto no primeiro frame */
-      float w = movingWindow(warpedUv.y, revealPos, revealWidth, revealFeather);
-
-      /* Base branca nas letras (modulada pela janela) */
-      vec3 base = vec3(1.0) * texel.a * w;
-
-      /* Pulso roxo + pico no centro da janela */
+      /* Base branca + pulso roxo sutil */
       float pulse = 0.6 + 0.4 * sin(time * 0.9);
-      float centerBoost = smoothstep(0.22, 0.0, abs(warpedUv.y - revealPos));
-      vec3 glow = glowColor * texel.a * (0.45 * pulse + pulseBoost * centerBoost);
+      vec3 base = vec3(1.0) * texel.a;
+      vec3 glow = glowColor * texel.a * 0.40 * pulse;
 
-      /* Micro-flash preto – desativado nos primeiros 0.25s */
+      /* Micro-flash preto curtíssimo (apenas no texto) */
       float interval = 1.2;
       float widthF   = 0.07;
       float phase    = fract(time / interval);
       float blackout = step(phase, widthF);
-      float boot    = smoothstep(0.0, 0.25, time); // 0→1 nos primeiros 0.25s
-      float blackoutStrength = 0.45 * boot;
+      float blackoutStrength = 0.35;
 
       vec3 color = base + glow;
-      color = mix(color, vec3(0.0), blackout * blackoutStrength * texel.a * step(0.01, w));
+      color = mix(color, vec3(0.0), blackout * blackoutStrength * texel.a);
 
-      gl_FragColor = vec4(color, texel.a * w);
+      gl_FragColor = vec4(color, texel.a);
     }
   </script>
 
   <script>
+    /* ========= CONTEÚDO ========= */
     const POEMA = `
 Nas entranhas do real, onde a forma range,
 eles caminham sem saber que já foram colhidos.
@@ -192,14 +174,34 @@ A ruína respira.
 E vos chama.
 `;
 
+    /* ========= VARS ========= */
     let scene, camera, renderer, clock = new THREE.Clock();
     let sfx1, sfx2, sfx25, sfx3;
-    let sfx2Id = null, sfx25Id = null;
-    let crawlGroup, textMesh, endThreshold=0, animationInProgress=false;
+    let sfx2Id=null, sfx25Id=null;
+    let crawlGroup, textMesh;
+    let animationInProgress=false;
     const ARCANE_PURPLE = new THREE.Color('#b24cff');
+
+    /* Typing mais lento + sem sobreposição */
+    const TYPING_MODE = {
+      perWordMs: 220,              // mais devagar (A1)
+      perWordJitter: 50,           // leve variação
+      materializeMs: 240,          // fade curto por palavra
+      driftPerFrame: 0.04,         // deslocamento MUITO sutil
+      spaceFactor: 1.15            // espaço extra entre palavras (anti-overlap)
+    };
+
+    // Estrutura de palavras com timestamp
+    let lines = [];
+    let tokens = [];  // [{text, lineIndex, x, y, t0}...]
+    let typingTimer = null;
+    let startedAt = null;
 
     function init(){
       Howler.autoSuspend = false;
+      Howler.mute(false);
+      Howler.volume(1.0);
+
       setupAudio();
       setupScene();
       setupListeners();
@@ -219,6 +221,7 @@ E vos chama.
       camera=new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 1, 10000);
       camera.position.set(0,130,480);
       camera.lookAt(0,0,0);
+
       renderer=new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
       renderer.setSize(innerWidth, innerHeight);
       renderer.setPixelRatio(Math.min(devicePixelRatio,3));
@@ -239,29 +242,29 @@ E vos chama.
       const seal=document.getElementById('arcane-seal-img');
       seal.classList.add('clicked');
       document.getElementById('build-version').classList.add('hide');
-      setTimeout(()=>{ document.getElementById('seal-container').style.display='none'; }, 320);
+      setTimeout(()=>{ document.getElementById('seal-container').style.display='none'; }, 280);
 
-      /* Áudio começa já (sua escolha B) */
+      // Áudio imediato
       sfx1.play();
       sfx2Id  = sfx2.play();  sfx2.fade(0, 0.6, 3000, sfx2Id);
       sfx25Id = sfx25.play(); sfx25.fade(0, 1.0, 3000, sfx25Id);
 
-      /* Reset do clock para “time=0” (bloqueia blackout inicial) */
-      clock = new THREE.Clock(true);
-
-      createCrawlText();
+      // Prepara texto/texture e inicia digitação
+      createTypingCanvasAndMesh();
+      startTyping();
       animate();
     }
 
-    function createCrawlText(){
-      const lines = POEMA.trim().split('\n');
+    function createTypingCanvasAndMesh(){
+      lines = POEMA.trim().split('\n');
 
       const isMobile = innerWidth <= 480;
-      let fontSize   = isMobile ? 22.4 : 32;      // 20% menor no mobile
+      let fontSize   = isMobile ? 22.4 : 32;         // 20% menor no mobile
       let lineHeight = fontSize * 1.28;
       let cssWidth   = 1024;
       let cssHeight  = Math.floor(lines.length * lineHeight + (fontSize * 2));
 
+      // autoscale vertical se necessário
       const maxCssHeight = Math.floor(innerHeight * 0.84);
       if(cssHeight > maxCssHeight){
         const s = maxCssHeight / cssHeight;
@@ -269,6 +272,7 @@ E vos chama.
         cssHeight = Math.floor(lines.length * lineHeight + (fontSize * 2));
       }
 
+      // canvas de alta resolução
       const dpr = Math.min(devicePixelRatio||1, 3), ss = 2.0;
       const canvas = document.createElement('canvas');
       canvas.width  = Math.floor(cssWidth  * dpr * ss);
@@ -276,14 +280,11 @@ E vos chama.
       const ctx = canvas.getContext('2d');
       ctx.imageSmoothingEnabled = false;
       ctx.scale(dpr*ss, dpr*ss);
-      ctx.font = `700 ${fontSize}px 'Cinzel Decorative'`;
-      ctx.fillStyle = '#FFFFFF';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'alphabetic';
 
-      let y = fontSize * 2;
-      for (const line of lines){ ctx.fillText(line, cssWidth/2, y); y += lineHeight; }
+      const textConf = { canvas, ctx, dpr, ss, cssWidth, cssHeight, fontSize, lineHeight };
+      canvas._textConf = textConf;
 
+      // plano + textura
       const texture=new THREE.CanvasTexture(canvas);
       texture.minFilter=THREE.LinearFilter;
       texture.magFilter=THREE.NearestFilter;
@@ -294,34 +295,134 @@ E vos chama.
           map:{value:texture},
           time:{value:0.0},
           glowColor:{value:ARCANE_PURPLE},
-          distortionStrength:{value:0.00605},
-          /* ⬇️ Revelação começa cobrindo a base do texto já no frame 1 */
-          revealPos:{value:0.18},     // mais alto que antes
-          revealWidth:{value:0.30},   // ~4–5 linhas visíveis
-          revealFeather:{value:0.07},
-          pulseBoost:{value:0.42}
+          distortionStrength:{value:0.00605}
         },
         vertexShader:document.getElementById('vertexShader').textContent,
         fragmentShader:document.getElementById('fragmentShader').textContent,
         transparent:true
       });
 
-      const geometry=new THREE.PlaneGeometry(cssWidth, cssHeight);
+      const geometry=new THREE.PlaneGeometry(textConf.cssWidth, textConf.cssHeight);
       textMesh=new THREE.Mesh(geometry, material);
 
       crawlGroup=new THREE.Group();
       crawlGroup.add(textMesh);
       crawlGroup.rotation.x=0;
 
-      /* ⬅️ Mais alto: garante texto no enquadramento já no início */
-      const startY = -cssHeight/2 - 100;
+      // Posição inicial alta (visível) e drift sutil
+      const startY = -textConf.cssHeight/2 - 90;
       crawlGroup.position.y = startY;
-
-      const baseEnd = (cssHeight*Math.cos(crawlGroup.rotation.x));
-      endThreshold = baseEnd * 1.26 + 140;
+      crawlGroup.userData = { startY };
 
       scene.add(crawlGroup);
-      crawlGroup.userData = { startY, total: endThreshold - startY };
+
+      // preparar tokens (palavras + posições) sem jitter de posição
+      prepareTokensForTyping(textConf, lines);
+      redrawTypingCanvas(textConf, performance.now(), true);
+      texture.needsUpdate = true;
+      textMesh.userData.textConf = textConf;
+    }
+
+    function prepareTokensForTyping(conf, linesArr){
+      const { ctx, cssWidth, fontSize, lineHeight } = conf;
+      ctx.clearRect(0,0,conf.cssWidth,conf.cssHeight);
+      ctx.font = `700 ${fontSize}px 'Cinzel Decorative'`;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+
+      tokens = [];
+      let y = fontSize * 2;
+
+      for (let i=0;i<linesArr.length;i++){
+        const raw = linesArr[i];
+        if (!raw.trim()){
+          y += lineHeight;
+          continue;
+        }
+        const words = raw.split(' ');
+
+        // medida precisa de cada palavra
+        const widths = words.map(w => ctx.measureText(w).width);
+        const spaceBase = ctx.measureText(' ').width * TYPING_MODE.spaceFactor;
+        const totalWidth = widths.reduce((a,b)=>a+b,0) + (words.length-1)*spaceBase;
+
+        // centraliza total
+        let x = (cssWidth - totalWidth)/2;
+
+        for (let j=0;j<words.length;j++){
+          const w = words[j];
+          const wWidth = widths[j];
+          tokens.push({ text:w, lineIndex:i, x, y, t0:null });
+          x += wWidth + spaceBase;
+        }
+        y += lineHeight;
+      }
+    }
+
+    function startTyping(){
+      startedAt = performance.now();
+      let idx = 0;
+
+      const step = () => {
+        if (idx >= tokens.length){
+          typingTimer = null;
+          // espera um pouco e finaliza para a assinatura
+          setTimeout(finishAnimation, 1200);
+          return;
+        }
+        const now = performance.now();
+        tokens[idx].t0 = now; // palavra nasce agora
+        idx++;
+
+        // agenda próxima palavra (mais devagar)
+        const jitter = (Math.random()*2 - 1) * TYPING_MODE.perWordJitter;
+        const delay = Math.max(60, TYPING_MODE.perWordMs + jitter);
+        typingTimer = setTimeout(step, delay);
+      };
+
+      step(); // mostra a primeira palavra já
+    }
+
+    function redrawTypingCanvas(conf, nowMs, firstFrame=false){
+      const { ctx, cssWidth, cssHeight, fontSize } = conf;
+
+      ctx.clearRect(0,0,cssWidth,cssHeight);
+      ctx.font = `700 ${conf.fontSize}px 'Cinzel Decorative'`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+
+      // desenha palavras já "nascidas" (materialização sem deslocar posição)
+      let lastX = null, lastY = null;
+
+      for (const tk of tokens){
+        if (!tk.t0) break;
+
+        const age = nowMs - tk.t0;              // ms desde que apareceu
+        const k = Math.min(1, age / TYPING_MODE.materializeMs); // 0→1
+
+        // fade-in + leve blur de contorno (sem mexer x/y)
+        ctx.globalAlpha = 0.15 + 0.85 * k;
+        ctx.shadowColor = `rgba(178,76,255,${(0.20*(1-k)).toFixed(3)})`;
+        ctx.shadowBlur  = 5*(1-k);
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(tk.text, tk.x, tk.y);
+
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+
+        lastX = tk.x + ctx.measureText(tk.text).width;
+        lastY = tk.y;
+      }
+
+      // cursor piscando ao final da última palavra
+      if (lastX!==null && lastY!==null){
+        const blink = (Math.sin((nowMs - startedAt)/280) > 0) ? 1 : 0.3;
+        ctx.globalAlpha = blink;
+        ctx.fillRect(lastX+6, lastY - fontSize*0.85, 2, fontSize*0.9);
+        ctx.globalAlpha = 1;
+      }
     }
 
     function animate(){
@@ -329,64 +430,44 @@ E vos chama.
       if (!animationInProgress) return;
 
       const t = clock.getElapsedTime();
+
+      // tempo do shader (ondas)
       if (textMesh && textMesh.material && textMesh.material.uniforms.time){
         textMesh.material.uniforms.time.value = t;
       }
 
-      /* 30% mais devagar que ~0.78 */
-      crawlGroup.position.y += 0.546;
-
-      /* Janela varre toda a altura; começa já visível */
-      const { startY, total } = crawlGroup.userData;
-      const current  = crawlGroup.position.y - startY;
-      const progress = Math.min(1, Math.max(0, current / total));
-
-      const sweep = 0.18 + progress * 1.05; // 0.18 → ~1.23
-      const u = textMesh.material.uniforms;
-      u.revealPos.value   = sweep;
-      u.revealWidth.value = 0.30;
-      u.revealFeather.value = 0.07;
-      u.pulseBoost.value  = 0.42;
-
-      /* Batimento acelera ao final */
-      if (sfx25Id !== null && sfx25.playing(sfx25Id)){
-        let rate = 1.0;
-        if      (progress > 0.40) rate = 1.10;
-        if      (progress > 0.60) rate = 1.20;
-        if      (progress > 0.80) rate = 1.30;
-        if      (progress > 0.92) rate = 1.38;
-        if      (progress > 0.98) rate = 1.45;
-        sfx25.rate(rate, sfx25Id);
+      // drift sutil (quase imperceptível)
+      if (crawlGroup){
+        crawlGroup.position.y += TYPING_MODE.driftPerFrame;
       }
 
-      if (crawlGroup.position.y > endThreshold){
-        finishAnimation();
+      // redesenha canvas
+      if (textMesh && textMesh.userData && textMesh.userData.textConf){
+        const conf = textMesh.userData.textConf;
+        redrawTypingCanvas(conf, performance.now());
+        textMesh.material.uniforms.map.value.needsUpdate = true;
       }
 
       renderer.render(scene, camera);
     }
 
     function finishAnimation(){
+      if (!animationInProgress) return;
       animationInProgress=false;
 
+      if (typingTimer) { clearTimeout(typingTimer); typingTimer=null; }
+
+      // fade-out loops
       if (sfx2Id !== null && sfx2.playing(sfx2Id)){
-        sfx2.fade(sfx2.volume(sfx2Id), 0, 800, sfx2Id);
-        setTimeout(()=>{ try{sfx2.stop(sfx2Id);}catch(e){} }, 820);
+        sfx2.fade(sfx2.volume(sfx2Id), 0, 600, sfx2Id);
+        setTimeout(()=>{ try{sfx2.stop(sfx2Id);}catch(e){} }, 620);
       }
       if (sfx25Id !== null && sfx25.playing(sfx25Id)){
-        sfx25.fade(sfx25.volume(sfx25Id), 0, 800, sfx25Id);
-        setTimeout(()=>{ try{sfx25.stop(sfx25Id);}catch(e){} }, 820);
+        sfx25.fade(sfx25.volume(sfx25Id), 0, 600, sfx25Id);
+        setTimeout(()=>{ try{sfx25.stop(sfx25Id);}catch(e){} }, 620);
       }
 
-      if(crawlGroup){
-        scene.remove(crawlGroup);
-        if(textMesh.geometry) textMesh.geometry.dispose();
-        if(textMesh.material){
-          if(textMesh.material.map) textMesh.material.map.dispose();
-          textMesh.material.dispose();
-        }
-      }
-
+      // Assinatura + sfx3
       const sig=document.getElementById('signature-container');
       sig.style.display='block';
       setTimeout(()=>{ sig.style.opacity='1'; },200);
@@ -402,6 +483,13 @@ E vos chama.
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight);
     }
+
+    /* === Selo / versão === */
+    document.getElementById('seal-container').addEventListener('click', ()=>{
+      document.getElementById('arcane-seal-img').classList.add('clicked');
+      document.getElementById('build-version').classList.add('hide');
+      setTimeout(()=>{ document.getElementById('seal-container').style.display='none'; }, 280);
+    }, { once:true });
 
     init();
   </script>
