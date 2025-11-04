@@ -319,7 +319,9 @@ E vos chama.`.trim();
     let binauralTargets = [];
     let crawlGroup, textMesh, textHeight;
     let animationInProgress = false;
-    let endThreshold = 0;
+    let scrollSpeed = 0.7;
+    let totalDistance = 0;
+    let targetDistance = 0;
     let clock = new THREE.Clock();
     let beatAccum = 0;
 
@@ -329,7 +331,7 @@ E vos chama.`.trim();
     function init() {
       setupAudio();
       setupScene();
-      createParticles(); // NÉVOA ROXA
+      createParticles();
       precomputeBeat('./sfx2_5.mp3');
       startBinauralLoop();
       setupListeners();
@@ -364,7 +366,7 @@ E vos chama.`.trim();
       window.addEventListener('resize', onWindowResize);
     }
 
-    /* ==================== NÉVOA ROXA (PARTÍCULAS) ==================== */
+    /* ==================== NÉVOA ROXA ==================== */
     function createParticles() {
       const geometry = new THREE.BufferGeometry();
       const count = 600;
@@ -471,7 +473,7 @@ E vos chama.`.trim();
       }, ms);
     }
 
-    /* ==================== TEXTO CRAWL (NÍTIDO + GLOW) ==================== */
+    /* ================= DETECÇÃO EXATA DO FINAL ================= */
     function createCrawlText() {
       const textCanvas = createTextCanvas(LOREM_IPSUM_ARCANO);
       textHeight = textCanvas.height;
@@ -508,14 +510,17 @@ E vos chama.`.trim();
 
       const startY = -textHeight / 2 - visibleHeight / 2 - safeMargin;
       crawlGroup.position.y = startY;
-      endThreshold = textHeight / 2 + visibleHeight / 2 + safeMargin;
 
+      // DISTÂNCIA TOTAL A SER PERCORRIDA
+      targetDistance = textHeight + visibleHeight + safeMargin * 2;
+
+      totalDistance = 0;
       scene.add(crawlGroup);
     }
 
     function createTextCanvas(text) {
       const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-      const fontSize = 36; // Aumentado para maior nitidez
+      const fontSize = 36;
       const lineHeight = fontSize * 1.5;
       const canvasHeight = lines.length * lineHeight + fontSize * 8;
       const canvasWidth = 1024;
@@ -537,7 +542,7 @@ E vos chama.`.trim();
       return canvas;
     }
 
-    /* ==================== ANIMAÇÃO ==================== */
+    /* ==================== ANIMAÇÃO (COM FINAL GARANTIDO) ==================== */
     function animate() {
       requestAnimationFrame(animate);
 
@@ -551,10 +556,12 @@ E vos chama.`.trim();
       }
 
       if (crawlGroup && animationInProgress) {
-        const scrollSpeed = 0.7;
-        crawlGroup.position.y += scrollSpeed;
+        const move = scrollSpeed;
+        crawlGroup.position.y += move;
+        totalDistance += move;
 
-        if (crawlGroup.position.y >= endThreshold) {
+        // FINAL DETECTADO COM PRECISÃO
+        if (totalDistance >= targetDistance) {
           finishAnimation();
         }
       }
@@ -562,23 +569,23 @@ E vos chama.`.trim();
       renderer.render(scene, camera);
     }
 
-    /* ==================== FINAL (IMEDIATO) ==================== */
+    /* ==================== FINALIZAÇÃO IMEDIATA ==================== */
     function finishAnimation() {
       if (!animationInProgress) return;
       animationInProgress = false;
 
-      // Remove texto do poema
+      // Remove poema
       if (crawlGroup) scene.remove(crawlGroup);
 
       // PARA SFX2 E SFX2_5
-      if (sfx2Id !== null && sfx2.playing(sfx2Id)) sfx2.stop(sfx2Id);
-      if (sfx25Id !== null && sfx25.playing(sfx25Id)) sfx25.stop(sfx25Id);
+      if (sfx2Id !== null) sfx2.stop(sfx2Id);
+      if (sfx25Id !== null) sfx25.stop(sfx25Id);
 
-      // Toca SFX3
+      // TOCA SFX3
       const id3 = sfx3.play();
       makeBinaural(sfx3, id3, { speed: 1.6, radius: 0.8, jitter: 0.4 });
 
-      // ASSINATURA FINAL APARECE IMEDIATAMENTE
+      // ASSINATURA APARECE IMEDIATAMENTE
       const signature = document.getElementById('signature-container');
       signature.style.display = 'block';
       signature.style.opacity = '1';
@@ -593,7 +600,7 @@ E vos chama.`.trim();
       }
     }
 
-    /* ==================== EFEITOS DE ÁUDIO ==================== */
+    /* ==================== ÁUDIO ==================== */
     function makeBinaural(howl, soundId, opts = {}) {
       const speed = opts.speed ?? 1.4;
       const radius = opts.radius ?? 1.0;
