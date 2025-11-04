@@ -235,11 +235,10 @@ function createWhisperAudio() {
 const RUNES = ['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᚾ','ᛁ','ᛃ','ᛇ','ᛈ','ᛉ','ᛊ','ᛏ','ᛒ','ᛖ','ᛗ','ᛚ','ᛜ','ᛞ','ᛟ'];
 let runeMeshes = [], particleSystem;
 
-/* ============ BEAT ============ */
+/* ============ BEAT DETECTION ============ */
 let BEAT = { fps: 60, durationSec: 0, values: [], ready: false };
 
 async function precomputeBeat(url){
-  // ... (mesmo código de antes)
   try{
     const resp = await fetch(url, {cache:'force-cache'});
     const arr = await resp.arrayBuffer();
@@ -313,7 +312,6 @@ let animationInProgress = false;
 let endThreshold = 0;
 let clock = new THREE.Clock();
 let beatAccum = 0;
-let lastFrameMs = null;
 
 const ARCANE_PURPLE = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--cor-arcana').trim());
 
@@ -321,15 +319,13 @@ const ARCANE_PURPLE = new THREE.Color(getComputedStyle(document.documentElement)
 function init(){
   setupAudio();
   setupScene();
-  setupListeners();
-  precomputeBeat('./sfx2_5.mp3');
+  createParticles();
   createWhisperAudio();
-  createParticles(); // partículas desde o início
-  animate(); // INICIA RENDERIZAÇÃO IMEDIATAMENTE
+  precomputeBeat('./sfx2_5.mp3');
   startBinauralLoop();
+  animate(); // INICIA RENDERIZAÇÃO IMEDIATAMENTE
 }
 
-/* ============ AUDIO ============ */
 function setupAudio(){
   sfx1 = new Howl({ src:['./sfx1.mp3'], volume:0.8, loop:false, html5:false });
   sfx2 = new Howl({ src:['./sfx2.mp3'], volume:0.6, loop:true, html5:false });
@@ -337,7 +333,6 @@ function setupAudio(){
   sfx3 = new Howl({ src:['./sfx3.mp3'], volume:0.6, loop:false, html5:false });
 }
 
-/* ============ SCENE ============ */
 function setupScene(){
   const canvas = document.getElementById('three-canvas');
   scene = new THREE.Scene();
@@ -353,97 +348,13 @@ function setupScene(){
   renderer.setClearColor(0x000000, 1);
 }
 
-/* ============ PARTÍCULAS ============ */
-function createParticles(){
-  const geometry = new THREE.BufferGeometry();
-  const count = 400;
-  const positions = new Float32Array(count * 3);
-  const velocities = new Float32Array(count * 3);
-  const sizes = new Float32Array(count);
-
-  for (let i = 0; i < count; i++) {
-    positions[i*3] = (Math.random() - 0.5) * 1200;
-    positions[i*3+1] = (Math.random() - 0.5) * 1200;
-    positions[i*3+2] = (Math.random() - 0.5) * 1200;
-
-    velocities[i*3] = (Math.random() - 0.5) * 0.3;
-    velocities[i*3+1] = (Math.random() - 0.5) * 0.3;
-    velocities[i*3+2] = (Math.random() - 0.5) * 0.3;
-
-    sizes[i] = Math.random() * 2.5 + 0.8;
-  }
-
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
-  geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-  const material = new THREE.ShaderMaterial({
-    uniforms: {
-      color: { value: ARCANE_PURPLE },
-      time: { value: 0 }
-    },
-    vertexShader: `
-      attribute float size;
-      attribute vec3 velocity;
-      uniform float time;
-      varying float vAlpha;
-      void main() {
-        vec3 pos = position + velocity * time * 8.0;
-        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-        gl_PointSize = size * (300.0 / -mvPosition.z);
-        vAlpha = sin(time * 1.5 + position.x * 0.01) * 0.5 + 0.5;
-        gl_Position = projectionMatrix * mvPosition;
-      }
-    `,
-    fragmentShader: `
-      uniform vec3 color;
-      varying float vAlpha;
-      void main() {
-        if (length(gl_PointCoord - vec2(0.5)) > 0.5) discard;
-        gl_FragColor = vec4(color, vAlpha * 0.5);
-      }
-    `,
-    transparent: true,
-    blending: THREE.AdditiveBlending
-  });
-
-  particleSystem = new THREE.Points(geometry, material);
-  scene.add(particleSystem);
+/* ============ LISTENERS ============ */
+function setupListeners(){
+  document.getElementById('seal-container').addEventListener('click', startExperience, { once: true });
+  window.addEventListener('resize', onWindowResize);
 }
 
-/* ============ RUNAS ============ */
-function createRunes() {
-  runeMeshes.forEach(m => scene.remove(m));
-  runeMeshes = [];
-
-  const lines = LOREM_IPSUM_ARCANO.split('\n').filter(l => l.trim());
-  const runeCount = Math.min(lines.length * 2, 50);
-
-  for (let i = 0; i < runeCount; i++) {
-    const canvas = document.createElement('canvas');
-    canvas.width = 64; canvas.height = 64;
-    const ctx = canvas.getContext('2d');
-    ctx.font = '48px Arial';
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.fillText(RUNES[i % RUNES.length], 32, 48);
-
-    const texture = new THREE.CanvasTexture(canvas);
-    const material = new THREE.SpriteMaterial({ map: texture, color: ARCANE_PURPLE, transparent: true });
-    const sprite = new THREE.Sprite(material);
-    sprite.scale.set(45, 45, 1);
-
-    const angle = (i / runeCount) * Math.PI * 2;
-    const radius = 320 + Math.random() * 180;
-    const yOffset = -textHeight/2 + (i % 12) * 70 - 500;
-    sprite.position.set(Math.cos(angle) * radius, yOffset, Math.sin(angle) * radius);
-
-    scene.add(sprite);
-    runeMeshes.push(sprite);
-  }
-}
-
-/* ============ FLOW ============ */
+/* ============ START ============ */
 function startExperience(){
   if (animationInProgress) return;
   animationInProgress = true;
@@ -520,7 +431,6 @@ function createCrawlText(){
   scene.add(crawlGroup);
 }
 
-/* ============ CANVAS TEXT ============ */
 function createTextCanvas(text){
   const lines = text.split('\n').map(l => l.trim()).filter(l => l);
   const fontSize = 32;
@@ -543,6 +453,96 @@ function createTextCanvas(text){
     y += lineHeight;
   }
   return canvas;
+}
+
+/* ============ RUNAS ============ */
+function createRunes() {
+  runeMeshes.forEach(m => scene.remove(m));
+  runeMeshes = [];
+
+  const lines = LOREM_IPSUM_ARCANO.split('\n').filter(l => l.trim());
+  const runeCount = Math.min(lines.length * 2, 50);
+
+  for (let i = 0; i < runeCount; i++) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64; canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.font = '48px Arial';
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.fillText(RUNES[i % RUNES.length], 32, 48);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.SpriteMaterial({ map: texture, color: ARCANE_PURPLE, transparent: true });
+    const sprite = new THREE.Sprite(material);
+    sprite.scale.set(45, 45, 1);
+
+    const angle = (i / runeCount) * Math.PI * 2;
+    const radius = 320 + Math.random() * 180;
+    const yOffset = -textHeight/2 + (i % 12) * 70 - 500;
+    sprite.position.set(Math.cos(angle) * radius, yOffset, Math.sin(angle) * radius);
+
+    scene.add(sprite);
+    runeMeshes.push(sprite);
+  }
+}
+
+/* ============ PARTICLES ============ */
+function createParticles(){
+  const geometry = new THREE.BufferGeometry();
+  const count = 400;
+  const positions = new Float32Array(count * 3);
+  const velocities = new Float32Array(count * 3);
+  const sizes = new Float32Array(count);
+
+  for (let i = 0; i < count; i++) {
+    positions[i*3] = (Math.random() - 0.5) * 1200;
+    positions[i*3+1] = (Math.random() - 0.5) * 1200;
+    positions[i*3+2] = (Math.random() - 0.5) * 1200;
+
+    velocities[i*3] = (Math.random() - 0.5) * 0.3;
+    velocities[i*3+1] = (Math.random() - 0.5) * 0.3;
+    velocities[i*3+2] = (Math.random() - 0.5) * 0.3;
+
+    sizes[i] = Math.random() * 2.5 + 0.8;
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+  geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      color: { value: ARCANE_PURPLE },
+      time: { value: 0 }
+    },
+    vertexShader: `
+      attribute float size;
+      attribute vec3 velocity;
+      uniform float time;
+      varying float vAlpha;
+      void main() {
+        vec3 pos = position + velocity * time * 8.0;
+        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+        gl_PointSize = size * (300.0 / -mvPosition.z);
+        vAlpha = sin(time * 1.5 + position.x * 0.01) * 0.5 + 0.5;
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 color;
+      varying float vAlpha;
+      void main() {
+        if (length(gl_PointCoord - vec2(0.5)) > 0.5) discard;
+        gl_FragColor = vec4(color, vAlpha * 0.5);
+      }
+    `,
+    transparent: true,
+    blending: THREE.AdditiveBlending
+  });
+
+  particleSystem = new THREE.Points(geometry, material);
+  scene.add(particleSystem);
 }
 
 /* ============ ANIMATE ============ */
@@ -612,8 +612,6 @@ function onWindowResize(){
 }
 
 /* ============ AUDIO FX ============ */
-// ... (makeBinaural, startBinauralLoop, applyReverbToSound, createImpulseResponse)
-
 function makeBinaural(howl, soundId, opts={}){
   const speed = opts.speed ?? 1.4;
   const radius = opts.radius ?? 1.0;
@@ -643,14 +641,50 @@ function startBinauralLoop(){
 }
 
 function applyReverbToSound(howl, soundId, {seconds=1.8, decay=3.0, wet=0.8}={}){
-  // ... (mesmo código)
+  try{
+    const ctx = Howler.ctx;
+    const sound = howl._soundById(soundId);
+    if (!sound || sound.__reverbApplied) return;
+    sound.__reverbApplied = true;
+
+    const sourceNode = sound._panner || sound._node;
+    if (!sourceNode) return;
+
+    const convolver = ctx.createConvolver();
+    convolver.buffer = createImpulseResponse(ctx, seconds, decay);
+
+    const wetGain = ctx.createGain(); wetGain.gain.value = wet;
+    const dryGain = ctx.createGain(); dryGain.gain.value = 1 - wet;
+
+    try{ sourceNode.disconnect(); }catch(e){}
+    sourceNode.connect(dryGain);
+    sourceNode.connect(convolver);
+    convolver.connect(wetGain);
+    dryGain.connect(Howler.masterGain);
+    wetGain.connect(Howler.masterGain);
+
+    sound.__reverb = { convolver, wetGain, dryGain };
+  }catch(e){
+    console.warn('Reverb falhou:', e);
+  }
 }
 
 function createImpulseResponse(ctx, seconds=1.8, decay=3.0){
-  // ... (mesmo código)
+  const rate = ctx.sampleRate;
+  const length = Math.max(1, Math.floor(rate * seconds));
+  const impulse = ctx.createBuffer(2, length, rate);
+  for (let ch=0; ch<2; ch++){
+    const data = impulse.getChannelData(ch);
+    for (let i=0; i<length; i++){
+      const n = Math.random()*2 - 1;
+      data[i] = n * Math.pow(1 - i/length, decay);
+    }
+  }
+  return impulse;
 }
 
-setupListeners();
+/* ============ INICIALIZAÇÃO FINAL ============ */
+setupListeners(); // ← AQUI: ANTES DO INIT E ANIMATE
 init();
 </script>
 </body>
