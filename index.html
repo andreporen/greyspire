@@ -37,7 +37,7 @@
     /* Canvas Three.js */
     #three-canvas{ position:fixed; top:0; left:0; z-index:1; }
 
-    /* Intersticial (tela de pensamento) */
+    /* Intersticial (primeira “assinatura”) */
     #interstitial{
       display:none; opacity:0;
       position:fixed; inset:0; z-index:9;
@@ -110,7 +110,7 @@
 
   <canvas id="three-canvas"></canvas>
 
-  <!-- Intersticial -->
+  <!-- Intersticial (primeira “assinatura”) -->
   <div id="interstitial">
     <div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div>
     <div class="glitch-lines" id="glitchLines"></div>
@@ -164,44 +164,45 @@ Mas a sensação é de que você já está atrasado.
   <script>
     /* ============ TEXTO ============ */
     const LOREM_IPSUM_ARCANO = `
-Nas veias do cosmo, onde a luz teme pisar,
-o Vazio pulsa em compasso ancestral.
-Ouve, neófito, o sussurro das eras:
-as engrenagens do destino rangem.
+Nas entranhas do real, onde a forma range,
+eles caminham sem saber que já foram colhidos.
+O mundo fede antes de morrer,
+mas vós chamais isso de ordem.
 
-A Sétima Estrela sangrou sobre o véu,
-tecendo a runa da Despossessão.
-E do pó de estrelas mortas,
-o Primeiro Selo foi forjado.
+Sob a pedra há dente,
+sob o dente há fome,
+sob a fome há ritmo,
+e o ritmo vos aguarda.
 
-Não busque o poder que corrompe,
-mas o saber que liberta.
-Pois no coração do silêncio,
-a verdade aguarda, paciente.
+Eles respiram, mas o ar não os quer.
+A carne permanece, mas a lembrança apodrece.
+O tempo só mastiga o que ainda resiste,
+e nada resiste por muito.
 
-A geometria do efêmero,
-a matemática da alma.
-Tudo se dobra à Vontade
-quando a Vontade é una com o Todo.
+O eixo tritura o que ousa lembrar.
+A cidade dorme sobre ossos que não consentem.
+Chama-se paz ao que sangra devagar,
+chama-se vida ao que ainda não cedeu.
 
-O Tempo é um rio que flui para trás,
-e a memória é a névoa em suas margens.
-Caminhamos sobre pontes de luar,
-buscando o que já foi perdido.
+Vós sois as falhas do esquecimento,
+os nomes que o silêncio não digeriu.
+A Fenda não oferece escolha —
+apenas retorno.
 
-Somente aqueles que ousam
-desvendar os nós do destino
-encontrarão a chave.
+A vinda já começou
+antes do passo.
+A queda já vos guarda
+antes da borda.
 
-A engrenagem gira.
-O coração bate.
-O caminho se revela.
+Ouçam.
+Desçam.
+Cedam.
+Retornem.
 
-Contempla a Cifra.
-Entende o Padrão.
-O selo se abre.
-A jornada é tua.
-    `;
+A pele racha.
+O selo abre.
+A ruína respira.
+E vos chama.    `;
 
     /* ============ VARS ============ */
     let scene, camera, renderer;
@@ -267,7 +268,7 @@ A jornada é tua.
       // Esconde o selo visualmente
       setTimeout(() => { document.getElementById('seal-container').style.display='none'; }, 400);
 
-      // Mostra intersticial e, ao terminar o glitch, inicia áudio+texto
+      // Intersticial + glitch; ao terminar, inicia áudio+texto
       showInterstitialAndThen(3000, () => {
         startTextAndAudio();
       });
