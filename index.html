@@ -193,14 +193,14 @@
 
       vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
 
-      // EFEITO ESTROBOSCÓPICO - oscila entre branco, cinza e roxo
+      // EFEITO ESTROBOSCÓPICO - oscila entre branco, cinza e roxo (mais agressivo)
       float b = clamp(beatLevel, 0.0, 1.2);
-      float strobeSpeed = time * 3.5;
+      float strobeSpeed = time * 6.0;
       float strobePhase = mod(strobeSpeed, 3.0);
       
-      vec3 white = vec3(1.0);
-      vec3 gray = vec3(0.5);
-      vec3 purple = normalize(glowColor) * 0.7 + vec3(0.35, 0.0, 0.65) * 0.3;
+      vec3 white = vec3(1.0, 1.0, 1.0);
+      vec3 gray = vec3(0.6, 0.6, 0.6);
+      vec3 purple = normalize(glowColor) * 1.2;
       
       vec3 colorText;
       if (strobePhase < 1.0) {
@@ -214,9 +214,9 @@
         colorText = mix(purple, white, strobePhase - 2.0);
       }
       
-      // Adiciona pulsação com beat
-      float beatPulse = sin(time * 4.0 + beatLevel * 2.0) * 0.3 + 0.7;
-      colorText = mix(colorText, white, beatPulse * 0.2);
+      // Adiciona pulsação mais forte com beat
+      float beatPulse = sin(time * 8.0 + beatLevel * 4.0) * 0.5 + 0.5;
+      colorText = mix(colorText, white, beatPulse * 0.4);
 
       float blackout = smoothstep(0.93, 1.05, b) * intensity;
       colorText = mix(colorText, vec3(0.0), 0.38 * blackout);
@@ -456,18 +456,18 @@ E vos chama.`.trim();
             
             // Combina os noise layers para criar veias
             float veins = n * 0.5 + n2 * 0.3 + n3 * 0.2;
-            veins = smoothstep(0.6, 0.9, veins);
+            veins = smoothstep(0.5, 0.85, veins);
             
-            // Pulsação baseada no beat
-            float pulse = sin(time * 2.0 + beatLevel * 3.0) * 0.5 + 0.5;
-            veins *= (0.3 + pulse * 0.7);
+            // Pulsação baseada no beat - mais forte
+            float pulse = sin(time * 2.5 + beatLevel * 4.0) * 0.5 + 0.5;
+            veins *= (0.5 + pulse * 0.5);
             
-            // Desfoque (intensidade baixa)
-            veins *= 0.15;
+            // Intensidade aumentada para ser visível
+            veins *= 0.8;
             
-            // Cria cores roxas desfocadas
-            vec3 color = purpleColor * veins;
-            gl_FragColor = vec4(color, veins * 0.4);
+            // Cria cores roxas desfocadas - mais visíveis
+            vec3 color = purpleColor * veins * 2.0;
+            gl_FragColor = vec4(color, min(veins * 1.2, 0.9));
           }
         `,
         transparent: true,
@@ -476,18 +476,21 @@ E vos chama.`.trim();
       });
       
       const veinMesh = new THREE.Mesh(geometry, veinMaterial);
-      veinMesh.position.z = -500;
+      veinMesh.position.set(0, 0, -400);
       scene.add(veinMesh);
       
       // Atualiza o tempo no shader
       function updateVeins(time, beat) {
         if (veinMaterial.uniforms) {
           veinMaterial.uniforms.time.value = time;
-          veinMaterial.uniforms.beatLevel.value = beat;
+          veinMaterial.uniforms.beatLevel.value = beat || 0;
         }
       }
       
-      return { mesh: veinMesh, update: updateVeins };
+      // Inicializa com tempo 0
+      updateVeins(0, 0);
+      
+      return { mesh: veinMesh, material: veinMaterial, update: updateVeins };
     }
     
     let veinsBackground = null;
@@ -654,10 +657,11 @@ E vos chama.`.trim();
 
     function createTextCanvas(text) {
       const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-      // Ajustado para caber na tela vertical do celular
+      // Ajustado para caber na tela vertical do celular - 25% menor
       const isMobile = window.innerWidth < 768;
       const maxWidth = isMobile ? window.innerWidth * 0.85 : 800;
-      const fontSize = isMobile ? Math.min(20, window.innerHeight / 35) : 24;
+      // Reduzido 25% no mobile: de 20 para 15
+      const fontSize = isMobile ? Math.min(15, window.innerHeight / 45) : 24;
       const lineHeight = fontSize * 1.3;
       const canvasHeight = lines.length * lineHeight + fontSize * 2;
       // Largura ajustada para mobile vertical
