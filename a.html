@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Pergaminho Arcano</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+
+    <style>
+        :root { --cor-arcana: #b24cff; }
+
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #000; color: #fff; font-family: 'MedievalSharp', cursive;
+            overflow: hidden;
+        }
+
+        /* Selo central, clicável */
+        #seal-container {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 160px; height: 160px; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; z-index: 20; pointer-events: auto;
+        }
+        #arcane-seal-img {
+            width: 120px; height: auto; pointer-events: auto;
+            filter: drop-shadow(0 0 22px var(--cor-arcana));
+            transition: opacity 0.4s ease-out, filter 0.4s ease-out;
+        }
+        #arcane-seal-img.clicked { opacity: 0; filter: drop-shadow(0 0 5px var(--cor-arcana)); }
+
+        /* Canvas Three.js */
+        #three-canvas { position: fixed; top: 0; left: 0; z-index: 1; }
+
+        /* Bloco final (assinatura substituída por narrativa) */
+        #signature-container {
+            display: none; opacity: 0; position: fixed; bottom: 110px; left: 50%;
+            transform: translateX(-50%); z-index: 10; text-align: center; font-size: 1.2rem;
+            font-family: 'MedievalSharp', cursive; transition: opacity 1s ease-in;
+            max-width: 600px; line-height: 1.35;
+        }
+        #signature { color: #fff; animation: pulse-arcano 1.4s ease-in-out infinite; }
+
+        @keyframes pulse-arcano {
+            0%, 100% { text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana); }
+            50%      { text-shadow: 0 0 10px #fff, 0 0 22px var(--cor-arcana), 0 0 32px var(--cor-arcana), 0 0 45px var(--cor-arcana); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="seal-container">
+        <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo Arcano">
+    </div>
+
+    <canvas id="three-canvas"></canvas>
+
+    <div id="signature-container">
+        <p id="signature">
+O coração dispara antes que você perceba que deixou a carta cair. O papel atinge o chão, mas a sensação de contato não some com ele. Algo fica preso na sua cabeça, como se um pensamento entrasse sem pedir permissão. Não é visão, nem sonho. É lembrança de algo que você nunca viveu.<br><br>
+A imagem vem inteira, sem construção, sem origem: uma taverna que você nunca viu, mas reconhece. Tábuas escuras, cheiro de ferrugem, luz baixa demais para ser aconchegante, mesas que já desistiram de permanecer retas. Ferrugem & Ossos. Velha Chama. O nome surge pronto, como se sempre estivesse guardado em algum ponto da sua mente que não era seu.<br><br>
+Ninguém diz que você deve ir.<br>
+Mas a sensação é de que você já está atrasado.
+        </p>
+    </div>
+
+    <!-- Shaders -->
+    <script type="x-shader/x-vertex" id="vertexShader">
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragmentShader">
+        uniform sampler2D map; uniform float time; uniform vec3 glowColor; uniform float distortionStrength;
+        varying vec2 vUv;
+        float rand(vec2 co){ return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453); }
+        void main() {
+            vec2 uv = vUv;
+            float bend = 0.35;
+            vec2 p = uv * 2.0 - 1.0;
+            p.y = p.y + bend * (p.y * p.y);
+            float perspective = 1.0 + bend * (p.y + 1.0) * 0.5;
+            p /= perspective;
+            vec2 warpedUv = p * 0.5 + 0.5;
+
+            vec2 distortedUv = warpedUv;
+            float noise = (rand(warpedUv * 10.0 + time * 0.5) - 0.5) * distortionStrength;
+            distortedUv.x += sin(warpedUv.y * 15.0 + time * 8.0) * noise;
+            distortedUv.y += cos(warpedUv.x * 15.0 + time * 7.0) * noise;
+
+            vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
+            float pulseFactor = (sin(time * 1.6) * 0.25 + 0.45);
+            vec3 purpleGlow = glowColor * texel.a * pulseFactor * 1.0;
+            vec3 finalColor = mix(vec3(1.0, 1.0, 1.0), purpleGlow, texel.a);
+            finalColor += glowColor * texel.a * pulseFactor * 0.75;
+            gl_FragColor = vec4(finalColor, texel.a);
+        }
+    </script>
+
+    <script>
+        /* ========================= TEXTO ========================= */
+        const LOREM_IPSUM_ARCANO = `
+Nas veias do cosmo, onde a luz teme pisar,
+o Vazio pulsa em compasso ancestral.
+Ouve, neófito, o sussurro das eras:
+as engrenagens do destino rangem.
+
+A Sétima Estrela sangrou sobre o véu,
+tecendo a runa da Despossessão.
+E do pó de estrelas mortas,
+o Primeiro Selo foi forjado.
+
+Não busque o poder que corrompe,
+mas o saber que liberta.
+Pois no coração do silêncio,
+a verdade aguarda, paciente.
+
+A geometria do efêmero,
+a matemática da alma.
+Tudo se dobra à Vontade
+quando a Vontade é una com o Todo.
+
+O Tempo é um rio que flui para trás,
+e a memória é a névoa em suas margens.
+Caminhamos sobre pontes de luar,
+buscando o que já foi perdido.
+
+Somente aqueles que ousam
+desvendar os nós do destino
+encontrarão a chave.
+
+A engrenagem gira.
+O coração bate.
+O caminho se revela.
+
+Contempla a Cifra.
+Entende o Padrão.
+O selo se abre.
+A jornada é tua.
+        `;
+
+        /* ========================= VARS ========================= */
+        let scene, camera, renderer;
+        let sfx1, sfx2, sfx25, sfx3;
+        let sfx2Id = null, sfx25Id = null;
+        let binauralTargets = [];
+        let crawlGroup, textMesh, textHeight;
+        let animationInProgress = false;
+        let endThreshold = 0;
+        let clock = new THREE.Clock();
+
+        const ARCANE_PURPLE = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--cor-arcana').trim());
+
+        /* ========================= INIT ========================= */
+        function init() {
+            setupAudio();
+            setupScene();
+            setupListeners();
+            startBinauralLoop();
+        }
+
+        /* ========================= AUDIO ========================= */
+        function setupAudio() {
+            sfx1  = new Howl({ src: ['./sfx1.mp3'],   volume: 0.8, loop: false, html5: false });
+            sfx2  = new Howl({ src: ['./sfx2.mp3'],   volume: 0.6, loop: true,  html5: false }); // Rusty Old Wheel
+            sfx25 = new Howl({ src: ['./sfx2_5.mp3'], volume: 0.4, loop: true,  html5: false }); // novo layer
+            sfx3  = new Howl({ src: ['./sfx3.mp3'],   volume: 0.6, loop: false, html5: false });
+        }
+
+        /* ========================= 3D SCENE ========================= */
+        function setupScene() {
+            const canvas = document.getElementById('three-canvas');
+            scene = new THREE.Scene();
+
+            const aspect = window.innerWidth / window.innerHeight;
+            camera = new THREE.PerspectiveCamera(50, aspect, 1, 10000);
+            camera.position.set(0, 130, 480);
+            camera.lookAt(0, 0, 0);
+            scene.add(camera);
+
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        }
+
+        function setupListeners() {
+            document.getElementById('seal-container').addEventListener('click', startExperience, { once: true });
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        /* ========================= FLOW ========================= */
+        function startExperience() {
+            if (animationInProgress) return;
+            animationInProgress = true;
+
+            const sealImg = document.getElementById('arcane-seal-img');
+            sealImg.classList.add('clicked');
+
+            // sfx1 imediato + binaural
+            const id1 = sfx1.play();
+            makeBinaural(sfx1, id1, {speed: 1.4, radius: 0.9, jitter: 0.35});
+
+            // sfx2 e sfx2.5 juntos após 1.5s
+            setTimeout(() => {
+                sfx2Id = sfx2.play();
+                makeBinaural(sfx2, sfx2Id, {speed: 1.3, radius: 1.2, jitter: 0.5});
+                // reverb metálico forte no sfx2 (80% wet / 20% dry)
+                setTimeout(() => {
+                    applyReverbToSound(sfx2, sfx2Id, {seconds: 1.8, decay: 3.0, wet: 0.8});
+                }, 120);
+
+sfx25.once('load', () => {
+    sfx25Id = sfx25.play();
+    makeBinaural(sfx25, sfx25Id, {speed: 1.5, radius: 1.0, jitter: 0.45});
+    console.log('%c[SFX] sfx2_5 carregado e reproduzido', 'color:#0f0');
+});
+sfx25.on('loaderror', (_, err) => {
+    console.warn('[SFX] Falha ao carregar sfx2_5:', err);
+});
+
+            }, 1500);
+
+            setTimeout(() => { document.getElementById('seal-container').style.display = 'none'; }, 400);
+
+            createCrawlText();
+            animate();
+        }
+
+        function createCrawlText() {
+            const textCanvas = createTextCanvas(LOREM_IPSUM_ARCANO);
+            textHeight = textCanvas.height;
+
+            const texture = new THREE.CanvasTexture(textCanvas);
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+
+            const material = new THREE.ShaderMaterial({
+                uniforms: {
+                    map: { value: texture },
+                    time: { value: 0.0 },
+                    glowColor: { value: ARCANE_PURPLE },
+                    distortionStrength: { value: 0.0075 }
+                },
+                vertexShader: document.getElementById('vertexShader').textContent,
+                fragmentShader: document.getElementById('fragmentShader').textContent,
+                transparent: true,
+                side: THREE.DoubleSide
+            });
+
+            const geometry = new THREE.PlaneGeometry(textCanvas.width, textHeight);
+            textMesh = new THREE.Mesh(geometry, material);
+
+            crawlGroup = new THREE.Group();
+            crawlGroup.add(textMesh);
+
+            crawlGroup.rotation.x = 0;
+            const startY = -textHeight / 2 - 200;   // entra mais cedo
+            crawlGroup.position.y = startY;
+
+            endThreshold = (textHeight * Math.cos(crawlGroup.rotation.x)) * 0.95; // sobe mais, não corta
+
+            scene.add(crawlGroup);
+        }
+
+        function createTextCanvas(text) {
+            const lines = text.split('\n');
+            const fontSize = 34;
+            const lineHeight = fontSize * 1.3;
+
+            const canvasHeight = lines.length * lineHeight + (fontSize * 2);
+            const canvasWidth = 1024;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+
+            const ctx = canvas.getContext('2d');
+            ctx.font = `${fontSize}px 'Cinzel Decorative'`;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.textAlign = 'center';
+
+            let y = fontSize * 2;
+            for (const line of lines) { ctx.fillText(line, canvasWidth / 2, y); y += lineHeight; }
+
+            return canvas;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (!animationInProgress) return;
+
+            if (textMesh && textMesh.material && textMesh.material.uniforms && textMesh.material.uniforms.time) {
+                textMesh.material.uniforms.time.value = clock.getElapsedTime();
+            }
+
+            crawlGroup.position.y += 0.8;
+
+            if (crawlGroup.position.y > endThreshold) {
+                finishAnimation();
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function finishAnimation() {
+            animationInProgress = false;
+
+            if (crawlGroup) {
+                scene.remove(crawlGroup);
+                if (textMesh.geometry) textMesh.geometry.dispose();
+                if (textMesh.material) {
+                    if (textMesh.material.map) textMesh.material.map.dispose();
+                    textMesh.material.dispose();
+                }
+            }
+
+            // fade-out de sfx2 e sfx2.5, depois stop
+            if (sfx2Id !== null && sfx2.playing(sfx2Id)) {
+                sfx2.fade(sfx2.volume(sfx2Id), 0, 800, sfx2Id);
+                setTimeout(() => { try { sfx2.stop(sfx2Id); } catch(e){} }, 820);
+            }
+            if (sfx25Id !== null && sfx25.playing(sfx25Id)) {
+                sfx25.fade(sfx25.volume(sfx25Id), 0, 800, sfx25Id);
+                setTimeout(() => { try { sfx25.stop(sfx25Id); } catch(e){} }, 820);
+            }
+
+            // assinatura + sfx3 depois de 1s (com binaural)
+            const signature = document.getElementById('signature-container');
+            signature.style.display = 'block';
+            setTimeout(() => { signature.style.opacity = '1'; }, 100);
+
+            setTimeout(() => {
+                const id3 = sfx3.play();
+                makeBinaural(sfx3, id3, {speed: 1.6, radius: 0.8, jitter: 0.4});
+            }, 1000);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        /* ========================= AUDIO FX (BINAURAL + REVERB) ========================= */
+
+        // Aplica binaural 3D (HRTF) com trajetória irregular ao redor do ouvinte.
+        function makeBinaural(howl, soundId, opts={}) {
+            const speed = opts.speed ?? 1.4;
+            const radius = opts.radius ?? 1.0;
+            const jitter = opts.jitter ?? 0.3;
+            howl.pannerAttr({ panningModel: 'HRTF', refDistance: 1, rolloffFactor: 0.9 }, soundId);
+            howl.pos(0, 0, -0.3, soundId);
+            binauralTargets.push({ howl, soundId, speed, radius, jitter, t0: performance.now()/1000 });
+        }
+
+        function startBinauralLoop() {
+            function frame() {
+                const now = performance.now()/1000;
+                binauralTargets = binauralTargets.filter(target => {
+                    const { howl, soundId, speed, radius, jitter, t0 } = target;
+                    if (!howl.playing(soundId)) return false;
+
+                    // caminho agressivo e irregular
+                    const t = (now - t0) * (1.0 / Math.max(0.001, speed));
+                    const a = 2.3, b = 1.7;
+                    const x = Math.sin(a * t) * radius * (0.85 + 0.15 * Math.sin(t*3.1));
+                    const y = (Math.sin(b * t * 0.7) * 0.25) + (Math.random() - 0.5) * 0.02 * jitter;
+                    const z = (Math.cos(a * t * 0.9) * 0.7) - 0.3 + (Math.random() - 0.5) * 0.02 * jitter;
+
+                    howl.pos(x, y, z, soundId);
+                    return true;
+                });
+                requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+        }
+
+        // Reverb metálico para sfx2 (wet 0.8, dry 0.2)
+        function applyReverbToSound(howl, soundId, {seconds=1.8, decay=3.0, wet=0.8}={}) {
+            try {
+                const ctx = Howler.ctx;
+                const sound = howl._soundById(soundId);
+                if (!sound) return;
+
+                const sourceNode = sound._panner || sound._node;
+                if (!sourceNode) return;
+
+                if (sound.__reverbApplied) return;
+                sound.__reverbApplied = true;
+
+                const convolver = ctx.createConvolver();
+                convolver.buffer = createImpulseResponse(ctx, seconds, decay);
+
+                const wetGain = ctx.createGain(); wetGain.gain.value = wet;
+                const dryGain = ctx.createGain(); dryGain.gain.value = 1 - wet; // 0.2
+
+                try { sourceNode.disconnect(); } catch(e){}
+
+                sourceNode.connect(dryGain);
+                sourceNode.connect(convolver);
+
+                convolver.connect(wetGain);
+                dryGain.connect(Howler.masterGain);
+                wetGain.connect(Howler.masterGain);
+
+                sound.__reverb = {convolver, wetGain, dryGain};
+            } catch (e) {
+                console.warn('Reverb não pôde ser aplicado:', e);
+            }
+        }
+
+        // IR procedural (ruído decaindo) — metálico/curto o suficiente para não virar caverna.
+        function createImpulseResponse(ctx, seconds=1.8, decay=3.0) {
+            const rate = ctx.sampleRate;
+            const length = Math.max(1, Math.floor(rate * seconds));
+            const impulse = ctx.createBuffer(2, length, rate);
+            for (let ch = 0; ch < 2; ch++) {
+                const data = impulse.getChannelData(ch);
+                for (let i = 0; i < length; i++) {
+                    const n = Math.random() * 2 - 1;
+                    data[i] = n * Math.pow(1 - i / length, decay);
+                }
+            }
+            return impulse;
+        }
+
+        init();
+    </script>
+</body>
+</html>
