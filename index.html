@@ -21,11 +21,32 @@
     #signature-container { display:none; opacity:0; position:fixed; bottom:110px; left:50%; transform:translateX(-50%); z-index:10; max-width:600px; transition:opacity 1.2s; }
     #signature { text-shadow:0 0 12px var(--cor-arcana); animation:pulse 1.4s infinite; }
     @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.8; } }
+    /* Estilo para o botão de iniciar */
+    #start-button {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      font-size: 1.2em;
+      background-color: var(--cor-arcana);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 30;
+      display: none; /* escondido inicialmente */
+    }
+    #start-button.show {
+      display: block;
+    }
   </style>
 </head>
 <body>
+  <!-- Botão para iniciar, inicialmente escondido -->
+  <button id="start-button">Começar</button>
+
   <div id="seal-container">
-    <img id="arcane-seal-img" src="selo-arcano.png" alt="Selo Arcano" onclick="startExperience()">
+    <img id="arcane-seal-img" src="selo-arcano.png" alt="Selo Arcano">
   </div>
   <canvas id="three-canvas"></canvas>
   <div id="interstitial">
@@ -192,14 +213,17 @@ E vos chama.`.trim();
       });
     }
 
-    // === BOTÃO FUNCIONA AQUI ===
+    // === FUNÇÃO DE INÍCIO, agora acessível ao clicar no botão ===
     window.startExperience = function() {
       if (animationInProgress) return;
       animationInProgress = true;
 
       const seal = document.getElementById('arcane-seal-img');
       seal.classList.add('clicked');
-      setTimeout(() => document.getElementById('seal-container').style.display = 'none', 400);
+      setTimeout(() => {
+        document.getElementById('seal-container').style.display = 'none';
+        document.getElementById('start-button').classList.remove('show');
+      }, 400);
 
       const id1 = sfx1.play();
       makeBinaural(sfx1, id1, {speed:1.4, radius:0.9, jitter:0.35});
@@ -223,6 +247,8 @@ E vos chama.`.trim();
           sfx25Id = sfx25.play();
           makeBinaural(sfx25, sfx25Id, {speed:1.5, radius:1.0, jitter:0.45});
         }
+        // Aqui pode ativar o botão para próximo passo se desejar
+        document.getElementById('start-button').classList.remove('show');
       }, 4500);
     };
 
@@ -261,13 +287,20 @@ E vos chama.`.trim();
       renderer.render(scene, camera);
     }
 
+    // Evento para redimensionar
     window.addEventListener('resize', () => {
       camera.aspect = innerWidth/innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight);
     });
 
-    init();
+    // Ao carregar, inicializa tudo e mostra o botão
+    window.onload = () => {
+      init();
+      // Mostra o botão após a inicialização
+      document.getElementById('start-button').classList.add('show');
+    };
+
   </script>
 </body>
 </html>
