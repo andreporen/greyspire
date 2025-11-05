@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sensorium — Selo, Carta & Calculadora</title>
+<title>Sensorium — Calculadora, Selo & Carta</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
@@ -46,17 +46,16 @@
   /* ---------- SELO "A" SVG (complexo) ---------- */
   #seal-container{
     position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-    width:260px; height:260px; z-index:20; cursor:pointer;
+    width:280px; height:280px; z-index:20; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
     transition:opacity .45s ease-out;
+    opacity:0; /* Inicialmente oculto */
   }
-  /* --- ATUALIZADO --- */
   .seal-svg{ 
     width:100%; height:100%; 
     filter:drop-shadow(0 0 22px rgba(178,76,255,.55)); 
     display:block;
   }
-  /* --- FIM DA ATUALIZAÇÃO --- */
   .seal-pulse{ animation:sealPulse 2.8s ease-in-out infinite }
   .ring-rot{ animation:ringRot 18s linear infinite }
   .sigil-rot{ animation:sigilRot 36s linear infinite }
@@ -64,6 +63,15 @@
   .strobe{ animation:strobe 4.6s ease-in-out infinite }
   #seal-container:hover .seal-svg{ filter:drop-shadow(0 0 26px rgba(178,76,255,.8)) }
   .seal-hide{ opacity:0 !important; filter:drop-shadow(0 0 6px rgba(178,76,255,.2)) }
+
+  /* Novos estilos para o selo complexo */
+  .fma-circle-outer { stroke:#b24cff; stroke-width:3; fill:none; filter:url(#fma-glow) }
+  .fma-circle-inner { stroke:#b24cff; stroke-width:1.5; fill:none; opacity:0.7 }
+  .fma-rune { fill:#b24cff; font-family:'Cinzel Decorative', serif; font-size:32px; text-anchor:middle; dominant-baseline:central; }
+  .fma-symbol { stroke:#fff; stroke-width:2; fill:none; filter:url(#fma-glow-white); }
+  .fma-star { fill:#fff; filter:url(#fma-glow-white); }
+  .fma-inner-ring-rot { animation:ringRot 12s linear infinite reverse }
+  .fma-outer-ring-rot { animation:ringRot 28s linear infinite }
 
   @keyframes sealPulse{ 0%,100%{ transform:scale(.965) } 50%{ transform:scale(1) } }
   @keyframes ringRot{ from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
@@ -158,7 +166,7 @@
   }
 
   /* ---------- CALCULADORA ---------- */
-  #calc-stage{ display:none; opacity:0; transition:opacity .8s ease; position:relative; z-index:2 }
+  #calc-stage{ opacity:1; transition:opacity .8s ease; position:relative; z-index:2 } /* Agora visível por padrão */
   header.calc-head{ padding:18px 16px 8px; text-align:center }
   header.calc-head h1{
     margin:0; font-size:clamp(22px,3.6vw,30px); color:var(--purple);
@@ -239,91 +247,86 @@
         <stop offset="45%" stop-color="#b24cff" stop-opacity="0.85"/>
         <stop offset="100%" stop-color="#3C0061" stop-opacity="0.0"/>
       </radialGradient>
-      <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="2" result="b"/>
+      
+      <filter id="fma-glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="3" result="glow"/>
         <feMerge>
-          <feMergeNode in="b"/>
+          <feMergeNode in="glow"/>
+          <feMergeNode in="SourceGraphic"/>
           <feMergeNode in="SourceGraphic"/>
         </feMerge>
       </filter>
+      <filter id="fma-glow-white" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="1.5" result="glow"/>
+        <feFlood flood-color="#ffffff" flood-opacity="0.8" result="color"/>
+        <feComposite in="color" in2="glow" operator="in" result="glow-colored"/>
+        <feMerge>
+          <feMergeNode in="glow-colored"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+
     </defs>
 
-    <circle cx="256" cy="256" r="190" fill="url(#gPurple)" opacity="0.25"/>
+    <circle cx="256" cy="256" r="230" fill="url(#gPurple)" opacity="0.15"/>
 
     <g transform="translate(256 256)">
-      <g class="ring-rot">
-        <circle cx="0" cy="0" r="200" fill="none" stroke="#b24cff" stroke-width="2" filter="url(#soft)"/>
-        <circle cx="0" cy="0" r="206" fill="none" stroke="#b24cff" stroke-opacity=".35" stroke-width="1"/>
-        <g stroke="#b24cff" stroke-linecap="round" opacity=".9">
-          <g>
-            <g id="tick12">
-              <line x1="0" y1="-206" x2="0" y2="-196" stroke-width="2"/>
-            </g>
-            <use href="#tick12" transform="rotate(30)"/>
-            <use href="#tick12" transform="rotate(60)"/>
-            <use href="#tick12" transform="rotate(90)"/>
-            <use href="#tick12" transform="rotate(120)"/>
-            <use href="#tick12" transform="rotate(150)"/>
-            <use href="#tick12" transform="rotate(180)"/>
-            <use href="#tick12" transform="rotate(210)"/>
-            <use href="#tick12" transform="rotate(240)"/>
-            <use href="#tick12" transform="rotate(270)"/>
-            <use href="#tick12" transform="rotate(300)"/>
-            <use href="#tick12" transform="rotate(330)"/>
-          </g>
+      <g class="fma-outer-ring-rot">
+        <circle cx="0" cy="0" r="240" class="fma-circle-outer"/>
+        <circle cx="0" cy="0" r="248" fill="none" stroke="#b24cff" stroke-opacity=".35" stroke-width="1"/>
+        <g class="fma-rune" fill="#b24cff" font-size="28">
+          <text x="0" y="-220" transform="rotate(0)">ᚠ</text>
+          <text x="110" y="-190" transform="rotate(30)">ᚦ</text>
+          <text x="200" y="-90" transform="rotate(60)">ᚨ</text>
+          <text x="220" y="0" transform="rotate(90)">ᚱ</text>
+          <text x="200" y="90" transform="rotate(120)">ᚲ</text>
+          <text x="110" y="190" transform="rotate(150)">ᚷ</text>
+          <text x="0" y="220" transform="rotate(180)">ᚺ</text>
+          <text x="-110" y="190" transform="rotate(210)">ᛃ</text>
+          <text x="-200" y="90" transform="rotate(240)">ᛇ</text>
+          <text x="-220" y="0" transform="rotate(270)">ᛈ</text>
+          <text x="-200" y="-90" transform="rotate(300)">ᛉ</text>
+          <text x="-110" y="-190" transform="rotate(330)">ᛏ</text>
         </g>
       </g>
     </g>
 
     <g transform="translate(256 256)">
-      <g class="ring-rot" style="animation-duration: 24s;">
-        <circle cx="0" cy="0" r="165" fill="none" stroke="#b24cff" stroke-opacity=".6" stroke-width="1"/>
-        <g font-family="Cinzel Decorative, serif" font-size="22" fill="#ffffff">
-          <g>
-            <g text-anchor="middle">
-              <text x="0" y="-165">ᚠ</text>
-              <text x="82" y="-144" transform="rotate(25)">ᚦ</text>
-              <text x="139" y="-80" transform="rotate(55)">ᛇ</text>
-              <text x="165" y="0" transform="rotate(90)">ᛟ</text>
-              <text x="139" y="80" transform="rotate(125)">✶</text>
-              <text x="82" y="144" transform="rotate(155)">ᛗ</text>
-              <text x="0" y="165" transform="rotate(180)">◇</text>
-              <text x="-82" y="144" transform="rotate(205)">ᛉ</text>
-              <text x="-139" y="80" transform="rotate(235)">✷</text>
-              <text x="-165" y="0" transform="rotate(270)">ᛚ</text>
-              <text x="-139" y="-80" transform="rotate(305)">ᚨ</text>
-              <text x="-82" y="-144" transform="rotate(335)">✧</text>
-            </g>
-          </g>
+      <g class="fma-inner-ring-rot">
+        <circle cx="0" cy="0" r="170" class="fma-circle-inner"/>
+        <g class="fma-symbol">
+          <path d="M-150,0 Q-100,-70 0,-150 Q100,-70 150,0 Q100,70 0,150 Q-100,70 -150,0 Z" stroke-width="1.8"/>
+          <line x1="-150" y1="0" x2="150" y2="0"/>
+          <line x1="0" y1="-150" x2="0" y2="150"/>
         </g>
+        <circle cx="0" cy="-170" r="4" class="fma-star"/>
+        <circle cx="0" cy="170" r="4" class="fma-star"/>
+        <circle cx="170" cy="0" r="4" class="fma-star"/>
+        <circle cx="-170" cy="0" r="4" class="fma-star"/>
       </g>
     </g>
 
-    <g class="shine">
-      <circle cx="256" cy="256" r="122" fill="none" stroke="#b24cff" stroke-width="1.6" opacity=".85"/>
-      <g transform="translate(256 256)">
-        <g class="sigil-rot" stroke="#b24cff" stroke-width="1.4" opacity=".9">
-          <polygon points="0,-100 86,50 -86,50" fill="none"/>
-          <line x1="0" y1="-100" x2="0" y2="68"/>
-          <line x1="-86" y1="50" x2="86" y2="50"/>
-          <circle cx="0" cy="0" r="26" fill="none"/>
-          <circle cx="0" cy="0" r="3" fill="#ffffff"/>
-        </g>
+    <g class="shine" transform="translate(256 256)">
+      <circle cx="0" cy="0" r="100" class="fma-circle-outer"/>
+      <g class="sigil-rot" stroke="#b24cff" stroke-width="2.5" opacity=".9" filter="url(#fma-glow)">
+        <polygon points="0,-80 70,40 -70,40" fill="none"/>
+        <line x1="0" y1="-80" x2="0" y2="60"/>
+        <line x1="-70" y1="40" x2="70" y2="40"/>
+        <circle cx="0" cy="0" r="22" fill="none" stroke="#fff" stroke-width="1.5"/>
+        <circle cx="0" cy="0" r="5" fill="#fff" filter="url(#fma-glow-white)"/>
       </g>
     </g>
 
-    <circle cx="256" cy="256" r="90" fill="none" stroke="#ffffff" stroke-opacity=".85" stroke-width="0.8"/>
+    <g transform="translate(256 256)">
+      <circle cx="0" cy="0" r="70" fill="none" stroke="#ffffff" stroke-opacity=".6" stroke-width="0.8"/>
+      <g class="fma-rune" font-size="18">
+        <text x="-45" y="-30">ᛖ</text>
+        <text x="45" y="-30">ᛜ</text>
+        <text x="0" y="50">ᛞ</text>
+      </g>
+    </g>
   </svg>
 </div>
-
-<section id="carta-stage">
-  <div id="carta-wrap">
-    <div id="carta"></div>
-    <div class="actions">
-      <button class="btn" id="btn-prosseguir">Prosseguir à calculadora</button>
-    </div>
-  </div>
-</section>
 
 <section id="calc-stage">
   <header class="calc-head">
@@ -419,42 +422,53 @@
             </tfoot>
           </table>
         </div>
+        <div class="actions" style="margin-top:20px;">
+          <button class="btn" id="btn-create-character">Criar Personagem &nbsp; (Ler Carta)</button>
+        </div>
       </div>
     </section>
   </main>
 </section>
 
+<section id="carta-stage">
+  <div id="carta-wrap">
+    <div id="carta"></div>
+    <div class="actions">
+      <button class="btn" id="btn-back-to-calc">Voltar para a Calculadora</button>
+    </div>
+  </div>
+</section>
+
 <button id="audio-tog" class="btn">Som: ligado</button>
 
 <script>
-/* =================== SELO: clique + flash + mostrar carta =================== */
+/* =================== GERAL: ÁUDIO, FLASH, CONTROLES DE NAVEGAÇÃO =================== */
 const seal = document.getElementById('seal-container');
 const flashEl = document.getElementById('flash');
 const cartaStage = document.getElementById('carta-stage');
 const calcStage  = document.getElementById('calc-stage');
 const audioTog   = document.getElementById('audio-tog');
+const btnCreateCharacter = document.getElementById('btn-create-character');
+const btnBackToCalc = document.getElementById('btn-back-to-calc');
 
-seal.addEventListener('click', ()=>{
-  // Flash
-  flashEl.classList.remove('flash-run'); void flashEl.offsetWidth; flashEl.classList.add('flash-run');
-  // Selo some
-  seal.classList.add('seal-hide');
-  setTimeout(()=>{ seal.remove(); }, 420);
-  // Audio start
-  try{ ensureAudio().resume(); }catch(e){}
-  startAmbient();
-  audioTog.style.display='block';
-  // Mostrar carta
-  cartaStage.style.display='block';
-  requestAnimationFrame(()=> cartaStage.style.opacity = 1);
-}, {once:true});
-
-/* =================== ÁUDIO PROCEDURAL (sem assets) =================== */
+// Iniciar áudio ambiente automaticamente após interação do usuário
 let audioCtx, ambientGain, ambient;
-function ensureAudio(){ if(audioCtx) return audioCtx; audioCtx = new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+let audioStarted = false;
+
+function ensureAudio(){
+  if(audioCtx) return audioCtx;
+  audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+
 function startAmbient(){
+  if (audioStarted) return;
   const ctx = ensureAudio();
-  const master = ctx.createGain(); master.gain.value = 0.0001; master.connect(ctx.destination);
+  if (ctx.state === 'suspended') { ctx.resume(); }
+
+  const master = ctx.createGain();
+  master.gain.value = 0.0001;
+  master.connect(ctx.destination);
   ambientGain = master;
 
   // Ruído filtrado (motor arcano)
@@ -482,25 +496,65 @@ function startAmbient(){
   noise.start(); osc.start(); lfo.start();
   ambient = {noise,osc,lfo};
   ambientGain.gain.linearRampToValueAtTime(0.35, ctx.currentTime+1.1);
+  audioStarted = true;
 }
+
 function stopAmbient(){
-  if(!audioCtx || !ambient) return;
+  if(!audioCtx || !ambient || !audioStarted) return;
   const t=audioCtx.currentTime;
   ambientGain.gain.linearRampToValueAtTime(0.0001, t+0.6);
   setTimeout(()=>{ try{ambient.noise.stop();ambient.osc.stop();ambient.lfo.stop();}catch(e){} },700);
+  audioStarted = false;
 }
+
 audioTog.addEventListener('click', ()=>{
-  if(!audioCtx || (ambientGain && ambientGain.gain.value<0.001)){ startAmbient(); audioTog.textContent='Som: ligado'; }
-  else { stopAmbient(); audioTog.textContent='Som: desligado'; }
+  if(audioStarted){ stopAmbient(); audioTog.textContent='Som: desligado'; }
+  else { startAmbient(); audioTog.textContent='Som: ligado'; }
 });
+
+// A calculadora será a tela inicial, o selo e a carta estarão ocultos.
+// Quando o botão "Criar Personagem" for clicado, a calculadora some, o selo aparece com flash, depois a carta.
+
+btnCreateCharacter.addEventListener('click', ()=>{
+  // Flash
+  flashEl.classList.remove('flash-run'); void flashEl.offsetWidth; flashEl.classList.add('flash-run');
+  // Esconder calculadora
+  calcStage.style.opacity = 0;
+  setTimeout(()=>{ calcStage.style.display = 'none'; }, 500);
+
+  // Mostrar selo e iniciar áudio (se não estiver rodando)
+  seal.style.display = 'block';
+  requestAnimationFrame(() => seal.style.opacity = 1);
+  startAmbient();
+  audioTog.style.display='block';
+
+  // Após um tempo, o selo some e a carta aparece
+  setTimeout(()=>{
+    flashEl.classList.remove('flash-run'); void flashEl.offsetWidth; flashEl.classList.add('flash-run');
+    seal.classList.add('seal-hide');
+    setTimeout(()=>{ seal.style.display = 'none'; }, 420); // remove after animation
+    cartaStage.style.display = 'block';
+    requestAnimationFrame(()=> cartaStage.style.opacity = 1);
+  }, 2500); // Tempo para o selo ficar visível e brilhar
+});
+
+btnBackToCalc.addEventListener('click', ()=>{
+  cartaStage.style.opacity = 0;
+  setTimeout(()=>{
+    cartaStage.style.display = 'none';
+    calcStage.style.display = 'block';
+    requestAnimationFrame(()=> calcStage.style.opacity = 1);
+  }, 500);
+});
+
 
 /* =================== CARTA: parser de tags + glitches =================== */
 const RAW_TEXT = `
-[fade]Não sei quanto tempo me resta antes de não restar tempo algum.[/fade] Já sinto o meu nome se afastando de mim como um dente morto empurrado pela língua. Se lerem isto, não procurem quem escreveu. O que sobra de mim já não é pessoa, mas ruído.
+[fade]Não sei quanto tempo me resta antes de não restar tempo algum.[/fade] Já sinto o meu nome se afastando de mim como um [blink]dente morto[/blink] empurrado pela língua. Se lerem isto, não procurem quem escreveu. O que sobra de mim já não é pessoa, mas [glitch]ruído[/glitch].
 
 [glitch]A Engrenagem está acelerando.[/glitch] Isso não é metáfora. Há algo que ela não consegue mais conter, e a Liturgia sabe, mesmo que finja medir tudo com gráficos e rezas. Não é verdade que ela apenas drena o que enlouqueceria os cidadãos. [fade]Ela começou a drenar o que os faz lembrar que ainda são humanos.[/fade]
 
-Eu fui parte disso. Eu recitei as fórmulas. Eu acreditei que manter a cidade sã era um bem maior. Só agora percebo que existem formas de loucura mais honestas do que a ordem que impomos. A cada rotação:
+Eu fui parte disso. Eu recitei as fórmulas. Eu acreditei que manter a cidade sã era um bem maior. Só agora percebo que existem formas de loucura mais honestas do que a [blink]ordem[/blink] que impomos. A cada rotação:
 
 [glow-purple]uma emoção é apagada[/glow-purple]  
 [glow-purple]uma memória é diluída[/glow-purple]  
@@ -508,31 +562,31 @@ Eu fui parte disso. Eu recitei as fórmulas. Eu acreditei que manter a cidade s�
 
 [blur]Eu já não lembro quem eram meus pais.[/blur]  
 Ontem, acho que ainda lembrava.  
-Agora só sei que um dia reconheci a palavra “mãe” como algo meu, e ela me soa estrangeira.
+Agora só sei que um dia reconheci a palavra “mãe” como algo meu, e ela me soa [glitch]estrangeira[/glitch].
 
-Não esperem que η cidade grite quando começar a morrer. Ela vai sorrir. Ela vai agradecer. É o que acontece quando se esquece o que se perdeu.
+Não esperem que η cidade grite quando começar a [blink]morrer[/blink]. Ela vai sorrir. Ela vai agradecer. É o que acontece quando se [blink]esquece[/blink] o que se perdeu.
 
-Alguém precisa descer até onde a Engrenagem respira. Alguém que ainda possa ser lembrado. Eu não posso mais. [glitch]Estou sendo reescrita enquanto escrevo.[/glitch]
+Alguém precisa descer até onde a [blink]Engrenagem[/blink] respira. Alguém que ainda possa ser lembrado. Eu não posso mais. [glitch]Estou sendo reescrita enquanto escrevo.[/glitch]
 
-Se sentirem a cabeça pesar, não é culpa de vocês. É ela. A máquina tentando transformar suas mentes em arquivo apagável. Resistam. Repitam o próprio nome. Lembrem-se das mãos. Lembrem-se do que escolheram ser antes de a cidade escolher por vocês.
+Se sentirem a cabeça pesar, não é culpa de vocês. É ela. A máquina tentando transformar suas mentes em [burned]arquivo apagável[/burned]. Resistam. Repitam o próprio nome. Lembrem-se das mãos. Lembrem-se do que [highlight]escolheram ser[/highlight] antes de a cidade escolher por vocês.
 
-[glow-purple]O sensorium está oscilando.[/glow-purple] A cor púrpura que alimenta as máquinas está ficando mais viva, como se fosse sangue lembrando que já foi alma. Isso significa que o limite está próximo.
+[glow-purple]O sensorium está oscilando.[/glow-purple] A cor púrpura que alimenta as máquinas está ficando mais viva, como se fosse sangue lembrando que já foi alma. Isso significa que o [blink]limite está próximo[/blink].
 
 Há um lugar onde ainda se pode falar antes que as paredes escutem:  
 [highlight]Taverna Ferrugem & Ossos[/highlight]. Distrito Velha Chama.  
 Vocês vão encontrá-la mesmo que tentem não ir.  
 Isso significa que ainda têm escolha.  
-Ou que já não têm nenhuma, e só estão descobrindo agora.
+Ou que já não têm nenhuma, e só estão [blur]descobrindo agora[/blur].
 
 Se chegarem a tempo, talvez eu consiga—  
 Talvez ainda haja—
 
 [burned][trecho ilegível — parte arrancada ou queimada][/burned]
 
-Se ouvirem alguém chamar, não respondam de imediato. Às vezes, não é voz. Às vezes, é um reflexo tentando se lembrar de que já foi vivo.
+Se ouvirem alguém chamar, não respondam de imediato. Às vezes, não é voz. Às vezes, é um [glitch]reflexo[/glitch] tentando se lembrar de que já foi vivo.
 
 Venham antes que a cidade decida que nunca receberam esta carta.  
-Antes que eu mesma me convença de que nunca a escrevi.
+Antes que eu mesma me convença de que nunca a [fade]escrevi[/fade].
 
 [eaten-signature]Arcanista-Mor Lythienne Vael[/eaten-signature]
 `.trim();
@@ -555,7 +609,11 @@ function parseCarta(raw){
       .replace(/(?<!\w)(memória|memoria)(?!\w)/gi, '<span class="blink">$1</span>')
       .replace(/(?<!\w)(engrenagem)(?!\w)/gi, '<span class="blink">$1</span>')
       .replace(/(?<!\w)(nome)(?!\w)/gi, '<span class="blink">$1</span>')
-      .replace(/(?<!\w)(esquecer|esquec[eê]u|esquecida|esquecido)(?!\w)/gi, '<span class="blink">$1</span>');
+      .replace(/(?<!\w)(esquecer|esquec[eê]u|esquecida|esquecido)(?!\w)/gi, '<span class="blink">$1</span>')
+      .replace(/(?<!\w)(morrer|morrendo)(?!\w)/gi, '<span class="blink">$1</span>')
+      .replace(/(?<!\w)(limite)(?!\w)/gi, '<span class="blink">$1</span>')
+      .replace(/(?<!\w)(cidade)(?!\w)/gi, '<span class="fx-blur">$1</span>'); // Mais efeitos
+
     return `<p>${t}</p>`;
   }).join("\n");
   return html;
@@ -584,14 +642,6 @@ setInterval(()=>{
   });
 }, 260);
 
-document.getElementById('btn-prosseguir').addEventListener('click', ()=>{
-  cartaStage.style.opacity = 0;
-  setTimeout(()=>{
-    cartaStage.style.display='none';
-    calcStage.style.display='block';
-    requestAnimationFrame(()=> calcStage.style.opacity = 1);
-  }, 500);
-});
 
 /* =================== CALCULADORA (4–15, 27 pts) =================== */
 const ATTRS=["Força","Destreza","Constituição","Inteligência","Sabedoria","Carisma"];
@@ -833,11 +883,20 @@ function importBuild(file){
 el.cls.onchange = () => { state.cls = el.cls.value; fillSubclass(); updateAll(); };
 el.subcls.onchange = () => { state.subcls = el.subcls.value; updateAll(); };
 el.rune.onchange = () => { state.rune = el.rune.value; initRuneChoiceUI(); updateAll(); };
-document.getElementById("runeChoice1")?.addEventListener("change", ()=>{ state.runeChoice1 = el.rc1.value; updateAll(); });
-document.getElementById("runeChoice2")?.addEventListener("change", ()=>{ state.runeChoice2 = el.rc2.value; updateAll(); });
+// Adicionar listeners para os selects de escolha de runa dinamicamente, pois eles podem ser recriados
+document.addEventListener("change", (event) => {
+    if (event.target.id === "runeChoice1") {
+        state.runeChoice1 = event.target.value;
+        updateAll();
+    }
+    if (event.target.id === "runeChoice2") {
+        state.runeChoice2 = event.target.value;
+        updateAll();
+    }
+});
 el.reset.onclick = () => { KEY.forEach(k=>state.base[k]=8); updateAll(); };
 el.export.onclick = exportBuild;
-el.import.onchange = (e)=>{ if (e.target.files[0]) importBuild(e.targe.files[0]); };
+el.import.onchange = (e)=>{ if (e.target.files[0]) importBuild(e.target.files[0]); };
 
 (function boot(){
   initClassUI(); initRunes(); renderStats(); renderTotals(); renderResult();
