@@ -33,7 +33,7 @@
 <body>
 
   <div id="seal-container">
-        <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo">
+    <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo">
   </div>
 
   <canvas id="canvas"></canvas>
@@ -54,7 +54,6 @@
     void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }
   </script>
   <script type="x-shader/x-fragment" id="fs">
-    // tSDF agora é uma máscara simples, e não um SDF pré-calculado
     uniform sampler2D tSDF; uniform float uTime,uBeat; varying vec2 vUv;
     void main(){
       // Efeito de distorção de perspectiva
@@ -63,18 +62,17 @@
       // Efeito de ondulação/glitch
       float w=.01*(1.0+2.0*uBeat); uv.x+=w*sin(uv.y*25.0+uTime*2.0)+w*.5*sin(uv.y*40.0+uTime*3.0);
       
-      // Obtém o valor (cor) da textura de máscara (o texto)
+      // Obtém o valor da textura de máscara (o texto)
       float s=texture2D(tSDF,uv).r; 
       
-      // Usa fwidth para calcular a largura da borda e smoothstep para suavizar o texto.
-      float border_width = fwidth(s) * 1.5;
-      float a = smoothstep(0.5 - border_width, 0.5 + border_width, s);
-      float g = smoothstep(0.0, 0.6, s); // Usado para o efeito de brilho
+      // Usamos smoothstep com valores fixos para criar a borda suavizada da máscara (mais estável)
+      float border_start = 0.5 - 0.05; 
+      float border_end = 0.5 + 0.05;
+      float a = smoothstep(border_start, border_end, s); 
+      float g = smoothstep(0.0, 0.6, s); // Para o brilho
       
-      // Renderização de cor e brilho
       vec3 c=mix(vec3(.8),vec3(1.0),sin(uTime*6.0)*.5+.5);
       vec3 gc=vec3(.7,.3,1.0)*g*(2.0+uBeat);
-      
       gl_FragColor=vec4(c*a*3.0+gc,a);
     }
   </script>
@@ -137,11 +135,10 @@ E vos chama.`.trim();
       renderer.setSize(innerWidth, innerHeight);
       renderer.setClearColor(0x000000, 1);
 
-      // CORRIGIDO: Agora makeSDF é makeMask (textura de máscara simples)
+      // CORRIGIDO: makeSDF agora é uma máscara simples, estável
       sdfTex = makeSDF();
 
       // Sons
-      // Certifique-se de que sfx1.mp3, sfx2.mp3, sfx2_5.mp3, sfx3.mp3 existam!
       ['sfx1','sfx2','sfx2_5','sfx3'].forEach(n=>sounds[n]=new Howl({src:[`./${n}.mp3`],volume:n==='sfx1'||n==='sfx3'?0.8:0.7,loop:n!=='sfx1'&&n!=='sfx3'}));
 
       // Clique no selo (mobile + desktop)
@@ -174,7 +171,6 @@ E vos chama.`.trim();
     }
 
     function makeText() {
-      // Ajuste a escala conforme necessário para diferentes telas
       const scale = innerWidth<768?1.8:2.2, w=800*scale, h=1800*scale;
       material = new THREE.ShaderMaterial({
         uniforms: { tSDF:{value:sdfTex}, uTime:{value:0}, uBeat:{value:0} },
@@ -190,17 +186,18 @@ E vos chama.`.trim();
       scroll = 0;
     }
 
-    // FUNÇÃO CORRIGIDA: Cria uma máscara de texto (simples)
+    // FUNÇÃO CORRIGIDA: Cria uma máscara de texto simples (sem cálculo de SDF quebrado)
     function makeSDF() {
       const w=800, h=1800, canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
       const ctx=canvas.getContext('2d'); ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
       
       // Estilo do Texto
       ctx.fillStyle='#fff'; 
-      ctx.font='bold 36px Uncial Antiqua,Georgia,serif'; // A fonte usada no CSS
+      ctx.font='bold 36px Uncial Antiqua,Georgia,serif'; 
       ctx.textAlign='center';
       
       const lines=TEXT.split('\n').map(l=>l.trim()).filter(Boolean); let y=100;
+      
       // Renderiza o texto no Canvas
       lines.forEach(l=>{ ctx.fillText(l,w/2,y); y+=52; });
 
@@ -214,7 +211,6 @@ E vos chama.`.trim();
     function animate() {
       requestAnimationFrame(animate);
       const dt = clock.getDelta(), t = clock.getElapsedTime();
-      // O uBeat idealmente viria de uma análise de áudio (Howler), mas o fallback está OK por enquanto
       const beat = Math.sin(t*2*Math.PI)*.5+.5; 
 
       if(material) { material.uniforms.uTime.value = t; material.uniforms.uBeat.value = beat; }
@@ -227,11 +223,8 @@ E vos chama.`.trim();
 
     function end() {
       running = false; scene.remove(crawl);
-      // Parar sons de loop
       ['s2','s25'].forEach(k=>sounds[k.split('s')[1]]?.stop(ids[k]));
-      // Tocar som final
       sounds.sfx3.play();
-      // Mostrar assinatura
       const sig = document.getElementById('signature-container');
       sig.style.display='block'; requestAnimationFrame(()=>sig.style.opacity='1');
     }
