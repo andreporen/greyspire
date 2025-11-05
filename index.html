@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sensorium — Calculadora, Selo & Carta</title>
+<title>Sensorium — Calculadora, Selo & Lore</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
@@ -46,10 +46,11 @@
   /* ---------- SELO "A" SVG (complexo) ---------- */
   #seal-container{
     position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-    width:280px; height:280px; z-index:20; cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
+    width:280px; height:280px; z-index:20;
+    display:none; /* Começa oculto */
+    align-items:center; justify-content:center;
     transition:opacity .45s ease-out;
-    opacity:0; /* Inicialmente oculto */
+    opacity:0;
   }
   .seal-svg{ 
     width:100%; height:100%; 
@@ -84,16 +85,51 @@
     0%,92%{ opacity:1 } 94%{ opacity:.5 } 96%{ opacity:.9 } 98%{opacity:.4} 100%{opacity:1}
   }
 
-  /* ---------- CARTA ---------- */
-  #carta-stage{ display:none; opacity:0; transition:opacity .8s ease; position:relative; z-index:2; }
-  #carta-wrap{
+  /* ---------- SEÇÕES DE CONTEÚDO (Carta, Lore, World) ---------- */
+  #carta-stage, #lore-stage, #world-stage { 
+    display:none; opacity:0; transition:opacity .8s ease; position:relative; z-index:2; 
+  }
+  #carta-wrap, .lore-wrap, .world-wrap {
     max-width:900px; margin:8vh auto 4vh; padding:28px 22px;
     background: var(--panel);
     border:1px solid var(--border);
     box-shadow: 0 0 24px rgba(178,76,255,.18), inset 0 0 60px rgba(178,76,255,.05);
     position:relative; overflow:hidden;
   }
-  #carta-wrap::before{
+  .lore-wrap h1, .world-wrap h1 {
+    font-family:'Cinzel Decorative', cursive; color:var(--purple); margin:0 0 14px 0;
+    font-size:clamp(20px,3.6vw,28px); letter-spacing:.5px; text-shadow:0 0 12px rgba(178,76,255,.6);
+  }
+  .world-wrap p {
+    font-style: italic;
+    color: var(--muted);
+  }
+
+  /* Menu de Capítulos */
+  .chapter-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .chapter-btn {
+    font-size: 18px;
+    padding: 14px 20px;
+    text-align: left;
+    color: var(--ink);
+    border: 1px solid var(--border);
+  }
+  .chapter-btn:hover {
+    color: #fff;
+    background: rgba(178, 76, 255, 0.1);
+  }
+  .chapter-btn strong {
+    font-family: 'Cinzel Decorative', cursive;
+    color: var(--purple);
+    margin-right: 12px;
+  }
+  
+  #carta-wrap::before, .lore-wrap::before, .world-wrap::before {
     content:""; position:absolute; inset:-12px;
     background:
       radial-gradient(300px 140px at 0% 0%, rgba(0,0,0,0.8), transparent 70%),
@@ -116,6 +152,15 @@
     transition:box-shadow .3s, border-color .3s, transform .2s;
   }
   .btn:hover{ border-color:#fff; box-shadow:0 0 22px rgba(178,76,255,.32); transform:translateY(-1px) }
+  .btn.btn-primary {
+    background: var(--purple);
+    color: #000;
+    font-weight: 700;
+  }
+  .btn.btn-primary:hover {
+    background: #fff;
+    border-color: #fff;
+  }
 
   /* Efeitos da carta */
   .blink{ animation:blink 3.6s steps(1,end) infinite }
@@ -166,7 +211,7 @@
   }
 
   /* ---------- CALCULADORA ---------- */
-  #calc-stage{ opacity:1; transition:opacity .8s ease; position:relative; z-index:2 } /* Agora visível por padrão */
+  #calc-stage{ opacity:1; transition:opacity .8s ease; position:relative; z-index:2 } /* Começa visível */
   header.calc-head{ padding:18px 16px 8px; text-align:center }
   header.calc-head h1{
     margin:0; font-size:clamp(22px,3.6vw,30px); color:var(--purple);
@@ -231,7 +276,7 @@
   .rune-extra.show{ display:flex }
 
   /* Áudio toggle */
-  #audio-tog{ position:fixed; right:12px; bottom:12px; z-index:40; display:none }
+  #audio-tog{ position:fixed; right:12px; bottom:12px; z-index:40; display:block; } /* Visível por padrão */
 </style>
 </head>
 <body>
@@ -248,6 +293,7 @@
         <stop offset="100%" stop-color="#3C0061" stop-opacity="0.0"/>
       </radialGradient>
       
+      <!-- Filtro de Brilho Roxo (FMA) -->
       <filter id="fma-glow" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="3" result="glow"/>
         <feMerge>
@@ -256,6 +302,7 @@
           <feMergeNode in="SourceGraphic"/>
         </feMerge>
       </filter>
+      <!-- Filtro de Brilho Branco (FMA) -->
       <filter id="fma-glow-white" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="1.5" result="glow"/>
         <feFlood flood-color="#ffffff" flood-opacity="0.8" result="color"/>
@@ -268,8 +315,10 @@
 
     </defs>
 
+    <!-- Halo Externo -->
     <circle cx="256" cy="256" r="230" fill="url(#gPurple)" opacity="0.15"/>
 
+    <!-- Anel de Runas Externo (Rotativo) -->
     <g transform="translate(256 256)">
       <g class="fma-outer-ring-rot">
         <circle cx="0" cy="0" r="240" class="fma-circle-outer"/>
@@ -291,6 +340,7 @@
       </g>
     </g>
 
+    <!-- Anel de Símbolos Interno (Rotativo) -->
     <g transform="translate(256 256)">
       <g class="fma-inner-ring-rot">
         <circle cx="0" cy="0" r="170" class="fma-circle-inner"/>
@@ -299,6 +349,7 @@
           <line x1="-150" y1="0" x2="150" y2="0"/>
           <line x1="0" y1="-150" x2="0" y2="150"/>
         </g>
+        <!-- Estrelas Guia -->
         <circle cx="0" cy="-170" r="4" class="fma-star"/>
         <circle cx="0" cy="170" r="4" class="fma-star"/>
         <circle cx="170" cy="0" r="4" class="fma-star"/>
@@ -306,6 +357,7 @@
       </g>
     </g>
 
+    <!-- Sigilo Central (Rotativo + Brilho) -->
     <g class="shine" transform="translate(256 256)">
       <circle cx="0" cy="0" r="100" class="fma-circle-outer"/>
       <g class="sigil-rot" stroke="#b24cff" stroke-width="2.5" opacity=".9" filter="url(#fma-glow)">
@@ -317,6 +369,7 @@
       </g>
     </g>
 
+    <!-- Runas Internas Estáticas -->
     <g transform="translate(256 256)">
       <circle cx="0" cy="0" r="70" fill="none" stroke="#ffffff" stroke-opacity=".6" stroke-width="0.8"/>
       <g class="fma-rune" font-size="18">
@@ -328,6 +381,7 @@
   </svg>
 </div>
 
+<!-- CALCULADORA (Tela Inicial) -->
 <section id="calc-stage">
   <header class="calc-head">
     <h1>Calculadora Point Buy — D&D 5e (27 pontos) + Runas</h1>
@@ -422,36 +476,72 @@
             </tfoot>
           </table>
         </div>
-        <div class="actions" style="margin-top:20px;">
-          <button class="btn" id="btn-create-character">Criar Personagem &nbsp; (Ler Carta)</button>
+        <!-- Botão para ir para o Lore -->
+        <div class="actions" style="margin-top:20px; justify-content:flex-end;">
+          <button class="btn btn-primary" id="btn-go-to-lore">Ir para Lore</button>
         </div>
       </div>
     </section>
   </main>
 </section>
 
-<section id="carta-stage">
-  <div id="carta-wrap">
-    <div id="carta"></div>
-    <div class="actions">
-      <button class="btn" id="btn-back-to-calc">Voltar para a Calculadora</button>
+<!-- MENU DE LORE (Capítulos) -->
+<section id="lore-stage">
+  <div class="lore-wrap">
+    <h1>Sensorium - Arquivos</h1>
+    <div class="chapter-menu">
+      <button class="btn chapter-btn" id="btn-chapter-1">
+        <strong>Capítulo 1:</strong> A Carta Encontrada
+      </button>
+      <button class="btn chapter-btn" id="btn-chapter-2">
+        <strong>Capítulo 2:</strong> Resumo do Mundo
+      </button>
     </div>
   </div>
 </section>
 
-<button id="audio-tog" class="btn">Som: ligado</button>
+<!-- CARTA (Capítulo 1) -->
+<section id="carta-stage">
+  <div id="carta-wrap">
+    <div id="carta"></div>
+    <div class="actions">
+      <button class="btn" id="btn-back-to-lore">Voltar ao Menu</button>
+    </div>
+  </div>
+</section>
+
+<!-- RESUMO DO MUNDO (Capítulo 2) -->
+<section id="world-stage">
+  <div class="world-wrap">
+    <h1>Resumo do Mundo</h1>
+    <p>
+      [...O usuário irá preencher a história do mundo aqui...]
+    </p>
+    <div class="actions">
+      <button class="btn" id="btn-world-back-to-lore">Voltar ao Menu</button>
+    </div>
+  </div>
+</section>
+
+
+<button id="audio-tog" class="btn">Som: desligado</button>
 
 <script>
 /* =================== GERAL: ÁUDIO, FLASH, CONTROLES DE NAVEGAÇÃO =================== */
 const seal = document.getElementById('seal-container');
 const flashEl = document.getElementById('flash');
-const cartaStage = document.getElementById('carta-stage');
 const calcStage  = document.getElementById('calc-stage');
+const loreStage = document.getElementById('lore-stage');
+const cartaStage = document.getElementById('carta-stage');
+const worldStage = document.getElementById('world-stage');
 const audioTog   = document.getElementById('audio-tog');
-const btnCreateCharacter = document.getElementById('btn-create-character');
-const btnBackToCalc = document.getElementById('btn-back-to-calc');
 
-// Iniciar áudio ambiente automaticamente após interação do usuário
+const btnGoToLore = document.getElementById('btn-go-to-lore');
+const btnChapter1 = document.getElementById('btn-chapter-1');
+const btnChapter2 = document.getElementById('btn-chapter-2');
+const btnBackToLore = document.getElementById('btn-back-to-lore');
+const btnWorldBackToLore = document.getElementById('btn-world-back-to-lore');
+
 let audioCtx, ambientGain, ambient;
 let audioStarted = false;
 
@@ -464,14 +554,15 @@ function ensureAudio(){
 function startAmbient(){
   if (audioStarted) return;
   const ctx = ensureAudio();
-  if (ctx.state === 'suspended') { ctx.resume(); }
+  if (ctx.state === 'suspended') { 
+    ctx.resume().catch(e => console.error("Audio resume failed:", e));
+  }
 
   const master = ctx.createGain();
   master.gain.value = 0.0001;
   master.connect(ctx.destination);
   ambientGain = master;
 
-  // Ruído filtrado (motor arcano)
   const len = ctx.sampleRate*2;
   const buf = ctx.createBuffer(1, len, ctx.sampleRate);
   const d = buf.getChannelData(0); let prev=0;
@@ -480,12 +571,10 @@ function startAmbient(){
   const bp = ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=360; bp.Q.value=3.2;
   const g = ctx.createGain(); g.gain.value=0.09;
 
-  // Droning grave (sensorium)
   const osc=ctx.createOscillator(); osc.type='sawtooth'; osc.frequency.value=52;
   const low=ctx.createBiquadFilter(); low.type='lowpass'; low.frequency.value=140;
   const g2 = ctx.createGain(); g2.gain.value=0.018;
 
-  // LFO leve para respirar
   const lfo=ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.28;
   const lfoG=ctx.createGain(); lfoG.gain.value=0.07;
   lfo.connect(lfoG).connect(g.gain);
@@ -497,6 +586,7 @@ function startAmbient(){
   ambient = {noise,osc,lfo};
   ambientGain.gain.linearRampToValueAtTime(0.35, ctx.currentTime+1.1);
   audioStarted = true;
+  audioTog.textContent = 'Som: ligado';
 }
 
 function stopAmbient(){
@@ -505,46 +595,74 @@ function stopAmbient(){
   ambientGain.gain.linearRampToValueAtTime(0.0001, t+0.6);
   setTimeout(()=>{ try{ambient.noise.stop();ambient.osc.stop();ambient.lfo.stop();}catch(e){} },700);
   audioStarted = false;
+  audioTog.textContent = 'Som: desligado';
 }
 
+// Botão de áudio principal
 audioTog.addEventListener('click', ()=>{
-  if(audioStarted){ stopAmbient(); audioTog.textContent='Som: desligado'; }
-  else { startAmbient(); audioTog.textContent='Som: ligado'; }
+  ensureAudio(); // Garante que o Ctx exista antes de verificar o estado
+  if(audioStarted){ 
+    stopAmbient(); 
+  } else { 
+    startAmbient(); 
+  }
 });
 
-// A calculadora será a tela inicial, o selo e a carta estarão ocultos.
-// Quando o botão "Criar Personagem" for clicado, a calculadora some, o selo aparece com flash, depois a carta.
+// Função genérica para transição de tela
+function transitionTo(stageToShow, stageToHide) {
+  if (stageToHide) {
+    stageToHide.style.opacity = 0;
+    setTimeout(() => { stageToHide.style.display = 'none'; }, 500);
+  }
+  
+  if (stageToShow) {
+    stageToShow.style.display = 'block';
+    requestAnimationFrame(() => { stageToShow.style.opacity = 1; });
+  }
+}
 
-btnCreateCharacter.addEventListener('click', ()=>{
-  // Flash
+// Fluxo: Calculadora -> Selo -> Menu Lore
+btnGoToLore.addEventListener('click', ()=>{
+  startAmbient(); // Garante que o áudio comece (corrige iOS)
+  
+  // 1. Flash e esconder calculadora
   flashEl.classList.remove('flash-run'); void flashEl.offsetWidth; flashEl.classList.add('flash-run');
-  // Esconder calculadora
-  calcStage.style.opacity = 0;
-  setTimeout(()=>{ calcStage.style.display = 'none'; }, 500);
+  transitionTo(null, calcStage);
 
-  // Mostrar selo e iniciar áudio (se não estiver rodando)
-  seal.style.display = 'block';
-  requestAnimationFrame(() => seal.style.opacity = 1);
-  startAmbient();
-  audioTog.style.display='block';
+  // 2. Mostrar Selo
+  setTimeout(() => {
+    seal.style.display = 'flex'; // 'flex' para centralizar
+    requestAnimationFrame(() => seal.style.opacity = 1);
+  }, 500); // Espera o fade-out da calculadora
 
-  // Após um tempo, o selo some e a carta aparece
+  // 3. Esconder Selo e Mostrar Menu Lore
   setTimeout(()=>{
     flashEl.classList.remove('flash-run'); void flashEl.offsetWidth; flashEl.classList.add('flash-run');
     seal.classList.add('seal-hide');
-    setTimeout(()=>{ seal.style.display = 'none'; }, 420); // remove after animation
-    cartaStage.style.display = 'block';
-    requestAnimationFrame(()=> cartaStage.style.opacity = 1);
-  }, 2500); // Tempo para o selo ficar visível e brilhar
+    transitionTo(loreStage, null); // Começa a mostrar o lore
+    
+    setTimeout(()=>{ seal.style.display = 'none'; }, 420); // Remove selo
+  }, 3000); // Tempo que o selo fica visível
 });
 
-btnBackToCalc.addEventListener('click', ()=>{
-  cartaStage.style.opacity = 0;
-  setTimeout(()=>{
-    cartaStage.style.display = 'none';
-    calcStage.style.display = 'block';
-    requestAnimationFrame(()=> calcStage.style.opacity = 1);
-  }, 500);
+// Fluxo: Menu Lore -> Capítulo 1 (Carta)
+btnChapter1.addEventListener('click', () => {
+  transitionTo(cartaStage, loreStage);
+});
+
+// Fluxo: Menu Lore -> Capítulo 2 (Mundo)
+btnChapter2.addEventListener('click', () => {
+  transitionTo(worldStage, loreStage);
+});
+
+// Fluxo: Carta -> Menu Lore
+btnBackToLore.addEventListener('click', () => {
+  transitionTo(loreStage, cartaStage);
+});
+
+// Fluxo: Mundo -> Menu Lore
+btnWorldBackToLore.addEventListener('click', () => {
+  transitionTo(loreStage, worldStage);
 });
 
 
@@ -612,7 +730,7 @@ function parseCarta(raw){
       .replace(/(?<!\w)(esquecer|esquec[eê]u|esquecida|esquecido)(?!\w)/gi, '<span class="blink">$1</span>')
       .replace(/(?<!\w)(morrer|morrendo)(?!\w)/gi, '<span class="blink">$1</span>')
       .replace(/(?<!\w)(limite)(?!\w)/gi, '<span class="blink">$1</span>')
-      .replace(/(?<!\w)(cidade)(?!\w)/gi, '<span class="fx-blur">$1</span>'); // Mais efeitos
+      .replace(/(?<!\w)(cidade)(?!\w)/gi, '<span class="fx-blur">$1</span>');
 
     return `<p>${t}</p>`;
   }).join("\n");
@@ -883,7 +1001,6 @@ function importBuild(file){
 el.cls.onchange = () => { state.cls = el.cls.value; fillSubclass(); updateAll(); };
 el.subcls.onchange = () => { state.subcls = el.subcls.value; updateAll(); };
 el.rune.onchange = () => { state.rune = el.rune.value; initRuneChoiceUI(); updateAll(); };
-// Adicionar listeners para os selects de escolha de runa dinamicamente, pois eles podem ser recriados
 document.addEventListener("change", (event) => {
     if (event.target.id === "runeChoice1") {
         state.runeChoice1 = event.target.value;
