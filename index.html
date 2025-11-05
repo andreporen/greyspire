@@ -59,7 +59,6 @@
     void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
   </script>
 
-  <!-- SDF SHADER (SIMPLIFICADO E ESTÁVEL) -->
   <script type="x-shader/x-fragment" id="sdfFragmentShader">
     uniform sampler2D tSDF;
     uniform float uTime;
@@ -179,7 +178,13 @@ E vos chama.`.trim();
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setClearColor(0x000000, 1);
-      document.getElementById('seal-container').addEventListener('click', startExperience, { once: true });
+
+      // === CLIQUE NO SELO CORRIGIDO ===
+      const seal = document.getElementById('seal-container');
+      seal.style.pointerEvents = 'auto';
+      seal.addEventListener('click', startExperience, { once: true });
+      seal.addEventListener('touchstart', (e) => { e.preventDefault(); startExperience(); }, { once: true, passive: false });
+
       window.addEventListener('resize', onWindowResize);
       precomputeBeat('./sfx2_5.mp3');
       animate();
@@ -187,13 +192,21 @@ E vos chama.`.trim();
 
     function startExperience() {
       if (animationInProgress) return;
-      animationInProgress = true。
+      animationInProgress = true; // <--- CORRIGIDO: ; no lugar de 。
 
-      document.getElementById('arcane-seal-img').classList.add('clicked');
+      const sealImg = document.getElementById('arcane-seal-img');
+      sealImg.classList.add('clicked');
       sfx1.play();
-      setTimeout(() => { document.getElementById('seal-container').style.display = 'none'; }, 400);
+
+      setTimeout(() => {
+        document.getElementById('seal-container').style.display = 'none';
+      }, 400);
+
       showInterstitial(3000);
-      setTimeout(() => { sfx2Id = sfx2.play(); sfx25Id = sfx25.play(); }, 4500);
+      setTimeout(() => {
+        sfx2Id = sfx2.play();
+        sfx25Id = sfx25.play();
+      }, 4500);
       setTimeout(createCrawlText, 3000);
     }
 
@@ -201,7 +214,14 @@ E vos chama.`.trim();
       const el = document.getElementById('interstitial');
       el.style.display = 'flex';
       requestAnimationFrame(() => el.classList.add('show'));
-      setTimeout(() => { el.classList.remove('show'); el.classList.add('hide'); setTimeout(() => { el.style.display = 'none'; el.classList.remove('hide'); }, 500); }, ms);
+      setTimeout(() => {
+        el.classList.remove('show');
+        el.classList.add('hide');
+        setTimeout(() => {
+          el.style.display = 'none';
+          el.classList.remove('hide');
+        }, 500);
+      }, ms);
     }
 
     function createCrawlText() {
