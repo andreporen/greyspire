@@ -1,9 +1,11 @@
+
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sensorium — Calculadora, Selo & Lore</title>
+<title>Liturgia da Engrenagem Perpétua</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
@@ -43,20 +45,14 @@
   .flash-run{ animation:flash .55s ease-out forwards }
   @keyframes flash{ 0%{opacity:0} 10%{opacity:1} 40%{opacity:.9} 100%{opacity:0} }
 
-  /* ---------- SELO "A" SVG (complexo) ---------- */
+  /* ---------- SELO SVG (complexo) ---------- */
   #seal-container{
     position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
     width:280px; height:280px; z-index:20;
-    display:none; /* Começa oculto */
-    align-items:center; justify-content:center;
-    transition:opacity .45s ease-out;
-    opacity:0;
+    display:none; align-items:center; justify-content:center;
+    transition:opacity .45s ease-out; opacity:0;
   }
-  .seal-svg{ 
-    width:100%; height:100%; 
-    filter:drop-shadow(0 0 22px rgba(178,76,255,.55)); 
-    display:block;
-  }
+  .seal-svg{ width:100%; height:100%; filter:drop-shadow(0 0 22px rgba(178,76,255,.55)); display:block; }
   .seal-pulse{ animation:sealPulse 2.8s ease-in-out infinite }
   .ring-rot{ animation:ringRot 18s linear infinite }
   .sigil-rot{ animation:sigilRot 36s linear infinite }
@@ -65,7 +61,6 @@
   #seal-container:hover .seal-svg{ filter:drop-shadow(0 0 26px rgba(178,76,255,.8)) }
   .seal-hide{ opacity:0 !important; filter:drop-shadow(0 0 6px rgba(178,76,255,.2)) }
 
-  /* Novos estilos para o selo complexo */
   .fma-circle-outer { stroke:#b24cff; stroke-width:3; fill:none; filter:url(#fma-glow) }
   .fma-circle-inner { stroke:#b24cff; stroke-width:1.5; fill:none; opacity:0.7 }
   .fma-rune { fill:#b24cff; font-family:'Cinzel Decorative', serif; font-size:32px; text-anchor:middle; dominant-baseline:central; }
@@ -81,14 +76,10 @@
     0%,100%{ filter:brightness(1) drop-shadow(0 0 8px #b24cff) }
     50%{ filter:brightness(1.15) drop-shadow(0 0 18px #b24cff) }
   }
-  @keyframes strobe{
-    0%,92%{ opacity:1 } 94%{ opacity:.5 } 96%{ opacity:.9 } 98%{opacity:.4} 100%{opacity:1}
-  }
+  @keyframes strobe{ 0%,92%{ opacity:1 } 94%{ opacity:.5 } 96%{ opacity:.9 } 98%{opacity:.4} 100%{opacity:1} }
 
-  /* ---------- SEÇÕES DE CONTEÚDO (Carta, Lore, World) ---------- */
-  #carta-stage, #lore-stage, #world-stage { 
-    display:none; opacity:0; transition:opacity .8s ease; position:relative; z-index:2; 
-  }
+  /* ---------- SEÇÕES ---------- */
+  #carta-stage, #lore-stage, #world-stage { display:none; opacity:0; transition:opacity .8s ease; position:relative; z-index:2; }
   #carta-wrap, .lore-wrap, .world-wrap {
     max-width:900px; margin:8vh auto 4vh; padding:28px 22px;
     background: var(--panel);
@@ -96,52 +87,17 @@
     box-shadow: 0 0 24px rgba(178,76,255,.18), inset 0 0 60px rgba(178,76,255,.05);
     position:relative; overflow:hidden;
   }
-  .lore-wrap h1, .world-wrap h1 {
+  .lore-wrap h1, .world-wrap h1, #carta h1 {
     font-family:'Cinzel Decorative', cursive; color:var(--purple); margin:0 0 14px 0;
     font-size:clamp(20px,3.6vw,28px); letter-spacing:.5px; text-shadow:0 0 12px rgba(178,76,255,.6);
   }
-  .world-wrap p {
-    font-style: italic;
-    color: var(--muted);
-  }
+  .world-wrap p { font-style: italic; color: var(--muted); }
 
-  /* Menu de Capítulos */
-  .chapter-menu {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 20px;
-  }
-  .chapter-btn {
-    font-size: 18px;
-    padding: 14px 20px;
-    text-align: left;
-    color: var(--ink);
-    border: 1px solid var(--border);
-  }
-  .chapter-btn:hover {
-    color: #fff;
-    background: rgba(178, 76, 255, 0.1);
-  }
-  .chapter-btn strong {
-    font-family: 'Cinzel Decorative', cursive;
-    color: var(--purple);
-    margin-right: 12px;
-  }
-  
-  #carta-wrap::before, .lore-wrap::before, .world-wrap::before {
-    content:""; position:absolute; inset:-12px;
-    background:
-      radial-gradient(300px 140px at 0% 0%, rgba(0,0,0,0.8), transparent 70%),
-      radial-gradient(380px 180px at 100% 20%, rgba(0,0,0,0.7), transparent 70%),
-      radial-gradient(420px 180px at 0% 100%, rgba(0,0,0,0.75), transparent 70%),
-      radial-gradient(300px 160px at 100% 100%, rgba(0,0,0,0.85), transparent 70%);
-    mix-blend-mode:multiply; pointer-events:none;
-  }
-  #carta h1{
-    font-family:'Cinzel Decorative', cursive; color:var(--purple); margin:0 0 14px 0;
-    font-size:clamp(20px,3.6vw,28px); letter-spacing:.5px; text-shadow:0 0 12px rgba(178,76,255,.6);
-  }
+  .chapter-menu { display:flex; flex-direction:column; gap:12px; margin-top:20px; }
+  .chapter-btn { font-size:18px; padding:14px 20px; text-align:left; color:var(--ink); border:1px solid var(--border); background:transparent; }
+  .chapter-btn:hover { color:#fff; background: rgba(178, 76, 255, 0.1); }
+  .chapter-btn strong { font-family: 'Cinzel Decorative', cursive; color: var(--purple); margin-right: 12px; }
+
   #carta p{ line-height:1.6; color:var(--ink); margin:10px 0 }
   #carta em{ color:var(--ink-dim) }
   .actions{ margin-top:20px; display:flex; flex-wrap:wrap; gap:10px }
@@ -152,29 +108,20 @@
     transition:box-shadow .3s, border-color .3s, transform .2s;
   }
   .btn:hover{ border-color:#fff; box-shadow:0 0 22px rgba(178,76,255,.32); transform:translateY(-1px) }
-  .btn.btn-primary {
-    background: var(--purple);
-    color: #000;
-    font-weight: 700;
-  }
-  .btn.btn-primary:hover {
-    background: #fff;
-    border-color: #fff;
-  }
+  .btn.btn-primary { background: var(--purple); color: #000; font-weight:700; }
+  .btn.btn-primary:hover { background:#fff; border-color:#fff; }
 
   /* Efeitos da carta */
   .blink{ animation:blink 3.6s steps(1,end) infinite }
   @keyframes blink{ 0%,87%{opacity:1} 88%{opacity:.15} 92%{opacity:.6} 96%{opacity:.3} 100%{opacity:1} }
   .fx-fade{ animation:fadePulse 6.5s ease-in-out infinite }
   @keyframes fadePulse{ 0%,100%{opacity:1} 40%{opacity:.45} 60%{opacity:.9} }
-  .fx-glow{ color:#fff; text-shadow:0 0 6px #fff,0 0 14px var(--purple),0 0 26px var(--purple),0 0 42px var(--purple-deep);
-            animation:glowBreath 3.4s ease-in-out infinite }
+  .fx-glow{ color:#fff; text-shadow:0 0 6px #fff,0 0 14px var(--purple),0 0 26px var(--purple),0 0 42px var(--purple-deep); animation:glowBreath 3.4s ease-in-out infinite }
   @keyframes glowBreath{ 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.15)} }
   .fx-blur{ filter:blur(1.4px); transition:filter .35s ease }
   .fx-blur:hover{ filter:blur(0) }
   .fx-highlight{ color:#fff; text-shadow:0 0 10px var(--purple),0 0 22px var(--purple),0 0 44px var(--purple); position:relative }
-  .fx-highlight::after{ content:""; position:absolute; left:-2px; right:-2px; bottom:-1px; height:1px;
-    box-shadow:0 0 10px var(--purple),0 0 20px var(--purple) }
+  .fx-highlight::after{ content:""; position:absolute; left:-2px; right:-2px; bottom:-1px; height:1px; box-shadow:0 0 10px var(--purple),0 0 20px var(--purple) }
   .fx-burned{ position:relative; display:inline-block; padding:0 .1em; color:var(--ink);
     --mask: radial-gradient(8px 5px at 0% 70%, transparent 40%, black 60%) repeat-x,
             radial-gradient(6px 4px at 100% 30%, transparent 45%, black 65%) repeat-x;
@@ -211,7 +158,7 @@
   }
 
   /* ---------- CALCULADORA ---------- */
-  #calc-stage{ opacity:1; transition:opacity .8s ease; position:relative; z-index:2 } /* Começa visível */
+  #calc-stage{ opacity:1; transition:opacity .8s ease; position:relative; z-index:2 }
   header.calc-head{ padding:18px 16px 8px; text-align:center }
   header.calc-head h1{
     margin:0; font-size:clamp(22px,3.6vw,30px); color:var(--purple);
@@ -233,18 +180,14 @@
   .control{ display:flex; flex-direction:column; gap:6px; min-width:180px; flex:1 }
   label{ font-size:12px; color:var(--muted) }
 
-  /* SELECTS corrigiDOS */
+  /* SELECTS */
   select{
     -webkit-appearance:none; appearance:none;
     width:100%;
     border:1px solid var(--border);
-    background: #000;
-    color:#fff;
-    border-radius:0;
-    padding:10px 36px 10px 12px;
-    font-size:14px;
-    font-family:'MedievalSharp', cursive;
-    outline:none;
+    background:#000; color:#fff;
+    border-radius:0; padding:10px 36px 10px 12px; font-size:14px;
+    font-family:'MedievalSharp', cursive; outline:none;
     transition:border-color .25s, box-shadow .25s;
     background-image:
       url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='20' viewBox='0 0 28 20'><polyline points='6,7 14,15 22,7' fill='none' stroke='%23b24cff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
@@ -252,9 +195,7 @@
   }
   select:focus{ border-color:#fff; box-shadow:0 0 6px #fff,0 0 12px var(--purple),0 0 18px var(--purple) }
 
-  input[type="number"], .btn{
-    border:1px solid var(--border); background:#000; color:#fff; border-radius:0; padding:10px 12px; font-size:14px
-  }
+  input[type="number"], .btn{ border:1px solid var(--border); background:#000; color:#fff; border-radius:0; padding:10px 12px; font-size:14px }
   .grid-6{ display:grid; grid-template-columns:repeat(6,1fr); gap:10px }
   @media(max-width:820px){ .grid-6{ grid-template-columns:repeat(3,1fr) } }
   @media(max-width:520px){ .grid-6{ grid-template-columns:repeat(2,1fr) } }
@@ -274,51 +215,37 @@
   th{ color:var(--purple); font-family:'Cinzel Decorative', cursive }
   .rune-extra{ display:none; gap:10px; margin-top:10px }
   .rune-extra.show{ display:flex }
-
-  /* Áudio toggle */
-  #audio-tog{ position:fixed; right:12px; bottom:12px; z-index:40; display:block; } /* Visível por padrão */
 </style>
 </head>
 <body>
 
 <div id="flash"></div>
 
+<!-- SELO -->
 <div id="seal-container" aria-label="Ativar Selo Arcano">
-  <svg class="seal-svg seal-pulse strobe" aria-hidden="true"
-       viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <svg class="seal-svg seal-pulse strobe" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <defs>
       <radialGradient id="gPurple" cx="50%" cy="50%" r="50%">
         <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
         <stop offset="45%" stop-color="#b24cff" stop-opacity="0.85"/>
         <stop offset="100%" stop-color="#3C0061" stop-opacity="0.0"/>
       </radialGradient>
-      
-      <!-- Filtro de Brilho Roxo (FMA) -->
       <filter id="fma-glow" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="3" result="glow"/>
-        <feMerge>
-          <feMergeNode in="glow"/>
-          <feMergeNode in="SourceGraphic"/>
-          <feMergeNode in="SourceGraphic"/>
-        </feMerge>
+        <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
-      <!-- Filtro de Brilho Branco (FMA) -->
       <filter id="fma-glow-white" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="1.5" result="glow"/>
         <feFlood flood-color="#ffffff" flood-opacity="0.8" result="color"/>
         <feComposite in="color" in2="glow" operator="in" result="glow-colored"/>
-        <feMerge>
-          <feMergeNode in="glow-colored"/>
-          <feMergeNode in="SourceGraphic"/>
-        </feMerge>
+        <feMerge><feMergeNode in="glow-colored"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
-
     </defs>
 
-    <!-- Halo Externo -->
+    <!-- Halo -->
     <circle cx="256" cy="256" r="230" fill="url(#gPurple)" opacity="0.15"/>
 
-    <!-- Anel de Runas Externo (Rotativo) -->
+    <!-- Anel externo com runas -->
     <g transform="translate(256 256)">
       <g class="fma-outer-ring-rot">
         <circle cx="0" cy="0" r="240" class="fma-circle-outer"/>
@@ -340,7 +267,7 @@
       </g>
     </g>
 
-    <!-- Anel de Símbolos Interno (Rotativo) -->
+    <!-- Anel interno -->
     <g transform="translate(256 256)">
       <g class="fma-inner-ring-rot">
         <circle cx="0" cy="0" r="170" class="fma-circle-inner"/>
@@ -349,7 +276,6 @@
           <line x1="-150" y1="0" x2="150" y2="0"/>
           <line x1="0" y1="-150" x2="0" y2="150"/>
         </g>
-        <!-- Estrelas Guia -->
         <circle cx="0" cy="-170" r="4" class="fma-star"/>
         <circle cx="0" cy="170" r="4" class="fma-star"/>
         <circle cx="170" cy="0" r="4" class="fma-star"/>
@@ -357,7 +283,7 @@
       </g>
     </g>
 
-    <!-- Sigilo Central (Rotativo + Brilho) -->
+    <!-- Sigilo central -->
     <g class="shine" transform="translate(256 256)">
       <circle cx="0" cy="0" r="100" class="fma-circle-outer"/>
       <g class="sigil-rot" stroke="#b24cff" stroke-width="2.5" opacity=".9" filter="url(#fma-glow)">
@@ -369,7 +295,7 @@
       </g>
     </g>
 
-    <!-- Runas Internas Estáticas -->
+    <!-- Runas internas -->
     <g transform="translate(256 256)">
       <circle cx="0" cy="0" r="70" fill="none" stroke="#ffffff" stroke-opacity=".6" stroke-width="0.8"/>
       <g class="fma-rune" font-size="18">
@@ -384,7 +310,7 @@
 <!-- CALCULADORA (Tela Inicial) -->
 <section id="calc-stage">
   <header class="calc-head">
-    <h1>Calculadora Point Buy — D&D 5e (27 pontos) + Runas</h1>
+    <h1>Calculadora Point Buy -- D&D 5e (27 pontos) + Runas</h1>
     <p>Distribua 27 pontos (pré-runa <strong>4–15</strong>). Abaixo de 8 devolve pontos. Acima de 15 é inválido antes da runa.</p>
   </header>
 
@@ -435,6 +361,7 @@
           <label class="btn" style="cursor:pointer">Importar
             <input type="file" id="import" accept="application/json" style="display:none">
           </label>
+          <button class="btn btn-primary" id="btn-go-to-lore">Ir para Lore</button>
         </div>
       </div>
     </section>
@@ -454,7 +381,7 @@
           <div class="control" style="width:100%">
             <label>Resumo</label>
             <div id="summary" class="pill" style="width:100%; justify-content:space-between">
-              <span id="sumText" class="muted">—</span>
+              <span id="sumText" class="muted">--</span>
               <span id="warnings" style="color:var(--danger)"></span>
             </div>
           </div>
@@ -476,19 +403,15 @@
             </tfoot>
           </table>
         </div>
-        <!-- Botão para ir para o Lore -->
-        <div class="actions" style="margin-top:20px; justify-content:flex-end;">
-          <button class="btn btn-primary" id="btn-go-to-lore">Ir para Lore</button>
-        </div>
       </div>
     </section>
   </main>
 </section>
 
-<!-- MENU DE LORE (Capítulos) -->
+<!-- MENU DE LORE -->
 <section id="lore-stage">
   <div class="lore-wrap">
-    <h1>Sensorium - Arquivos</h1>
+    <h1>Arquivos da Liturgia</h1>
     <div class="chapter-menu">
       <button class="btn chapter-btn" id="btn-chapter-1">
         <strong>Capítulo 1:</strong> A Carta Encontrada
@@ -500,7 +423,7 @@
   </div>
 </section>
 
-<!-- CARTA (Capítulo 1) -->
+<!-- CARTA -->
 <section id="carta-stage">
   <div id="carta-wrap">
     <div id="carta"></div>
@@ -510,59 +433,47 @@
   </div>
 </section>
 
-<!-- RESUMO DO MUNDO (Capítulo 2) -->
+<!-- RESUMO DO MUNDO -->
 <section id="world-stage">
   <div class="world-wrap">
-    <h1>Resumo do Mundo</h1>
-    <p>
-      [...O usuário irá preencher a história do mundo aqui...]
-    </p>
+    <h1>Arquivo de Referência Interna – Registro Histórico de Greyspire</h1>
+    <p>    Greyspire ainda é chamada de cidade, mas o termo já não descreve com precisão o que ela se tornou. É mais correto dizer que ela persiste. Continua erguida não porque venceu o colapso do mundo, mas porque aprendeu a conviver com ele como quem divide a casa com um animal que não pode ser nomeado. Ela é o que restou do Velho Império depois da guerra que apagou não só um inimigo, mas a própria memória do que significava derrotá-lo.  
+  A Federação Arcana não caiu. Ela foi retirada. O Ritual da Convergência, ideia doentia de vitória absoluta, não destruiu muralhas ou exércitos; destruiu o direito de existir. O território onde ela ficava continua lá, mas não tem mais dono, nem história, nem forma estável. É o lugar onde começou a Fenda, e nada desde então voltou a se comportar como deveria.  
+  A Fenda não avança, não fala e não responde. Apenas permanece, como um acidente que decidiu ser permanente. Todos sabem dela. Poucos tentam compreendê-la. Os que tentam, ou não voltam, ou voltam com uma lucidez que ninguém inveja. O saber que vem de lá não serve para viver, apenas para perceber o quanto já estamos mortos em partes.  
+  Greyspire só suporta isso porque algo a sustém por baixo. Uma máquina que não deveria existir, girando sem cessar em um subterrâneo que não aparece em mapa algum. A Engrenagem Perpétua. Não há registro de quem construiu, nem de quando, nem de como. Só há a certeza prática: enquanto ela se mover, a cidade não enlouquece de uma vez só. As ruas não se deformam. As pessoas ainda sonham com coisas feitas de carne, não de pensamento. Isso basta, dizem.  
+  A população se divide pelas runas. Não por escolha, jamais por mérito. Cada pessoa nasce marcada, e a marca define o que ela será permitida a ser. As castas não são decretadas: crescem na pele. A runa diz que um corpo vale tanto, que uma mente pode usar tanto, que uma alma será cobrada tanto. Os que não têm runa não são considerados cidadãos. São tolerados em silêncio, como poeira que ainda não foi varrida.  
+  A estrutura social é simples porque não permite exceção. Magia forte, posição alta. Magia fraca, função servil. Sem magia, ausência administrativa. A Liturgia chama isso de equilíbrio. Os manuais chamam de classificação. Quem observa de perto chama de outra coisa que não pode ser escrita nos documentos.  
+  O sensorium (a energia que tudo alimenta) mudou de comportamento nas últimas décadas. Ele responde a estímulos que ninguém fez. Gesta luz onde não existe lanterna. Vibra quando ninguém conjura. Há quem diga que ele começou a aprender. Há quem diga que ele começou a lembrar. Em ambos os casos, é proibido tratar isso como hipótese.  
+  Nada aqui é estável. Nada aqui é confiável. Mas tudo aqui continua funcionando. E isso, mais do que qualquer muralha, é o que mantém Greyspire viva: ela aprendeu a sobreviver mesmo depois que o mundo perdeu o sentido.</p>
     <div class="actions">
       <button class="btn" id="btn-world-back-to-lore">Voltar ao Menu</button>
     </div>
   </div>
 </section>
 
-
-<button id="audio-tog" class="btn">Som: desligado</button>
-
 <script>
-/* =================== GERAL: ÁUDIO, FLASH, CONTROLES DE NAVEGAÇÃO =================== */
-const seal = document.getElementById('seal-container');
-const flashEl = document.getElementById('flash');
-const calcStage  = document.getElementById('calc-stage');
-const loreStage = document.getElementById('lore-stage');
-const cartaStage = document.getElementById('carta-stage');
-const worldStage = document.getElementById('world-stage');
-const audioTog   = document.getElementById('audio-tog');
+/* ========= ÁUDIO (ambient arcano) ========= */
+let audioCtx, ambientGain, ambient, audioPlaying = false;
 
-const btnGoToLore = document.getElementById('btn-go-to-lore');
-const btnChapter1 = document.getElementById('btn-chapter-1');
-const btnChapter2 = document.getElementById('btn-chapter-2');
-const btnBackToLore = document.getElementById('btn-back-to-lore');
-const btnWorldBackToLore = document.getElementById('btn-world-back-to-lore');
-
-let audioCtx, ambientGain, ambient;
-let audioStarted = false;
-
-function ensureAudio(){
-  if(audioCtx) return audioCtx;
-  audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+function ensureAudioCtx(){
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume().catch(()=>{});
+  }
   return audioCtx;
 }
-
 function startAmbient(){
-  if (audioStarted) return;
-  const ctx = ensureAudio();
-  if (ctx.state === 'suspended') { 
-    ctx.resume().catch(e => console.error("Audio resume failed:", e));
-  }
+  if (audioPlaying) return;
+  const ctx = ensureAudioCtx();
 
   const master = ctx.createGain();
   master.gain.value = 0.0001;
   master.connect(ctx.destination);
   ambientGain = master;
 
+  // noise
   const len = ctx.sampleRate*2;
   const buf = ctx.createBuffer(1, len, ctx.sampleRate);
   const d = buf.getChannelData(0); let prev=0;
@@ -571,10 +482,12 @@ function startAmbient(){
   const bp = ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=360; bp.Q.value=3.2;
   const g = ctx.createGain(); g.gain.value=0.09;
 
+  // under-osc
   const osc=ctx.createOscillator(); osc.type='sawtooth'; osc.frequency.value=52;
   const low=ctx.createBiquadFilter(); low.type='lowpass'; low.frequency.value=140;
   const g2 = ctx.createGain(); g2.gain.value=0.018;
 
+  // LFO leve
   const lfo=ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.28;
   const lfoG=ctx.createGain(); lfoG.gain.value=0.07;
   lfo.connect(lfoG).connect(g.gain);
@@ -584,89 +497,72 @@ function startAmbient(){
 
   noise.start(); osc.start(); lfo.start();
   ambient = {noise,osc,lfo};
-  ambientGain.gain.linearRampToValueAtTime(0.35, ctx.currentTime+1.1);
-  audioStarted = true;
-  audioTog.textContent = 'Som: ligado';
-}
 
+  ambientGain.gain.linearRampToValueAtTime(0.32, ctx.currentTime + 1.2);
+  audioPlaying = true;
+}
 function stopAmbient(){
-  if(!audioCtx || !ambient || !audioStarted) return;
-  const t=audioCtx.currentTime;
-  ambientGain.gain.linearRampToValueAtTime(0.0001, t+0.6);
-  setTimeout(()=>{ try{ambient.noise.stop();ambient.osc.stop();ambient.lfo.stop();}catch(e){} },700);
-  audioStarted = false;
-  audioTog.textContent = 'Som: desligado';
+  if (!audioCtx || !ambient || !audioPlaying) return;
+  const t = audioCtx.currentTime;
+  ambientGain.gain.cancelScheduledValues(t);
+  ambientGain.gain.linearRampToValueAtTime(0.0001, t + 1.2);
+  setTimeout(()=>{
+    try{ ambient.noise.stop(); ambient.osc.stop(); ambient.lfo.stop(); }catch(e){}
+  }, 1400);
+  audioPlaying = false;
 }
 
-// Botão de áudio principal
-audioTog.addEventListener('click', ()=>{
-  ensureAudio(); // Garante que o Ctx exista antes de verificar o estado
-  if(audioStarted){ 
-    stopAmbient(); 
-  } else { 
-    startAmbient(); 
-  }
-});
+/* ========= TRANSIÇÕES / FLUXO ========= */
+const flashEl = document.getElementById('flash');
+const calcStage  = document.getElementById('calc-stage');
+const loreStage = document.getElementById('lore-stage');
+const cartaStage = document.getElementById('carta-stage');
+const worldStage = document.getElementById('world-stage');
+const btnGoToLore = document.getElementById('btn-go-to-lore');
+const btnChapter1 = document.getElementById('btn-chapter-1');
+const btnChapter2 = document.getElementById('btn-chapter-2');
+const btnBackToLore = document.getElementById('btn-back-to-lore');
+const btnWorldBackToLore = document.getElementById('btn-world-back-to-lore');
+const seal = document.getElementById('seal-container');
 
-// Função genérica para transição de tela
 function transitionTo(stageToShow, stageToHide) {
   if (stageToHide) {
     stageToHide.style.opacity = 0;
     setTimeout(() => { stageToHide.style.display = 'none'; }, 500);
   }
-  
   if (stageToShow) {
     stageToShow.style.display = 'block';
     requestAnimationFrame(() => { stageToShow.style.opacity = 1; });
   }
 }
 
-// Fluxo: Calculadora -> Selo -> Menu Lore
 btnGoToLore.addEventListener('click', ()=>{
-  startAmbient(); // Garante que o áudio comece (corrige iOS)
-  
-  // 1. Flash e esconder calculadora
+  // flash e esconder calculadora
   flashEl.classList.remove('flash-run'); void flashEl.offsetWidth; flashEl.classList.add('flash-run');
   transitionTo(null, calcStage);
 
-  // 2. Mostrar Selo
+  // mostrar selo + iniciar áudio quando o selo aparece
   setTimeout(() => {
-    seal.style.display = 'flex'; // 'flex' para centralizar
+    seal.style.display = 'flex';
     requestAnimationFrame(() => seal.style.opacity = 1);
-  }, 500); // Espera o fade-out da calculadora
+    startAmbient(); // <<< áudio começa aqui
+  }, 500);
 
-  // 3. Esconder Selo e Mostrar Menu Lore
+  // após alguns segundos, esconder selo e ir para o menu
   setTimeout(()=>{
     flashEl.classList.remove('flash-run'); void flashEl.offsetWidth; flashEl.classList.add('flash-run');
     seal.classList.add('seal-hide');
-    transitionTo(loreStage, null); // Começa a mostrar o lore
-    
-    setTimeout(()=>{ seal.style.display = 'none'; }, 420); // Remove selo
-  }, 3000); // Tempo que o selo fica visível
+    transitionTo(loreStage, null);
+    setTimeout(()=>{ seal.style.display = 'none'; }, 420);
+  }, 3000);
 });
 
-// Fluxo: Menu Lore -> Capítulo 1 (Carta)
-btnChapter1.addEventListener('click', () => {
-  transitionTo(cartaStage, loreStage);
-});
+btnChapter1.addEventListener('click', () => { transitionTo(cartaStage, loreStage); });
+btnChapter2.addEventListener('click', () => { transitionTo(worldStage, loreStage); });
+btnBackToLore.addEventListener('click', () => { transitionTo(loreStage, cartaStage); });
+btnWorldBackToLore.addEventListener('click', () => { transitionTo(loreStage, worldStage); });
 
-// Fluxo: Menu Lore -> Capítulo 2 (Mundo)
-btnChapter2.addEventListener('click', () => {
-  transitionTo(worldStage, loreStage);
-});
-
-// Fluxo: Carta -> Menu Lore
-btnBackToLore.addEventListener('click', () => {
-  transitionTo(loreStage, cartaStage);
-});
-
-// Fluxo: Mundo -> Menu Lore
-btnWorldBackToLore.addEventListener('click', () => {
-  transitionTo(loreStage, worldStage);
-});
-
-
-/* =================== CARTA: parser de tags + glitches =================== */
+/* ========= CARTA (parser e efeitos) ========= */
 const RAW_TEXT = `
 [fade]Não sei quanto tempo me resta antes de não restar tempo algum.[/fade] Já sinto o meu nome se afastando de mim como um [blink]dente morto[/blink] empurrado pela língua. Se lerem isto, não procurem quem escreveu. O que sobra de mim já não é pessoa, mas [glitch]ruído[/glitch].
 
@@ -680,7 +576,7 @@ Eu fui parte disso. Eu recitei as fórmulas. Eu acreditei que manter a cidade s�
 
 [blur]Eu já não lembro quem eram meus pais.[/blur]  
 Ontem, acho que ainda lembrava.  
-Agora só sei que um dia reconheci a palavra “mãe” como algo meu, e ela me soa [glitch]estrangeira[/glitch].
+Agora só sei que um dia reconheci a palavra "mãe" como algo meu, e ela me soa [glitch]estrangeira[/glitch].
 
 Não esperem que η cidade grite quando começar a [blink]morrer[/blink]. Ela vai sorrir. Ela vai agradecer. É o que acontece quando se [blink]esquece[/blink] o que se perdeu.
 
@@ -696,10 +592,10 @@ Vocês vão encontrá-la mesmo que tentem não ir.
 Isso significa que ainda têm escolha.  
 Ou que já não têm nenhuma, e só estão [blur]descobrindo agora[/blur].
 
-Se chegarem a tempo, talvez eu consiga—  
-Talvez ainda haja—
+Se chegarem a tempo, talvez eu consiga--  
+Talvez ainda haja--
 
-[burned][trecho ilegível — parte arrancada ou queimada][/burned]
+[burned][trecho ilegível -- parte arrancada ou queimada][/burned]
 
 Se ouvirem alguém chamar, não respondam de imediato. Às vezes, não é voz. Às vezes, é um [glitch]reflexo[/glitch] tentando se lembrar de que já foi vivo.
 
@@ -731,13 +627,12 @@ function parseCarta(raw){
       .replace(/(?<!\w)(morrer|morrendo)(?!\w)/gi, '<span class="blink">$1</span>')
       .replace(/(?<!\w)(limite)(?!\w)/gi, '<span class="blink">$1</span>')
       .replace(/(?<!\w)(cidade)(?!\w)/gi, '<span class="fx-blur">$1</span>');
-
     return `<p>${t}</p>`;
   }).join("\n");
   return html;
 }
 const cartaEl = document.getElementById('carta');
-cartaEl.innerHTML = `<h1>— Carta recuperada do Sensorium —</h1>\n` + parseCarta(RAW_TEXT);
+cartaEl.innerHTML = `<h1>-- Carta recuperada do Sensorium --</h1>\n` + parseCarta(RAW_TEXT);
 
 const GLYPHS = "ᚠᚡᚢᚦᚨᚱᚲᚷᚺᛃᛇᛈᛉᛏᛒᛗᛚᛟ◊◇◆△▽✧✦✷✴✶✹";
 function glitchOnce(el, dur=90){
@@ -760,8 +655,7 @@ setInterval(()=>{
   });
 }, 260);
 
-
-/* =================== CALCULADORA (4–15, 27 pts) =================== */
+/* ========= CALCULADORA (Point Buy 4–15, 27 pts) ========= */
 const ATTRS=["Força","Destreza","Constituição","Inteligência","Sabedoria","Carisma"];
 const KEY=["str","dex","con","int","wis","cha"];
 const COST={4:-4,5:-3,6:-2,7:-1,8:0,9:1,10:2,11:3,12:4,13:5,14:7,15:9};
@@ -795,11 +689,8 @@ const RUNES = [
 ];
 const state = {
   base: {str:8,dex:8,con:8,int:8,wis:8,cha:8},
-  cls: "Fighter",
-  subcls: "Champion",
-  rune: "rust",
-  runeChoice1: null,
-  runeChoice2: null
+  cls: "Fighter", subcls: "Champion",
+  rune: "rust", runeChoice1: null, runeChoice2: null
 };
 const el = {
   cls: document.getElementById("cls"),
@@ -852,10 +743,7 @@ function initRuneChoiceUI(){
   if (r.type==="one"){
     el.runeExtras.classList.add("show");
     el.rc1Wrap.style.display = "block";
-    el.rc1.innerHTML = r.options.map(k=>{
-      const name = ATTRS[KEY.indexOf(k)];
-      return `<option value="${k}">${name}</option>`;
-    }).join("");
+    el.rc1.innerHTML = r.options.map(k=>`<option value="${k}">${ATTRS[KEY.indexOf(k)]}</option>`).join("");
     if (!r.options.includes(state.runeChoice1)) state.runeChoice1 = r.options[0];
     el.rc1.value = state.runeChoice1;
   }
@@ -916,7 +804,7 @@ function renderStats(){
         </div>
         <div class="meta" style="display:flex; justify-content:space-between; font-size:12px; color:var(--muted)">
           <span class="${(v<4 || v>15) ? "warning":""}">Limite: 4–15</span>
-          <span class="cost-badge ${badgeCls}" style="border:1px solid var(--border); padding:2px 8px">Custo: ${Number.isFinite(cost)?costTxt:"—"}</span>
+          <span class="cost-badge ${badgeCls}" style="border:1px solid var(--border); padding:2px 8px">Custo: ${Number.isFinite(cost)?costTxt:"--"}</span>
         </div>
       </div>
     `;
@@ -944,43 +832,30 @@ function renderTotals(){
 }
 function renderResult(){
   const {after, bonus} = applyRune(state.base);
-  let capWarn = [];
-  let anyWarn = false;
+  let capWarn = []; let anyWarn = false;
   el.finalTable.innerHTML = KEY.map((k,i)=>{
-    const pre = state.base[k];
-    const bn = bonus[k]||0;
-    const post = after[k];
+    const pre = state.base[k], bn = bonus[k]||0, post = after[k];
     if (post>20){ capWarn.push(`${ATTRS[i]} ${post} (>20)`); anyWarn = true; }
     const m = modOf(post);
-    return `
-      <tr>
-        <td style="text-align:left">${ATTRS[i]}</td>
-        <td>${pre}</td>
-        <td>${bn>=0?`+${bn}`:bn}</td>
-        <td>${post}</td>
-        <td>${m>=0?`+${m}`:m}</td>
-      </tr>
-    `;
+    return `<tr><td style="text-align:left">${ATTRS[i]}</td><td>${pre}</td><td>${bn>=0?`+${bn}`:bn}</td><td>${post}</td><td>${m>=0?`+${m}`:m}</td></tr>`;
   }).join("");
-  el.capWarn.textContent = capWarn.length ? `Limite 20 excedido em: ${capWarn.join(", ")}` : "—";
+  el.capWarn.textContent = capWarn.length ? `Limite 20 excedido em: ${capWarn.join(", ")}` : "--";
   const cls = el.cls.value, sub = el.subcls.value;
-  const runeName = RUNES.find(r=>r.id===el.rune.value)?.name || "—";
-  el.summary.textContent = `Classe: ${cls} — Subclasse: ${sub} — Runa: ${runeName}`;
+  const runeName = RUNES.find(r=>r.id===el.rune.value)?.name || "--";
+  el.summary.textContent = `Classe: ${cls} -- Subclasse: ${sub} -- Runa: ${runeName}`;
   el.warnings.textContent = anyWarn ? "Atenção aos limites de 20." : "";
 }
 function updateAll(){ renderStats(); renderTotals(); renderResult(); }
 
 function exportBuild(){
-  const data = {
-    base:state.base, cls:el.cls.value, subcls:el.subcls.value, rune:el.rune.value,
-    runeChoice1: el.rc1?.value ?? null, runeChoice2: el.rc2?.value ?? null
-  };
+  const data = { base:state.base, cls:el.cls.value, subcls:el.subcls.value, rune:el.rune.value,
+                 runeChoice1: document.getElementById('runeChoice1')?.value ?? null,
+                 runeChoice2: document.getElementById('runeChoice2')?.value ?? null };
   const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "build-pointbuy.json";
-  a.click();
-  URL.revokeObjectURL(a.href);
+  a.click(); URL.revokeObjectURL(a.href);
 }
 function importBuild(file){
   const fr = new FileReader();
@@ -1002,21 +877,17 @@ el.cls.onchange = () => { state.cls = el.cls.value; fillSubclass(); updateAll();
 el.subcls.onchange = () => { state.subcls = el.subcls.value; updateAll(); };
 el.rune.onchange = () => { state.rune = el.rune.value; initRuneChoiceUI(); updateAll(); };
 document.addEventListener("change", (event) => {
-    if (event.target.id === "runeChoice1") {
-        state.runeChoice1 = event.target.value;
-        updateAll();
-    }
-    if (event.target.id === "runeChoice2") {
-        state.runeChoice2 = event.target.value;
-        updateAll();
-    }
+  if (event.target.id === "runeChoice1") { state.runeChoice1 = event.target.value; updateAll(); }
+  if (event.target.id === "runeChoice2") { state.runeChoice2 = event.target.value; updateAll(); }
 });
 el.reset.onclick = () => { KEY.forEach(k=>state.base[k]=8); updateAll(); };
 el.export.onclick = exportBuild;
 el.import.onchange = (e)=>{ if (e.target.files[0]) importBuild(e.target.files[0]); };
 
 (function boot(){
-  initClassUI(); initRunes(); renderStats(); renderTotals(); renderResult();
+  // calcula primeiro
+  (function initClassUIBoot(){ el.cls.innerHTML = Object.keys(CLASSES).map(c=>`<option value="${c}">${c}</option>`).join(""); el.cls.value = state.cls; fillSubclass(); })();
+  initRunes(); updateAll();
 })();
 </script>
 </body>
