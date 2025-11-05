@@ -1,11 +1,9 @@
-
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Liturgia da Engrenagem Perpétua</title>
+<title>Liturgia da Engrenagem Perpétua -- Calculadora, Selo & Lore</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
@@ -49,10 +47,16 @@
   #seal-container{
     position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
     width:280px; height:280px; z-index:20;
-    display:none; align-items:center; justify-content:center;
-    transition:opacity .45s ease-out; opacity:0;
+    display:none; /* aparece no fluxo */
+    align-items:center; justify-content:center;
+    transition:opacity .45s ease-out;
+    opacity:0;
   }
-  .seal-svg{ width:100%; height:100%; filter:drop-shadow(0 0 22px rgba(178,76,255,.55)); display:block; }
+  .seal-svg{ 
+    width:100%; height:100%; 
+    filter:drop-shadow(0 0 22px rgba(178,76,255,.55)); 
+    display:block;
+  }
   .seal-pulse{ animation:sealPulse 2.8s ease-in-out infinite }
   .ring-rot{ animation:ringRot 18s linear infinite }
   .sigil-rot{ animation:sigilRot 36s linear infinite }
@@ -76,10 +80,14 @@
     0%,100%{ filter:brightness(1) drop-shadow(0 0 8px #b24cff) }
     50%{ filter:brightness(1.15) drop-shadow(0 0 18px #b24cff) }
   }
-  @keyframes strobe{ 0%,92%{ opacity:1 } 94%{ opacity:.5 } 96%{ opacity:.9 } 98%{opacity:.4} 100%{opacity:1} }
+  @keyframes strobe{
+    0%,92%{ opacity:1 } 94%{ opacity:.5 } 96%{ opacity:.9 } 98%{opacity:.4} 100%{opacity:1}
+  }
 
-  /* ---------- SEÇÕES ---------- */
-  #carta-stage, #lore-stage, #world-stage { display:none; opacity:0; transition:opacity .8s ease; position:relative; z-index:2; }
+  /* ---------- ESTÁGIOS ---------- */
+  #carta-stage, #lore-stage, #world-stage { 
+    display:none; opacity:0; transition:opacity .8s ease; position:relative; z-index:2; 
+  }
   #carta-wrap, .lore-wrap, .world-wrap {
     max-width:900px; margin:8vh auto 4vh; padding:28px 22px;
     background: var(--panel);
@@ -91,15 +99,14 @@
     font-family:'Cinzel Decorative', cursive; color:var(--purple); margin:0 0 14px 0;
     font-size:clamp(20px,3.6vw,28px); letter-spacing:.5px; text-shadow:0 0 12px rgba(178,76,255,.6);
   }
-  .world-wrap p { font-style: italic; color: var(--muted); }
+  .world-wrap p { color: var(--ink); }
 
-  .chapter-menu { display:flex; flex-direction:column; gap:12px; margin-top:20px; }
-  .chapter-btn { font-size:18px; padding:14px 20px; text-align:left; color:var(--ink); border:1px solid var(--border); background:transparent; }
-  .chapter-btn:hover { color:#fff; background: rgba(178, 76, 255, 0.1); }
-  .chapter-btn strong { font-family: 'Cinzel Decorative', cursive; color: var(--purple); margin-right: 12px; }
+  .chapter-menu { display:flex; flex-direction:column; gap:12px; margin-top:20px }
+  .chapter-btn { font-size:18px; padding:14px 20px; text-align:left; color:var(--ink); border:1px solid var(--border) }
+  .chapter-btn:hover { color:#fff; background: rgba(178, 76, 255, 0.1) }
+  .chapter-btn strong { font-family:'Cinzel Decorative', cursive; color:var(--purple); margin-right:12px }
 
-  #carta p{ line-height:1.6; color:var(--ink); margin:10px 0 }
-  #carta em{ color:var(--ink-dim) }
+  #carta p{ line-height:1.65; color:var(--ink); margin:10px 0; text-indent:0 }
   .actions{ margin-top:20px; display:flex; flex-wrap:wrap; gap:10px }
   .btn{
     appearance:none; border:1px solid var(--purple); background:#000; color:#fff;
@@ -108,26 +115,57 @@
     transition:box-shadow .3s, border-color .3s, transform .2s;
   }
   .btn:hover{ border-color:#fff; box-shadow:0 0 22px rgba(178,76,255,.32); transform:translateY(-1px) }
-  .btn.btn-primary { background: var(--purple); color: #000; font-weight:700; }
-  .btn.btn-primary:hover { background:#fff; border-color:#fff; }
+  .btn.btn-primary { background: var(--purple); color:#000; font-weight:700 }
+  .btn.btn-primary:hover{ background:#fff; border-color:#fff }
 
-  /* Efeitos da carta */
-  .blink{ animation:blink 3.6s steps(1,end) infinite }
-  @keyframes blink{ 0%,87%{opacity:1} 88%{opacity:.15} 92%{opacity:.6} 96%{opacity:.3} 100%{opacity:1} }
+  /* Carta FX */
   .fx-fade{ animation:fadePulse 6.5s ease-in-out infinite }
   @keyframes fadePulse{ 0%,100%{opacity:1} 40%{opacity:.45} 60%{opacity:.9} }
-  .fx-glow{ color:#fff; text-shadow:0 0 6px #fff,0 0 14px var(--purple),0 0 26px var(--purple),0 0 42px var(--purple-deep); animation:glowBreath 3.4s ease-in-out infinite }
+
+  /* NOVO BLINK (sem flicker; memória oscilante) */
+  .fx-blink{
+    position:relative; display:inline-block;
+    animation:blinkSoft 3.8s ease-in-out infinite;
+  }
+  .fx-blink::after{
+    content: attr(data-shadow);
+    position:absolute; left:0; top:0;
+    color:#fff; opacity:.0;
+    text-shadow: 0 0 10px var(--purple), 0 0 22px var(--purple);
+    filter: blur(1px);
+    transform: translate(0,0);
+    animation: blinkGhost 3.8s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes blinkSoft{
+    0%,100%{ opacity:1; transform:translate(0,0) }
+    40%    { opacity:.68; transform:translate(0.2px,0) }
+    55%    { opacity:.92; transform:translate(-0.15px,0) }
+  }
+  @keyframes blinkGhost{
+    0%,100%{ opacity:0; transform: translate(0,0) }
+    40%    { opacity:.22; transform: translate(0.4px,0) }
+    55%    { opacity:.12; transform: translate(-0.3px,0) }
+  }
+
+  .fx-glow{ color:#fff; text-shadow:0 0 6px #fff,0 0 14px var(--purple),0 0 26px var(--purple),0 0 42px var(--purple-deep);
+            animation:glowBreath 3.4s ease-in-out infinite }
   @keyframes glowBreath{ 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.15)} }
+
   .fx-blur{ filter:blur(1.4px); transition:filter .35s ease }
   .fx-blur:hover{ filter:blur(0) }
+
   .fx-highlight{ color:#fff; text-shadow:0 0 10px var(--purple),0 0 22px var(--purple),0 0 44px var(--purple); position:relative }
-  .fx-highlight::after{ content:""; position:absolute; left:-2px; right:-2px; bottom:-1px; height:1px; box-shadow:0 0 10px var(--purple),0 0 20px var(--purple) }
+  .fx-highlight::after{ content:""; position:absolute; left:-2px; right:-2px; bottom:-1px; height:1px;
+    box-shadow:0 0 10px var(--purple),0 0 20px var(--purple) }
+
   .fx-burned{ position:relative; display:inline-block; padding:0 .1em; color:var(--ink);
     --mask: radial-gradient(8px 5px at 0% 70%, transparent 40%, black 60%) repeat-x,
             radial-gradient(6px 4px at 100% 30%, transparent 45%, black 65%) repeat-x;
     -webkit-mask: var(--mask); mask: var(--mask);
     -webkit-mask-size:18px 100%,14px 100%; mask-size:18px 100%,14px 100%;
     filter: drop-shadow(0 0 2px rgba(0,0,0,.6)) }
+
   .fx-missing{ display:inline-block; width:11ch; height:1em; color:transparent; position:relative; vertical-align:baseline }
   .fx-missing::before{
     content:""; position:absolute; inset:-2px -3px;
@@ -142,8 +180,10 @@
           radial-gradient(8px 5px at 88% 40%, black 55%, transparent 56%) repeat-x;
     mask-size:18px 100%,16px 100%;
   }
+
   .fx-glitch{ position:relative }
   .fx-glitch[data-glitching="1"]{ text-shadow:0 0 6px rgba(178,76,255,.9), 0 0 18px rgba(178,76,255,.6); filter:hue-rotate(10deg) saturate(1.2) }
+
   .fx-eaten{
     display:inline-block; position:relative; color:#fff;
     text-shadow:0 0 6px #fff,0 0 16px var(--purple),0 0 28px var(--purple);
@@ -180,14 +220,17 @@
   .control{ display:flex; flex-direction:column; gap:6px; min-width:180px; flex:1 }
   label{ font-size:12px; color:var(--muted) }
 
-  /* SELECTS */
   select{
     -webkit-appearance:none; appearance:none;
     width:100%;
     border:1px solid var(--border);
-    background:#000; color:#fff;
-    border-radius:0; padding:10px 36px 10px 12px; font-size:14px;
-    font-family:'MedievalSharp', cursive; outline:none;
+    background: #000;
+    color:#fff;
+    border-radius:0;
+    padding:10px 36px 10px 12px;
+    font-size:14px;
+    font-family:'MedievalSharp', cursive;
+    outline:none;
     transition:border-color .25s, box-shadow .25s;
     background-image:
       url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='20' viewBox='0 0 28 20'><polyline points='6,7 14,15 22,7' fill='none' stroke='%23b24cff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
@@ -195,7 +238,9 @@
   }
   select:focus{ border-color:#fff; box-shadow:0 0 6px #fff,0 0 12px var(--purple),0 0 18px var(--purple) }
 
-  input[type="number"], .btn{ border:1px solid var(--border); background:#000; color:#fff; border-radius:0; padding:10px 12px; font-size:14px }
+  input[type="number"], .btn{
+    border:1px solid var(--border); background:#000; color:#fff; border-radius:0; padding:10px 12px; font-size:14px
+  }
   .grid-6{ display:grid; grid-template-columns:repeat(6,1fr); gap:10px }
   @media(max-width:820px){ .grid-6{ grid-template-columns:repeat(3,1fr) } }
   @media(max-width:520px){ .grid-6{ grid-template-columns:repeat(2,1fr) } }
@@ -223,7 +268,8 @@
 
 <!-- SELO -->
 <div id="seal-container" aria-label="Ativar Selo Arcano">
-  <svg class="seal-svg seal-pulse strobe" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <svg class="seal-svg seal-pulse strobe" aria-hidden="true"
+       viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <radialGradient id="gPurple" cx="50%" cy="50%" r="50%">
         <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
@@ -232,20 +278,27 @@
       </radialGradient>
       <filter id="fma-glow" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="3" result="glow"/>
-        <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+        <feMerge>
+          <feMergeNode in="glow"/>
+          <feMergeNode in="SourceGraphic"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
       </filter>
       <filter id="fma-glow-white" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="1.5" result="glow"/>
         <feFlood flood-color="#ffffff" flood-opacity="0.8" result="color"/>
         <feComposite in="color" in2="glow" operator="in" result="glow-colored"/>
-        <feMerge><feMergeNode in="glow-colored"/><feMergeNode in="SourceGraphic"/></feMerge>
+        <feMerge>
+          <feMergeNode in="glow-colored"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
       </filter>
     </defs>
 
-    <!-- Halo -->
+    <!-- Halo Externo -->
     <circle cx="256" cy="256" r="230" fill="url(#gPurple)" opacity="0.15"/>
 
-    <!-- Anel externo com runas -->
+    <!-- Anel de Runas Externo -->
     <g transform="translate(256 256)">
       <g class="fma-outer-ring-rot">
         <circle cx="0" cy="0" r="240" class="fma-circle-outer"/>
@@ -267,7 +320,7 @@
       </g>
     </g>
 
-    <!-- Anel interno -->
+    <!-- Anel Interno -->
     <g transform="translate(256 256)">
       <g class="fma-inner-ring-rot">
         <circle cx="0" cy="0" r="170" class="fma-circle-inner"/>
@@ -283,7 +336,7 @@
       </g>
     </g>
 
-    <!-- Sigilo central -->
+    <!-- Sigilo Central -->
     <g class="shine" transform="translate(256 256)">
       <circle cx="0" cy="0" r="100" class="fma-circle-outer"/>
       <g class="sigil-rot" stroke="#b24cff" stroke-width="2.5" opacity=".9" filter="url(#fma-glow)">
@@ -295,7 +348,7 @@
       </g>
     </g>
 
-    <!-- Runas internas -->
+    <!-- Runas Internas -->
     <g transform="translate(256 256)">
       <circle cx="0" cy="0" r="70" fill="none" stroke="#ffffff" stroke-opacity=".6" stroke-width="0.8"/>
       <g class="fma-rune" font-size="18">
@@ -408,22 +461,22 @@
   </main>
 </section>
 
-<!-- MENU DE LORE -->
+<!-- MENU DE LORE (Capítulos) -->
 <section id="lore-stage">
   <div class="lore-wrap">
-    <h1>Arquivos da Liturgia</h1>
+    <h1>Arquivos da Liturgia da Engrenagem Perpétua</h1>
     <div class="chapter-menu">
       <button class="btn chapter-btn" id="btn-chapter-1">
         <strong>Capítulo 1:</strong> A Carta Encontrada
       </button>
       <button class="btn chapter-btn" id="btn-chapter-2">
-        <strong>Capítulo 2:</strong> Resumo do Mundo
+        <strong>Capítulo 2:</strong> Arquivo Público de Greyspire - Versão Autorizada
       </button>
     </div>
   </div>
 </section>
 
-<!-- CARTA -->
+<!-- CARTA (Capítulo 1) -->
 <section id="carta-stage">
   <div id="carta-wrap">
     <div id="carta"></div>
@@ -433,18 +486,20 @@
   </div>
 </section>
 
-<!-- RESUMO DO MUNDO -->
+<!-- RESUMO DO MUNDO (Capítulo 2) -->
 <section id="world-stage">
   <div class="world-wrap">
-    <h1>Arquivo de Referência Interna – Registro Histórico de Greyspire</h1>
-    <p>    Greyspire ainda é chamada de cidade, mas o termo já não descreve com precisão o que ela se tornou. É mais correto dizer que ela persiste. Continua erguida não porque venceu o colapso do mundo, mas porque aprendeu a conviver com ele como quem divide a casa com um animal que não pode ser nomeado. Ela é o que restou do Velho Império depois da guerra que apagou não só um inimigo, mas a própria memória do que significava derrotá-lo.  
-  A Federação Arcana não caiu. Ela foi retirada. O Ritual da Convergência, ideia doentia de vitória absoluta, não destruiu muralhas ou exércitos; destruiu o direito de existir. O território onde ela ficava continua lá, mas não tem mais dono, nem história, nem forma estável. É o lugar onde começou a Fenda, e nada desde então voltou a se comportar como deveria.  
-  A Fenda não avança, não fala e não responde. Apenas permanece, como um acidente que decidiu ser permanente. Todos sabem dela. Poucos tentam compreendê-la. Os que tentam, ou não voltam, ou voltam com uma lucidez que ninguém inveja. O saber que vem de lá não serve para viver, apenas para perceber o quanto já estamos mortos em partes.  
-  Greyspire só suporta isso porque algo a sustém por baixo. Uma máquina que não deveria existir, girando sem cessar em um subterrâneo que não aparece em mapa algum. A Engrenagem Perpétua. Não há registro de quem construiu, nem de quando, nem de como. Só há a certeza prática: enquanto ela se mover, a cidade não enlouquece de uma vez só. As ruas não se deformam. As pessoas ainda sonham com coisas feitas de carne, não de pensamento. Isso basta, dizem.  
-  A população se divide pelas runas. Não por escolha, jamais por mérito. Cada pessoa nasce marcada, e a marca define o que ela será permitida a ser. As castas não são decretadas: crescem na pele. A runa diz que um corpo vale tanto, que uma mente pode usar tanto, que uma alma será cobrada tanto. Os que não têm runa não são considerados cidadãos. São tolerados em silêncio, como poeira que ainda não foi varrida.  
-  A estrutura social é simples porque não permite exceção. Magia forte, posição alta. Magia fraca, função servil. Sem magia, ausência administrativa. A Liturgia chama isso de equilíbrio. Os manuais chamam de classificação. Quem observa de perto chama de outra coisa que não pode ser escrita nos documentos.  
-  O sensorium (a energia que tudo alimenta) mudou de comportamento nas últimas décadas. Ele responde a estímulos que ninguém fez. Gesta luz onde não existe lanterna. Vibra quando ninguém conjura. Há quem diga que ele começou a aprender. Há quem diga que ele começou a lembrar. Em ambos os casos, é proibido tratar isso como hipótese.  
-  Nada aqui é estável. Nada aqui é confiável. Mas tudo aqui continua funcionando. E isso, mais do que qualquer muralha, é o que mantém Greyspire viva: ela aprendeu a sobreviver mesmo depois que o mundo perdeu o sentido.</p>
+    <h1>  Greyspire é a maior cidade ainda funcional do Velho Império e, para muitos, o último exemplo de civilização ordenada após a Guerra Arcana. Sua existência não é atribuída à força militar nem à estabilidade política, mas ao fato de ter aprendido a administrar o colapso em vez de resistir a ele. A cidade permanece de pé não porque venceu a devastação, mas porque a organizou.
+  As bases sociais de Greyspire não estão fundadas em riqueza, tradição de sangue ou linhagens nobres. Toda a estrutura da cidade é determinada pela magia, e esta é medida pela runa que cada cidadão recebe ao nascer. As runas não são escolhidas, aplicadas ou herdadas: elas surgem como parte do corpo, e a partir desse instante a pessoa está situada no sistema para o restante da vida. Quanto maior o domínio arcano, maior a posição social. Os portadores de runas elevadas ocupam as camadas superiores, atuando como magos, tecnomantes, decifradores, estrategistas e membros da Liturgia. Os de afinidade moderada assumem funções técnicas ou militares. Os de potencial mínimo são mão de obra descartável, úteis até o ponto em que continuem obedientes. Há ainda os sem-runa, que não pertencem oficialmente a nenhuma categoria. São ignorados pela administração, sem documentos, sem direitos, sem relevância. Existência tolerada, nunca reconhecida.
+  Esse modelo não é considerado injusto em Greyspire. É considerado natural.
+  A guerra que definiu o estado atual do mundo não terminou com ruínas, exércitos vencidos ou tratados políticos. O Velho Império executou o Ritual da Convergência, uma tentativa de eliminar a Federação Arcana de forma absoluta, não militar. O efeito foi imediato. A Federação não foi derrotada. Foi retirada da realidade. Em vez de território conquistado, restou ausência. No lugar onde ficavam cidades, fronteiras e pessoas, estabeleceu-se a Fenda: um espaço onde a lógica não se completa e o tempo não reconhece sequência. A Liturgia afirma que ela é perigosa, irreversível e distante o bastante para que a cidade continue estável. Nenhum texto oficial explica como uma ausência pode continuar ativa.
+  Greyspire, no entanto, não se sustenta apenas pela distância da Fenda. Ela depende da Engrenagem Perpétua, instalada em profundidade desconhecida sob o solo. O mecanismo é reconhecido publicamente, mas não descrito. Nenhum documento civil informa quem a construiu, quando foi iniciada ou de que forma opera. A explicação utilizada pela Liturgia é sempre idêntica: a Engrenagem mantém a sanidade coletiva da cidade. Ela impede que os efeitos da Fenda ultrapassem os limites do controle. O que acontece se ela parar, ninguém diz. A cidade inteira escuta seu ruído subterrâneo, mas finge que não o ouve.
+  A Liturgia é a autoridade máxima de Greyspire. Não governa oficialmente, mas toda decisão real depende de sua aprovação. Ela controla o uso de magia, o registro das runas, o protocolo sobre a Fenda e o acesso a qualquer informação considerada perigosa para a ordem. Não há forma pública de contestar sua doutrina, pois a doutrina não é debate. É estrutura. A Liturgia define o que é estável, o que é anômalo, o que é aceitável e quem deve desaparecer antes que se torne um problema.
+  Magos são a classe mais alta da cidade. São admirados, preservados, estudados e vigiados. Não são apenas indivíduos com poder, mas peças do equilíbrio urbano. Sua existência vale mais do que exércitos, pois sem eles não há rituais, nem tecnologia arcana, nem Engrenagem, nem defesa contra a Fenda. Ao mesmo tempo, o mago é também aquele que mais se aproxima do limite do aceitável. Uma mente poderosa demais pode ser útil. Ou pode ser removida antes que deixe de obedecer.
+  Nada em Greyspire se move sem magia. Nada em Greyspire respira sem controle. A cidade não teme monstros, teme falhas no sistema. A estabilidade é considerada a maior virtude. O preço dela é a ausência de perguntas.
+  Greyspire continua a existir. O que acontece fora dela não é tema de interesse urbano. A Fenda permanece distante, mas permanente. A Engrenagem continua girando, mas ninguém sabe por quanto tempo. As runas continuam surgindo, mas algumas já começaram a mudar. A cidade permanece funcional. A Liturgia afirma que isso é suficiente.
+  Até agora, é.</h1>
+    <div id="world-text"></div>
     <div class="actions">
       <button class="btn" id="btn-world-back-to-lore">Voltar ao Menu</button>
     </div>
@@ -452,8 +507,8 @@
 </section>
 
 <script>
-/* ========= ÁUDIO (ambient arcano) ========= */
-let audioCtx, ambientGain, ambient, audioPlaying = false;
+/* =================== ÁUDIO: Coral Arcano Etéreo (WebAudio) =================== */
+let audioCtx, masterGain, choir = null, audioPlaying = false;
 
 function ensureAudioCtx(){
   if (!audioCtx) {
@@ -464,66 +519,141 @@ function ensureAudioCtx(){
   }
   return audioCtx;
 }
-function startAmbient(){
+
+function createReverb(ctx, seconds=2.4, decay=2.8){
+  const rate = ctx.sampleRate;
+  const len = Math.max(1, Math.floor(rate * seconds));
+  const ir = ctx.createBuffer(2, len, rate);
+  for (let ch=0; ch<2; ch++){
+    const data = ir.getChannelData(ch);
+    for (let i=0; i<len; i++){
+      const n = (Math.random()*2-1);
+      data[i] = n * Math.pow(1 - i/len, decay);
+    }
+  }
+  const convolver = ctx.createConvolver();
+  convolver.buffer = ir;
+  return convolver;
+}
+
+function startArcaneChoir(){
   if (audioPlaying) return;
   const ctx = ensureAudioCtx();
 
-  const master = ctx.createGain();
-  master.gain.value = 0.0001;
-  master.connect(ctx.destination);
-  ambientGain = master;
+  masterGain = ctx.createGain();
+  masterGain.gain.value = 0.0001;
+  masterGain.connect(ctx.destination);
 
-  // noise
+  const reverb = createReverb(ctx, 2.8, 3.2);
+  const wetGain = ctx.createGain(); wetGain.gain.value = 0.45;
+  const dryGain = ctx.createGain(); dryGain.gain.value = 0.65;
+
+  const voices = [];
+  const base = 196.0; // G3 ~ coral grave
+  const ratios = [1, 1.25, 1.5, 2]; // G3, a 4ª, a 5ª, oitava
+  const detunes = [-8, -3, +3, +7]; // cents aproximados
+
+  // LFOs para vibrato e "respiração"
+  const lfoVibr = ctx.createOscillator(); lfoVibr.type='sine'; lfoVibr.frequency.value = 0.45;
+  const lfoVibrGain = ctx.createGain(); lfoVibrGain.gain.value = 4; // cents
+  lfoVibr.connect(lfoVibrGain);
+
+  const lfoBreath = ctx.createOscillator(); lfoBreath.type='sine'; lfoBreath.frequency.value = 0.07;
+  const lfoBreathGain = ctx.createGain(); lfoBreathGain.gain.value = 0.14;
+  lfoBreath.connect(lfoBreathGain);
+
+  // "Formantes" leves com filtros bandpass para timbre vocal
+  const formantFreqs = [600, 1150, 2900]; // muito simplificado
+  const voiceOut = ctx.createGain(); voiceOut.gain.value = 0.9;
+
+  ratios.forEach((r, i) => {
+    const osc = ctx.createOscillator();
+    osc.type = (i%2===0) ? 'triangle' : 'sine';
+    osc.frequency.value = base * r;
+    osc.detune.value = detunes[i] || 0;
+
+    // modulando detune (vibrato em cents)
+    lfoVibrGain.connect(osc.detune);
+
+    // ganho individual com "respiração"
+    const g = ctx.createGain();
+    g.gain.value = 0.22;
+    lfoBreathGain.connect(g.gain);
+
+    // cadeia de formantes (bem leve)
+    let last = osc;
+    formantFreqs.forEach((ff, idx) => {
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = ff * (1 + (i-1)*0.02); // leve variação
+      bp.Q.value = 1.2 + idx*0.3;
+      last.connect(bp);
+      last = bp;
+    });
+
+    last.connect(g).connect(voiceOut);
+    osc.start();
+    voices.push(osc);
+  });
+
+  // Som "ar" mecânico sutil
   const len = ctx.sampleRate*2;
   const buf = ctx.createBuffer(1, len, ctx.sampleRate);
   const d = buf.getChannelData(0); let prev=0;
-  for(let i=0;i<d.length;i++){ const w=Math.random()*2-1; prev = prev*0.97 + w*0.03; d[i]=prev*0.7; }
+  for(let i=0;i<d.length;i++){ const w=Math.random()*2-1; prev = prev*0.97 + w*0.03; d[i]=prev*0.5; }
   const noise = ctx.createBufferSource(); noise.buffer=buf; noise.loop=true;
-  const bp = ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=360; bp.Q.value=3.2;
-  const g = ctx.createGain(); g.gain.value=0.09;
+  const bp = ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=340; bp.Q.value=2.2;
+  const gNoise = ctx.createGain(); gNoise.gain.value = 0.06;
+  noise.connect(bp).connect(gNoise).connect(voiceOut);
+  noise.start();
 
-  // under-osc
-  const osc=ctx.createOscillator(); osc.type='sawtooth'; osc.frequency.value=52;
-  const low=ctx.createBiquadFilter(); low.type='lowpass'; low.frequency.value=140;
-  const g2 = ctx.createGain(); g2.gain.value=0.018;
+  // Wet/dry
+  const preRev = ctx.createGain(); preRev.gain.value = 0.9;
+  voiceOut.connect(preRev);
+  preRev.connect(reverb);
+  reverb.connect(wetGain).connect(masterGain);
+  voiceOut.connect(dryGain).connect(masterGain);
 
-  // LFO leve
-  const lfo=ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.28;
-  const lfoG=ctx.createGain(); lfoG.gain.value=0.07;
-  lfo.connect(lfoG).connect(g.gain);
+  // Fade-in
+  masterGain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.8);
+  masterGain.gain.linearRampToValueAtTime(0.32, ctx.currentTime + 3.2);
 
-  noise.connect(bp).connect(g).connect(master);
-  osc.connect(low).connect(g2).connect(master);
+  lfoVibr.start(); lfoBreath.start();
 
-  noise.start(); osc.start(); lfo.start();
-  ambient = {noise,osc,lfo};
-
-  ambientGain.gain.linearRampToValueAtTime(0.32, ctx.currentTime + 1.2);
+  choir = { voices, noise, lfoVibr, lfoBreath, nodes:[voiceOut, preRev, reverb, wetGain, dryGain] };
   audioPlaying = true;
 }
-function stopAmbient(){
-  if (!audioCtx || !ambient || !audioPlaying) return;
+
+function stopArcaneChoir(){
+  if (!audioCtx || !audioPlaying || !choir) return;
   const t = audioCtx.currentTime;
-  ambientGain.gain.cancelScheduledValues(t);
-  ambientGain.gain.linearRampToValueAtTime(0.0001, t + 1.2);
+  masterGain.gain.cancelScheduledValues(t);
+  masterGain.gain.linearRampToValueAtTime(0.0001, t + 1.2);
   setTimeout(()=>{
-    try{ ambient.noise.stop(); ambient.osc.stop(); ambient.lfo.stop(); }catch(e){}
+    try{
+      choir.voices.forEach(v=>v.stop());
+      choir.noise.stop();
+      choir.lfoVibr.stop();
+      choir.lfoBreath.stop();
+    }catch(e){}
+    choir = null;
+    audioPlaying = false;
   }, 1400);
-  audioPlaying = false;
 }
 
-/* ========= TRANSIÇÕES / FLUXO ========= */
+/* =================== TRANSIÇÕES & SELO =================== */
+const seal = document.getElementById('seal-container');
 const flashEl = document.getElementById('flash');
 const calcStage  = document.getElementById('calc-stage');
 const loreStage = document.getElementById('lore-stage');
 const cartaStage = document.getElementById('carta-stage');
 const worldStage = document.getElementById('world-stage');
+
 const btnGoToLore = document.getElementById('btn-go-to-lore');
 const btnChapter1 = document.getElementById('btn-chapter-1');
 const btnChapter2 = document.getElementById('btn-chapter-2');
 const btnBackToLore = document.getElementById('btn-back-to-lore');
 const btnWorldBackToLore = document.getElementById('btn-world-back-to-lore');
-const seal = document.getElementById('seal-container');
 
 function transitionTo(stageToShow, stageToHide) {
   if (stageToHide) {
@@ -537,18 +667,20 @@ function transitionTo(stageToShow, stageToHide) {
 }
 
 btnGoToLore.addEventListener('click', ()=>{
-  // flash e esconder calculadora
+  // Flash e esconder calculadora
   flashEl.classList.remove('flash-run'); void flashEl.offsetWidth; flashEl.classList.add('flash-run');
   transitionTo(null, calcStage);
 
-  // mostrar selo + iniciar áudio quando o selo aparece
+  // Mostrar Selo + iniciar áudio (iOS-safe: após esta interação)
   setTimeout(() => {
     seal.style.display = 'flex';
-    requestAnimationFrame(() => seal.style.opacity = 1);
-    startAmbient(); // <<< áudio começa aqui
+    requestAnimationFrame(() => {
+      seal.style.opacity = 1;
+      startArcaneChoir(); // <-- áudio começa aqui
+    });
   }, 500);
 
-  // após alguns segundos, esconder selo e ir para o menu
+  // Esconder selo e mostrar menu
   setTimeout(()=>{
     flashEl.classList.remove('flash-run'); void flashEl.offsetWidth; flashEl.classList.add('flash-run');
     seal.classList.add('seal-hide');
@@ -557,12 +689,12 @@ btnGoToLore.addEventListener('click', ()=>{
   }, 3000);
 });
 
-btnChapter1.addEventListener('click', () => { transitionTo(cartaStage, loreStage); });
-btnChapter2.addEventListener('click', () => { transitionTo(worldStage, loreStage); });
-btnBackToLore.addEventListener('click', () => { transitionTo(loreStage, cartaStage); });
-btnWorldBackToLore.addEventListener('click', () => { transitionTo(loreStage, worldStage); });
+btnChapter1.addEventListener('click', () => transitionTo(cartaStage, loreStage));
+btnChapter2.addEventListener('click', () => transitionTo(worldStage, loreStage));
+btnBackToLore.addEventListener('click', () => transitionTo(loreStage, cartaStage));
+btnWorldBackToLore.addEventListener('click', () => transitionTo(loreStage, worldStage));
 
-/* ========= CARTA (parser e efeitos) ========= */
+/* =================== CARTA: parser de tags + glitches =================== */
 const RAW_TEXT = `
 [fade]Não sei quanto tempo me resta antes de não restar tempo algum.[/fade] Já sinto o meu nome se afastando de mim como um [blink]dente morto[/blink] empurrado pela língua. Se lerem isto, não procurem quem escreveu. O que sobra de mim já não é pessoa, mas [glitch]ruído[/glitch].
 
@@ -605,42 +737,48 @@ Antes que eu mesma me convença de que nunca a [fade]escrevi[/fade].
 [eaten-signature]Arcanista-Mor Lythienne Vael[/eaten-signature]
 `.trim();
 
-function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") }
 function parseCarta(raw){
-  const paras = raw.split(/\n\s*\n/);
-  const html = paras.map(block=>{
-    let t = esc(block);
-    t = t.replace(/  \n/g, "<br>");
-    t = t.replace(/\[burned\]\[trecho ilegível[^\]]*\]\[\/burned\]/gi, '<span class="fx-missing" aria-label="trecho ilegível"></span>');
-    t = t.replace(/\[fade\]([\s\S]*?)\[\/fade\]/gi, '<span class="fx-fade">$1</span>');
-    t = t.replace(/\[glitch\]([\s\S]*?)\[\/glitch\]/gi, '<span class="fx-glitch" data-glitch="1">$1</span>');
-    t = t.replace(/\[glow-purple\]([\s\S]*?)\[\/glow-purple\]/gi, '<span class="fx-glow">$1</span>');
-    t = t.replace(/\[blur\]([\s\S]*?)\[\/blur\]/gi, '<span class="fx-blur">$1</span>');
-    t = t.replace(/\[burned\]([\s\S]*?)\[\/burned\]/gi, '<span class="fx-burned">$1</span>');
-    t = t.replace(/\[highlight\]([\s\S]*?)\[\/highlight\]/gi, '<span class="fx-highlight">$1</span>');
-    t = t.replace(/\[eaten-signature\]([\s\S]*?)\[\/eaten-signature\]/gi, '<span class="fx-eaten">$1</span>');
-    t = t
-      .replace(/(?<!\w)(memória|memoria)(?!\w)/gi, '<span class="blink">$1</span>')
-      .replace(/(?<!\w)(engrenagem)(?!\w)/gi, '<span class="blink">$1</span>')
-      .replace(/(?<!\w)(nome)(?!\w)/gi, '<span class="blink">$1</span>')
-      .replace(/(?<!\w)(esquecer|esquec[eê]u|esquecida|esquecido)(?!\w)/gi, '<span class="blink">$1</span>')
-      .replace(/(?<!\w)(morrer|morrendo)(?!\w)/gi, '<span class="blink">$1</span>')
-      .replace(/(?<!\w)(limite)(?!\w)/gi, '<span class="blink">$1</span>')
-      .replace(/(?<!\w)(cidade)(?!\w)/gi, '<span class="fx-blur">$1</span>');
-    return `<p>${t}</p>`;
-  }).join("\n");
-  return html;
+  // Ordem: primeiro substituímos marcações → spans; depois quebras de linha duplas → <p>
+  let t = raw;
+
+  // bloco "trecho ilegível" especial
+  t = t.replace(/\[burned\]\[trecho ilegível[^\]]*\]\[\/burned\]/gi, '<span class="fx-missing" aria-label="trecho ilegível"></span>');
+
+  // marcações
+  t = t.replace(/\[fade\]([\s\S]*?)\[\/fade\]/gi, '<span class="fx-fade">$1</span>');
+  t = t.replace(/\[glitch\]([\s\S]*?)\[\/glitch\]/gi, '<span class="fx-glitch" data-glitch="1">$1</span>');
+  t = t.replace(/\[glow-purple\]([\s\S]*?)\[\/glow-purple\]/gi, '<span class="fx-glow">$1</span>');
+  t = t.replace(/\[blur\]([\s\S]*?)\[\/blur\]/gi, '<span class="fx-blur">$1</span>');
+  t = t.replace(/\[burned\]([\s\S]*?)\[\/burned\]/gi, '<span class="fx-burned">$1</span>');
+  t = t.replace(/\[highlight\]([\s\S]*?)\[\/highlight\]/gi, '<span class="fx-highlight">$1</span>');
+  t = t.replace(/\[eaten-signature\]([\s\S]*?)\[\/eaten-signature\]/gi, '<span class="fx-eaten">$1</span>');
+  // NOVO blink
+  t = t.replace(/\[blink\]([\s\S]*?)\[\/blink\]/gi, '<span class="fx-blink" data-shadow="$1">$1</span>');
+
+  // palavras "marcadas" adicionais (sem exibir tags)
+  t = t
+    .replace(/(?<!\w)(memória|memoria)(?!\w)/gi, '<span class="fx-blink" data-shadow="$1">$1</span>')
+    .replace(/(?<!\w)(engrenagem)(?!\w)/gi, '<span class="fx-blink" data-shadow="$1">$1</span>')
+    .replace(/(?<!\w)(nome)(?!\w)/gi, '<span class="fx-blink" data-shadow="$1">$1</span>')
+    .replace(/(?<!\w)(esquecer|esquec[eê]u|esquecida|esquecido)(?!\w)/gi, '<span class="fx-blink" data-shadow="$1">$1</span>')
+    .replace(/(?<!\w)(morrer|morrendo)(?!\w)/gi, '<span class="fx-blink" data-shadow="$1">$1</span>')
+    .replace(/(?<!\w)(limite)(?!\w)/gi, '<span class="fx-blink" data-shadow="$1">$1</span>');
+
+  // blocos → parágrafos
+  const parts = t.split(/\n\s*\n/);
+  return parts.map(p=>`<p>${p.replace(/  \n/g,'<br>')}</p>`).join('\n');
 }
 const cartaEl = document.getElementById('carta');
-cartaEl.innerHTML = `<h1>-- Carta recuperada do Sensorium --</h1>\n` + parseCarta(RAW_TEXT);
+cartaEl.innerHTML = `<h1>-- Carta recuperada --</h1>\n` + parseCarta(RAW_TEXT);
 
+// glitch leve aleatório
 const GLYPHS = "ᚠᚡᚢᚦᚨᚱᚲᚷᚺᛃᛇᛈᛉᛏᛒᛗᛚᛟ◊◇◆△▽✧✦✷✴✶✹";
 function glitchOnce(el, dur=90){
   if(el.dataset.glitching === "1") return;
   el.dataset.glitching = "1";
   const orig = el.textContent;
   const arr = orig.split("");
-  const n = Math.ceil(arr.length * 0.25);
+  const n = Math.ceil(arr.length * 0.18);
   const idxs = new Set();
   while(idxs.size < n) idxs.add( Math.floor(Math.random()*arr.length) );
   const mutated = arr.map((ch,i)=> idxs.has(i) && ch.trim()? GLYPHS[Math.floor(Math.random()*GLYPHS.length)] : ch ).join("");
@@ -651,11 +789,28 @@ function glitchOnce(el, dur=90){
 }
 setInterval(()=>{
   document.querySelectorAll('.fx-glitch[data-glitch="1"]').forEach(el=>{
-    if(Math.random() < 0.18) glitchOnce(el, 80 + Math.random()*120);
+    if(Math.random() < 0.14) glitchOnce(el, 80 + Math.random()*120);
   });
 }, 260);
 
-/* ========= CALCULADORA (Point Buy 4–15, 27 pts) ========= */
+/* =================== CAPÍTULO 2 (Resumo do Mundo) =================== */
+const WORLD_PARAGRAPHS = [
+  "  Greyspire não é uma cidade: é um sobrevivente que ainda respira porque ninguém teve coragem de dizer que já morreu. O que a mantém de pé não é esperança, nem fé, nem glória do Império. É controle. Controle sobre memória, corpo, magia, nascimento, pensamento. O que chamam de ordem é apenas a forma mais lenta de colapso já registrada.",
+  "  A Guerra Arcana terminou, mas não houve paz. O Império venceu de um modo tão absoluto que destruiu a própria função da vitória. A Federação não foi derrotada. Foi removida como se fosse um erro de escrita na realidade. O mapa continuou existindo, mas o território não. E no lugar onde ela deveria estar, permanece a Fenda, um intervalo impossível entre o que foi e o que ainda não aceitou que acabou. Ela não avança. Não recua. Só espera.",
+  "  Greyspire sobrevive porque não ousa encarar o mundo como ele é. Tudo aqui é estabilizado à força. As pessoas dormem porque algo sonha no lugar delas. A cidade se mantém sã porque outra parte do mundo enlouquece no lugar dela. Todos sentem. Quase ninguém admite.",
+  "  Sob as ruas, a Engrenagem Perpétua gira sem descanso. Não há acesso, não há explicação oficial, não há registro público. Só som. Um som que vibra nos ossos, mesmo quando ninguém percebe. A Liturgia repete que a Engrenagem nos protege, mas nunca diz do quê. E nunca diz o que ela exige em troca. Só ordena silêncio. E o silêncio obedece.",
+  "  Cada pessoa nasce marcada. Ninguém escolhe a própria runa. Ela aparece na pele antes do choro, como se o corpo fosse apenas um rótulo para algo que já estava decidido. A runa define o que você pode fazer, o que você será autorizado a sonhar, e quanto da sua existência será considerado útil. Não existem cidadãos sem runa. Só sombras. Só pessoas que desistiram de existir antes de serem oficialmente apagadas.",
+  "  A hierarquia é simples. Magia é valor. Poder arcano compra direitos. Falta de poder compra desaparecimento. Os que dominam suas marcas ocupam as camadas mais altas da cidade e das catedrais rúnicas. Os que mal controlam a própria essência trabalham nas fábricas e nas muralhas. Os que nascem sem marca sequer recebem nome oficial. São tolerados enquanto permanecem invisíveis.",
+  "  O sensorium, a energia roxa que move a cidade, está diferente. Mais denso. Mais vivo. Alguns dizem que ele está absorvendo pensamentos. Outros que ele está adquirindo vontade. Há quem tenha visto máquinas agir sozinhas. Há quem tenha visto feitiços agir contra quem os lançou. Há quem tenha visto a própria runa piscar como se fosse um olho. Não há provas. Só desaparecimentos.",
+  "  A Liturgia diz que tudo está sob controle. A Liturgia sempre diz isso. Mesmo quando as runas mudam forma. Mesmo quando pessoas voltam com outra voz. Mesmo quando as ruas mudam de direção durante a noite. Mesmo quando crianças nascem com marcas que não constam nos códigos.",
+  "  A Fenda ainda pulsa. A Engrenagem gira cada vez mais rápido. O sensorium aumenta como maré. A cidade continua fingindo que tudo é estável. E há algo de profundamente errado na forma como ninguém mais se espanta.",
+  "  Vocês não precisam ser heróis. Não precisam ser salvadores. Só precisam existir dentro disso. E existir, em Greyspire, já é uma forma de ameaça. Uns serão absorvidos. Outros serão apagados. Poucos serão lembrados.",
+  "  Se querem saber quem vocês são, não perguntem a si mesmos. Perguntem quanto da sua mente ainda pertence a vocês."
+];
+document.getElementById('world-text').innerHTML =
+  WORLD_PARAGRAPHS.map(p=>`<p style="text-indent:2ch">${p}</p>`).join("");
+
+/* =================== CALCULADORA (4–15, 27 pts) =================== */
 const ATTRS=["Força","Destreza","Constituição","Inteligência","Sabedoria","Carisma"];
 const KEY=["str","dex","con","int","wis","cha"];
 const COST={4:-4,5:-3,6:-2,7:-1,8:0,9:1,10:2,11:3,12:4,13:5,14:7,15:9};
@@ -687,11 +842,7 @@ const RUNES = [
   { id:"rupture", name:"Runa da Ruptura (+2 em qualquer atributo)", type:"one-any" },
   { id:"shard", name:"Runa da Fragmentação (indisponível)", type:"locked", bonus:{} }
 ];
-const state = {
-  base: {str:8,dex:8,con:8,int:8,wis:8,cha:8},
-  cls: "Fighter", subcls: "Champion",
-  rune: "rust", runeChoice1: null, runeChoice2: null
-};
+const state = { base:{str:8,dex:8,con:8,int:8,wis:8,cha:8}, cls:"Fighter", subcls:"Champion", rune:"rust", runeChoice1:null, runeChoice2:null };
 const el = {
   cls: document.getElementById("cls"),
   subcls: document.getElementById("subcls"),
@@ -714,11 +865,7 @@ const el = {
   export: document.getElementById("export"),
   import: document.getElementById("import")
 };
-function initClassUI(){
-  el.cls.innerHTML = Object.keys(CLASSES).map(c=>`<option value="${c}">${c}</option>`).join("");
-  el.cls.value = state.cls;
-  fillSubclass();
-}
+function initClassUI(){ el.cls.innerHTML = Object.keys(CLASSES).map(c=>`<option value="${c}">${c}</option>`).join(""); el.cls.value = state.cls; fillSubclass(); }
 function fillSubclass(){
   const subs = CLASSES[el.cls.value] || [];
   el.subcls.innerHTML = subs.map(s=>`<option value="${s}">${s}</option>`).join("");
@@ -726,12 +873,8 @@ function fillSubclass(){
   el.subcls.value = state.subcls;
 }
 function initRunes(){
-  el.rune.innerHTML = RUNES.map(r => {
-    if (r.id==="shard") return `<option value="${r.id}" disabled>🔒 ${r.name}</option>`;
-    return `<option value="${r.id}">${r.name}</option>`;
-  }).join("");
-  el.rune.value = state.rune;
-  initRuneChoiceUI();
+  el.rune.innerHTML = RUNES.map(r => r.id==="shard" ? `<option value="${r.id}" disabled>🔒 ${r.name}</option>` : `<option value="${r.id}">${r.name}</option>`).join("");
+  el.rune.value = state.rune; initRuneChoiceUI();
 }
 function makeAttrOptions(){ return KEY.map((k,i)=>`<option value="${k}">${ATTRS[i]}</option>`).join(""); }
 function initRuneChoiceUI(){
@@ -746,15 +889,13 @@ function initRuneChoiceUI(){
     el.rc1.innerHTML = r.options.map(k=>`<option value="${k}">${ATTRS[KEY.indexOf(k)]}</option>`).join("");
     if (!r.options.includes(state.runeChoice1)) state.runeChoice1 = r.options[0];
     el.rc1.value = state.runeChoice1;
-  }
-  else if (r.type==="one-any"){
+  } else if (r.type==="one-any"){
     el.runeExtras.classList.add("show");
     el.rc1Wrap.style.display = "block";
     el.rc1.innerHTML = makeAttrOptions();
     if (!KEY.includes(state.runeChoice1)) state.runeChoice1 = "str";
     el.rc1.value = state.runeChoice1;
-  }
-  else if (r.type==="two"){
+  } else if (r.type==="two"){
     el.runeExtras.classList.add("show");
     el.rc1Wrap.style.display = "block";
     el.rc2Wrap.style.display = "block";
@@ -762,26 +903,21 @@ function initRuneChoiceUI(){
     el.rc2.innerHTML = makeAttrOptions();
     if (!KEY.includes(state.runeChoice1) || state.runeChoice1==null) state.runeChoice1 = "str";
     if (!KEY.includes(state.runeChoice2) || state.runeChoice2==null) state.runeChoice2 = "dex";
-    el.rc1.value = state.runeChoice1;
-    el.rc2.value = state.runeChoice2;
+    el.rc1.value = state.runeChoice1; el.rc2.value = state.runeChoice2;
   }
 }
 function scoreCost(v){ if (v<4 || v>15) return Infinity; return COST[v]; }
 function totalCost(base){ return KEY.reduce((sum,k)=>sum + scoreCost(base[k]), 0); }
 function pointsLeft(base){ const cost = totalCost(base); return 27 - cost; }
-function canInc(base,k){
-  const v = base[k]; if (v>=15) return false;
-  const hypot = {...base, [k]: v+1}; return totalCost(hypot) <= 27;
-}
-function canDec(base,k){ const v = base[k]; return v>4; }
+function canInc(base,k){ const v=base[k]; if (v>=15) return false; const hypot={...base,[k]:v+1}; return totalCost(hypot)<=27; }
+function canDec(base,k){ return base[k]>4; }
 function applyRune(base){
   const after = {...base};
   const r = RUNES.find(x=>x.id===el.rune.value);
   let bonus = {str:0,dex:0,con:0,int:0,wis:0,cha:0};
   if (!r) return {after, bonus};
   if (r.type==="fixed"){ bonus = {...bonus, ...r.bonus}; }
-  else if (r.type==="one"){ if (el.rc1.value){ bonus[el.rc1.value] += 2; } }
-  else if (r.type==="one-any"){ if (el.rc1.value){ bonus[el.rc1.value] += 2; } }
+  else if (r.type==="one" || r.type==="one-any"){ if (el.rc1.value){ bonus[el.rc1.value] += 2; } }
   else if (r.type==="two"){ if (el.rc1.value) bonus[el.rc1.value] += 1; if (el.rc2.value) bonus[el.rc2.value] += 1; }
   KEY.forEach(k => { after[k] = base[k] + bonus[k]; });
   return {after, bonus};
@@ -832,12 +968,23 @@ function renderTotals(){
 }
 function renderResult(){
   const {after, bonus} = applyRune(state.base);
-  let capWarn = []; let anyWarn = false;
+  let capWarn = [];
+  let anyWarn = false;
   el.finalTable.innerHTML = KEY.map((k,i)=>{
-    const pre = state.base[k], bn = bonus[k]||0, post = after[k];
+    const pre = state.base[k];
+    const bn = bonus[k]||0;
+    const post = after[k];
     if (post>20){ capWarn.push(`${ATTRS[i]} ${post} (>20)`); anyWarn = true; }
     const m = modOf(post);
-    return `<tr><td style="text-align:left">${ATTRS[i]}</td><td>${pre}</td><td>${bn>=0?`+${bn}`:bn}</td><td>${post}</td><td>${m>=0?`+${m}`:m}</td></tr>`;
+    return `
+      <tr>
+        <td style="text-align:left">${ATTRS[i]}</td>
+        <td>${pre}</td>
+        <td>${bn>=0?`+${bn}`:bn}</td>
+        <td>${post}</td>
+        <td>${m>=0?`+${m}`:m}</td>
+      </tr>
+    `;
   }).join("");
   el.capWarn.textContent = capWarn.length ? `Limite 20 excedido em: ${capWarn.join(", ")}` : "--";
   const cls = el.cls.value, sub = el.subcls.value;
@@ -846,16 +993,18 @@ function renderResult(){
   el.warnings.textContent = anyWarn ? "Atenção aos limites de 20." : "";
 }
 function updateAll(){ renderStats(); renderTotals(); renderResult(); }
-
 function exportBuild(){
-  const data = { base:state.base, cls:el.cls.value, subcls:el.subcls.value, rune:el.rune.value,
-                 runeChoice1: document.getElementById('runeChoice1')?.value ?? null,
-                 runeChoice2: document.getElementById('runeChoice2')?.value ?? null };
+  const data = {
+    base:state.base, cls:el.cls.value, subcls:el.subcls.value, rune:el.rune.value,
+    runeChoice1: document.getElementById("runeChoice1")?.value ?? null,
+    runeChoice2: document.getElementById("runeChoice2")?.value ?? null
+  };
   const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "build-pointbuy.json";
-  a.click(); URL.revokeObjectURL(a.href);
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 function importBuild(file){
   const fr = new FileReader();
@@ -885,9 +1034,7 @@ el.export.onclick = exportBuild;
 el.import.onchange = (e)=>{ if (e.target.files[0]) importBuild(e.target.files[0]); };
 
 (function boot(){
-  // calcula primeiro
-  (function initClassUIBoot(){ el.cls.innerHTML = Object.keys(CLASSES).map(c=>`<option value="${c}">${c}</option>`).join(""); el.cls.value = state.cls; fillSubclass(); })();
-  initRunes(); updateAll();
+  initClassUI(); initRunes(); renderStats(); renderTotals(); renderResult();
 })();
 </script>
 </body>
