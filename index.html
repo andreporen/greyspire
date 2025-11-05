@@ -47,6 +47,8 @@
     /* Canvas */
     #three-canvas {
       position: fixed; top: 0; left: 0; z-index: 1;
+      /* Evita capturar cliques por cima do selo */
+      pointer-events: none;
     }
     /* Interstitial */
     #interstitial {
@@ -348,7 +350,14 @@ E vos chama.`.trim();
       renderer.setClearColor(0x000000, 1);
     }
     function setupListeners() {
-      document.getElementById('seal-container').addEventListener('click', startExperience, { once: true });
+      const sealContainer = document.getElementById('seal-container');
+      const sealImg = document.getElementById('arcane-seal-img');
+      const onClick = (e) => { e.stopPropagation(); startExperience(); };
+      sealContainer.addEventListener('click', onClick, { once: true });
+      // Redundância: se a imagem existir, também escuta o clique nela
+      if (sealImg) sealImg.addEventListener('click', onClick, { once: true });
+      window.addEventListener('resize', onWindowResize);
+    });
       window.addEventListener('resize', onWindowResize);
     }
     /* ==================== VEIAS + PARTÍCULAS + CRAWL (CORRIGIDO) ==================== */
@@ -433,26 +442,27 @@ E vos chama.`.trim();
       const isMobile = window.innerWidth < 768;
       const maxWidth = Math.min(window.innerWidth * 0.9, 800);
       const availableHeight = window.innerHeight * 0.85;
-      const fontSize = Math.max(14, Math.min(28, Math.floor(availableHeight / lines.length * 0.45)));
+      const fontSize = Math.max(14, Math.min(28, Math.floor(availableHeight / Math.max(1, lines.length) * 0.45)));
       const lineHeight = fontSize * 1.3;
       const canvasHeight = lines.length * lineHeight + fontSize * 2;
       const scale = isMobile ? 3 : 4;
       const canvas = document.createElement('canvas');
-      canvas.width = maxWidth * scale;
-      canvas.height = canvasHeight * scale;
-      const ctx = canvas.getContext('2d');
+      canvas.width = Math.max(2, Math.floor(maxWidth * scale));
+      canvas.height = Math.max(2, Math.floor(canvasHeight * scale));
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
       ctx.scale(scale, scale);
       ctx.clearRect(0, 0, maxWidth, canvasHeight);
       ctx.font = `bold ${fontSize}px 'Uncial Antiqua', 'Cinzel Decorative', 'MedievalSharp', Georgia, serif`;
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
+      ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       let y = fontSize;
-      lines.forEach(line => {
+      for (const line of lines) {
         ctx.fillText(line, maxWidth / 2, y);
         y += lineHeight;
-      });
+      }
       return canvas;
     }
     function animate() {
