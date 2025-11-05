@@ -14,7 +14,39 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
   <!-- TinySDF -->
-  <script src="https://unpkg.com/tiny-sdf@2.0.4"></script>
+  <!-- TinySDF embutido diretamente -->
+  <script>
+  // TinySDF inline (versão reduzida)
+  class TinySDF {
+    constructor(fontSize = 24, buffer = 3, radius = 8, cutoff = 0.25, fontFamily = 'sans-serif', fontWeight = 'normal') {
+      this.fontSize = fontSize;
+      this.buffer = buffer;
+      this.radius = radius;
+      this.cutoff = cutoff;
+      this.fontFamily = fontFamily;
+      this.fontWeight = fontWeight;
+      this.size = fontSize + buffer * 2;
+      this.canvas = document.createElement('canvas');
+      this.canvas.width = this.size;
+      this.canvas.height = this.size;
+      this.ctx = this.canvas.getContext('2d');
+      this.ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+      this.ctx.textBaseline = 'top';
+      this.ctx.fillStyle = 'black';
+    }
+    draw(char) {
+      const ctx = this.ctx;
+      const size = this.size;
+      ctx.clearRect(0, 0, size, size);
+      ctx.fillText(char, this.buffer, this.buffer);
+      const imgData = ctx.getImageData(0, 0, size, size);
+      const alpha = new Uint8ClampedArray(size * size);
+      for (let i = 0; i < alpha.length; i++) alpha[i] = imgData.data[i * 4 + 3];
+      return alpha;
+    }
+  }
+  window.TinySDF = TinySDF;
+  </script>
   <style>
     :root { --cor-arcana: #b24cff; }
     html, body {
