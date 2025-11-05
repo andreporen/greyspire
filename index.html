@@ -2,78 +2,99 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0,
+                 user-scalable=no, viewport-fit=cover"/>
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="format-detection" content="telephone=no">
-  <title>Pergaminho Arcano — Troika SDF (fix)</title>
+  <title>Pergaminho Arcano — Reescrito (Seguro)</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet"/>
 
+  <!-- Libs -->
   <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.core.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 
   <style>
-    :root { --cor-arcana: #b24cff; }
+    :root { --arcana: #b24cff; }
+
     html, body {
       margin: 0; padding: 0; width: 100%; height: 100%;
-      background: #000; color: #fff; font-family: 'MedievalSharp', cursive;
-      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
-      overscroll-behavior: none; touch-action: manipulation;
+      background: #000; color: #fff;
+      font-family: 'MedievalSharp', cursive;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overscroll-behavior: none;
+      touch-action: manipulation;
     }
 
-    /* Canvas no fundo e SEM cliques */
-    #stage { position: fixed; inset: 0; z-index: 0; display: block; pointer-events: none !important; }
+    /* Camadas */
+    #stage       { position: fixed; inset: 0; z-index: 0; display: block; pointer-events: none !important; }
+    #ui          { position: fixed; inset: 0; z-index: 20; display: grid; grid-template-rows: 1fr; }
 
-    /* UI plenamente clicável */
-    #ui { position: fixed; inset: 0; z-index: 10; pointer-events: auto; }
-
-    /* Selo central absoluto e clicável */
-    #seal-layer { position: absolute; inset: 0; display: grid; place-items: center; }
+    /* Selo clicável garantido */
+    #seal-layer  { display: grid; place-items: center; pointer-events: auto; }
     #seal-button {
-      background: transparent; border: 0; display: grid; gap: 10px; place-items: center;
-      cursor: pointer; padding: 0; pointer-events: auto; outline: none;
+      appearance: none; -webkit-appearance: none;
+      border: 0; background: transparent; cursor: pointer;
+      display: grid; gap: 10px; place-items: center;
+      padding: 0; margin: 0; outline: none;
+      pointer-events: auto;
     }
     #seal-img {
       width: 160px; height: auto;
-      filter: drop-shadow(0 0 24px var(--cor-arcana));
-      transition: transform .18s ease, opacity .25s ease;
+      filter: drop-shadow(0 0 24px var(--arcana));
+      transition: transform .15s ease, opacity .25s ease, filter .25s ease;
       pointer-events: auto;
     }
     #seal-button:active #seal-img { transform: scale(.98); }
-    #seal-hint { font-size: 14px; opacity: .85; }
+    #seal-hint { font-size: 14px; opacity: .9; user-select: none; }
+
     .hidden { display: none !important; }
 
     /* Interstitial */
-    #interstitial { position: absolute; inset: 0; display: none; place-items: center; text-align: center; padding: 24px; }
+    #interstitial { display: none; place-items: center; text-align: center; padding: 24px; }
     #interstitial.show { display: grid; }
     .interstitial-text {
       font-size: clamp(20px, 4vw, 36px);
-      text-shadow: 0 0 10px var(--cor-arcana), 0 0 20px var(--cor-arcana), 0 0 30px var(--cor-arcana);
-      animation: arcGlow 2.8s ease-in-out infinite;
+      text-shadow: 0 0 10px var(--arcana), 0 0 20px var(--arcana), 0 0 30px var(--arcana);
+      animation: iglow 2.8s ease-in-out infinite;
     }
-    @keyframes arcGlow {
-      0%,100% { text-shadow: 0 0 10px #fff, 0 0 18px var(--cor-arcana), 0 0 28px var(--cor-arcana); }
-      50%     { text-shadow: 0 0 16px #fff, 0 0 32px var(--cor-arcana), 0 0 50px var(--cor-arcana), 0 0 70px var(--cor-arcana); }
+    @keyframes iglow {
+      0%,100% { text-shadow: 0 0 10px #fff, 0 0 18px var(--arcana), 0 0 28px var(--arcana); }
+      50%     { text-shadow: 0 0 16px #fff, 0 0 32px var(--arcana), 0 0 50px var(--arcana), 0 0 70px var(--arcana); }
     }
 
-    /* Assinatura */
-    #signature-container { position: absolute; left: 50%; bottom: 110px; transform: translateX(-50%); max-width: 640px; line-height: 1.35; text-align: center; display: none; }
+    /* Assinatura final */
+    #signature-container {
+      position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%);
+      text-align: center; max-width: 640px; line-height: 1.35;
+      display: none; z-index: 25;
+    }
     #signature {
-      text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana);
+      text-shadow: 0 0 6px #fff, 0 0 12px var(--arcana), 0 0 18px var(--arcana);
       animation: pulse 1.4s ease-in-out infinite;
     }
     @keyframes pulse {
-      0%,100% { text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana); }
-      50%     { text-shadow: 0 0 10px #fff, 0 0 22px var(--cor-arcana), 0 0 32px var(--cor-arcana), 0 0 45px var(--cor-arcana); }
+      0%,100% { text-shadow: 0 0 6px #fff, 0 0 12px var(--arcana), 0 0 18px var(--arcana); }
+      50%     { text-shadow: 0 0 10px #fff, 0 0 22px var(--arcana), 0 0 32px var(--arcana), 0 0 45px var(--arcana); }
     }
+
+    /* Blindagem total: nada além do selo captura cliques */
+    canvas, #stage, #stage * { pointer-events: none !important; }
+    #seal-layer, #seal-layer * { pointer-events: auto !important; }
   </style>
 </head>
 <body>
+  <!-- Canvas WebGL (apenas se 3D habilitado, senão fica preto e não bloqueia cliques) -->
   <canvas id="stage"></canvas>
 
+  <!-- UI -->
   <div id="ui" aria-hidden="false">
+    <!-- Selo -->
     <div id="seal-layer">
       <button id="seal-button" tabindex="0" aria-label="Entrar">
         <img id="seal-img" src="./selo-arcano.png" alt="Selo Arcano"
@@ -82,25 +103,26 @@
       </button>
     </div>
 
+    <!-- Interstitial -->
     <div id="interstitial">
       <div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div>
     </div>
-
-    <div id="signature-container">
-      <p id="signature">
-        O coração dispara antes que você perceba que deixou a carta cair. O papel atinge o chão, mas a sensação de contato não some com ele. Algo fica preso na sua cabeça, como se um pensamento entrasse sem pedir permissão. Não é visão, nem sonho. É lembrança de algo que você nunca viveu.<br><br>
-        A imagem vem inteira, sem construção, sem origem: uma taverna que você nunca viu, mas reconhece. Tábuas escuras, cheiro de ferrugem, luz baixa demais para ser aconchegante, mesas que já desistiram de permanecer retas. Ferrugem & Ossos. Velha Chama. O nome surge pronto, como se sempre estivesse guardado em algum ponto da sua mente que não era seu.<br><br>
-        Ninguém diz que você deve ir.<br>
-        Mas a sensação é de que você já está atrasado.
-      </p>
-    </div>
   </div>
 
-  <script type="module">
-    import * as THREE from "https://unpkg.com/three@0.155.0/build/three.module.js";
-    import { Text }  from "https://unpkg.com/troika-three-text@0.49.0/dist/troika-three-text.esm.js";
+  <!-- Assinatura -->
+  <div id="signature-container">
+    <p id="signature">
+      O coração dispara antes que você perceba que deixou a carta cair. O papel atinge o chão, mas a sensação de contato não some com ele. Algo fica preso na sua cabeça, como se um pensamento entrasse sem pedir permissão. Não é visão, nem sonho. É lembrança de algo que você nunca viveu.<br><br>
+      A imagem vem inteira, sem construção, sem origem: uma taverna que você nunca viu, mas reconhece. Tábuas escuras, cheiro de ferrugem, luz baixa demais para ser aconchegante, mesas que já desistiram de permanecer retas. Ferrugem & Ossos. Velha Chama. O nome surge pronto, como se sempre estivesse guardado em algum ponto da sua mente que não era seu.<br><br>
+      Ninguém diz que você deve ir.<br>
+      Mas a sensação é de que você já está atrasado.
+    </p>
+  </div>
 
-    const POEM = `Nas entranhas do real, onde a forma range,
+  <!-- App -->
+  <script type="module">
+    /* ========== Texto ========== */
+    const TEXT = `Nas entranhas do real, onde a forma range,
 eles caminham sem saber que já foram colhidos.
 O mundo fede antes de morrer,
 mas vós chamais isso de ordem.
@@ -133,40 +155,57 @@ O selo abre.
 A ruína respira.
 E vos chama.`;
 
-    /* ===== THREE ===== */
+    /* ========== Áudio ========== */
+    const sfx1  = new Howl({ src: ['./sfx1.mp3'], volume: 0.9 });
+    const sfx2  = new Howl({ src: ['./sfx2.mp3'], volume: 0.6, loop:true });
+    const sfx25 = new Howl({ src: ['./sfx2_5.mp3'], volume: 1.0, loop:true });
+    const sfx3  = new Howl({ src: ['./sfx3.mp3'], volume: 0.7 });
+
+    /* ========== Troika Text (SDF) ========== */
+    import * as THREE from "https://unpkg.com/three@0.155.0/build/three.module.js";
+    import { Text }  from "https://unpkg.com/troika-three-text@0.49.0/dist/troika-three-text.esm.js";
+
+    /* ========== Cena ========== */
     const canvas   = document.getElementById('stage');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
     const scene    = new THREE.Scene();
     const camera   = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 5000);
     camera.position.set(0, 0, 200);
-    const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
     renderer.setSize(innerWidth, innerHeight);
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 1);
-    const light = new THREE.AmbientLight(0xffffff, 0.9); scene.add(light);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.9));
 
-    const crawl = new THREE.Group(); scene.add(crawl);
+    // Fundo glow
+    const glow = new THREE.Mesh(
+      new THREE.PlaneGeometry(2,2),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color('#b24cff'), transparent:true, opacity:0.2 })
+    );
+    glow.scale.set(600, 600, 1);
+    glow.position.z = -50;
+    scene.add(glow);
 
+    // Grupo do texto
+    const crawl = new THREE.Group();
+    scene.add(crawl);
+
+    // Texto SDF
     const text = new Text();
-    text.text = POEM;
+    text.text = TEXT;
     text.fontSize = 5.2;
-    text.maxWidth = Math.min(innerWidth * 0.36, 320);
+    text.maxWidth = Math.min(innerWidth * 0.36, 360);
     text.lineHeight = 1.28;
     text.textAlign = 'center';
     text.color = 0xffffff;
     text.font = 'https://fonts.gstatic.com/s/uncialantiqua/v19/N0bM2S5C8e7-ht7PwhWQaP5B.woff';
     text.anchorX = 'center';
     text.anchorY = 'top';
-    text.outlineWidth = 0;
     text.depthOffset = -1;
+    text.outlineWidth = 0;
     text.sync();
     crawl.add(text);
 
-    const glow = new THREE.Mesh(
-      new THREE.PlaneGeometry(2,2),
-      new THREE.MeshBasicMaterial({ color: new THREE.Color('#b24cff'), transparent:true, opacity:0.22 })
-    );
-    glow.scale.set(600, 600, 1); glow.position.z = -50; scene.add(glow);
-
+    // Resize
     function fit() {
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
@@ -175,58 +214,58 @@ E vos chama.`;
       text.fontSize = Math.max(3.8, Math.min(6.2, innerHeight / 120));
       text.sync();
     }
-    addEventListener('resize', fit, {passive:true});
+    addEventListener('resize', fit, { passive:true });
     fit();
 
-    /* ===== ÁUDIO ===== */
-    const sfx1  = new Howl({ src: ['./sfx1.mp3'], volume: 0.9 });
-    const sfx2  = new Howl({ src: ['./sfx2.mp3'], volume: 0.6, loop:true });
-    const sfx25 = new Howl({ src: ['./sfx2_5.mp3'], volume: 1.0, loop:true });
-    const sfx3  = new Howl({ src: ['./sfx3.mp3'], volume: 0.7 });
-
-    /* ===== UI ===== */
+    /* ========== UI ========== */
     const sealLayer = document.getElementById('seal-layer');
-    const inter     = document.getElementById('interstitial');
-    const sigWrap   = document.getElementById('signature-container');
     const sealBtn   = document.getElementById('seal-button');
     const sealImg   = document.getElementById('seal-img');
+    const inter     = document.getElementById('interstitial');
+    const sigWrap   = document.getElementById('signature-container');
 
-    // Força clique em todos os cenários
-    function bindClick(el, fn){
-      el.addEventListener('click', fn, {passive:false});
-      el.addEventListener('pointerdown', fn, {passive:false});
-      el.addEventListener('touchstart', (e)=>{e.preventDefault(); fn(e);}, {passive:false});
-      el.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fn(e);} }, {passive:false});
+    // Bind de clique radical (todos os eventos relevantes)
+    function bindStart(el) {
+      el.addEventListener('click',     start, { passive:false });
+      el.addEventListener('pointerup', start, { passive:false });
+      el.addEventListener('pointerdown', (e)=>e.preventDefault(), { passive:false });
+      el.addEventListener('touchstart',(e)=>{ e.preventDefault(); start(e); }, { passive:false });
+      el.addEventListener('keydown',   (e)=>{ const k=e.key||e.code||''; if(k==='Enter'||k===' '||k==='Space'){ e.preventDefault(); start(e); }}, { passive:false });
     }
+    bindStart(sealBtn);
+    bindStart(sealImg);
+    bindStart(sealLayer);
 
-    let running = false;
-    bindClick(sealBtn, startExperience);
-    bindClick(sealImg, startExperience);
-    bindClick(sealLayer, startExperience);
+    let running=false;
 
-    function startExperience(e){
-      if (running) return;
-      running = true;
+    function start(e){
+      if(running) return;
+      running=true;
 
-      sealLayer.classList.add('hidden');
+      // Feedback visual do selo
+      sealImg.style.opacity = '0';
+      sealImg.style.filter  = 'drop-shadow(0 0 5px var(--arcana))';
+      setTimeout(()=>{ sealLayer.classList.add('hidden'); }, 250);
 
-      inter.style.display = 'grid';
-      inter.style.opacity = '0';
-      gsap.to(inter, {opacity: 1, duration: 0.25, onComplete(){
-        gsap.to(inter, {opacity: 0, delay: 2.8, duration: 0.5, onComplete(){
-          inter.style.display = 'none';
+      // Interstitial
+      inter.classList.add('show');
+      inter.style.opacity='0';
+      gsap.to(inter, { opacity:1, duration:.25, onComplete(){
+        gsap.to(inter, { opacity:0, delay:2.6, duration:.5, onComplete(){
+          inter.classList.remove('show');
         }});
       }});
 
+      // Áudio
       sfx1.play();
-      setTimeout(()=>{ sfx2.play(); sfx25.play(); }, 1200);
+      setTimeout(()=>{ sfx2.play(); sfx25.play(); }, 1000);
 
+      // Inicia scroll
       text.sync();
-      const approxLines = POEM.split('\n').length + 8;
+      const approxLines = TEXT.split('\n').length + 8;
       const approxHeight = approxLines * text.fontSize * text.lineHeight;
 
       crawl.position.set(0, approxHeight * 0.6, 0);
-
       gsap.to(crawl.position, {
         y: -approxHeight * 0.65,
         duration: 55,
@@ -239,13 +278,13 @@ E vos chama.`;
       });
     }
 
-    /* ===== Loop ===== */
-    const clock = new THREE.Clock();
-    (function tick(){
+    /* ========== Loop ========== */
+    const clock=new THREE.Clock();
+    (function loop(){
       const t = clock.getElapsedTime();
       glow.material.opacity = 0.18 + Math.sin(t * 1.6) * 0.06;
       renderer.render(scene, camera);
-      requestAnimationFrame(tick);
+      requestAnimationFrame(loop);
     })();
   </script>
 </body>
