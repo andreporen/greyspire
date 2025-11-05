@@ -11,7 +11,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tiny-sdf@latest/dist/tiny-sdf.min.js"></script>   <style>
+  <script src="https://cdn.jsdelivr.net/npm/tiny-sdf@latest/dist/tiny-sdf.min.js"></script> 
+
+  <style>
     :root { --cor-arcana: #b24cff; }
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width:100%; height:100%; background:#000; overflow:hidden; touch-action:none; -webkit-tap-highlight-color:transparent; }
@@ -150,7 +152,6 @@ E vos chama.`.trim();
       window.onresize = () => {
         camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
         renderer.setSize(innerWidth, innerHeight);
-        // Não é necessário recriar o SDF na mudança de tamanho, apenas o mesh
         if(crawl){ scene.remove(crawl); makeText(); }
       };
 
@@ -174,35 +175,39 @@ E vos chama.`.trim();
     }
 
     function makeText() {
-      const scale = innerWidth<768?1.8:2.2, w=800*scale, h=1800*scale; // Esses valores agora são apenas de escala
+      const scale = innerWidth<768?1.8:2.2; 
+      // CORREÇÃO: Usamos dimensões base (originais) para o plano e o valor de escala para o dimensionamento
+      const w = 800 * scale; 
+      const h = 1800 * scale;
+
       material = new THREE.ShaderMaterial({
         uniforms: { tSDF:{value:sdfTex}, uTime:{value:0}, uBeat:{value:0} },
         vertexShader: document.getElementById('vs').textContent,
         fragmentShader: document.getElementById('fs').textContent,
         transparent: true, side: THREE.DoubleSide, 
-        depthWrite: false // Melhor para objetos transparentes
+        depthWrite: false
       });
-      // Dimensões do mesh devem corresponder à textura para evitar estiramento
-      const geo = new THREE.PlaneGeometry(sdfTex.image.width * scale * 0.5, sdfTex.image.height * scale * 0.5); 
+      
+      // Usamos w e h do cálculo original, que é mais estável.
+      const geo = new THREE.PlaneGeometry(w, h); 
       const mesh = new THREE.Mesh(geo, material);
-      crawl = new THREE.Group(); crawl.add(mesh); crawl.position.y = -mesh.geometry.parameters.height/2-300;
+      crawl = new THREE.Group(); crawl.add(mesh); crawl.position.y = -h/2-300;
       scene.add(crawl);
-      target = mesh.geometry.parameters.height + 2*Math.tan(camera.fov*Math.PI/360)*camera.position.z*0.7;
+      target = h + 2*Math.tan(camera.fov*Math.PI/360)*camera.position.z*0.7;
       scroll = 0;
     }
     
-    // FUNÇÃO ATUALIZADA: Gera o SDF usando TinySDF
+    // FUNÇÃO makeSDF PERMANECE CORRETA COM TINY-SDF
     function makeSDF() {
-      const fontSize = 64; // Aumentei a fonte para melhor SDF base (36 -> 64)
+      const fontSize = 64; 
       const buffer = 8; 
-      const radius = 16; // Raio do SDF
+      const radius = 16; 
       const cutoff = 0.25; 
-      // A fonte deve estar completamente carregada antes de rodar isso.
+      
       const sdfGenerator = new TinySDF(fontSize, buffer, radius, cutoff, '"Uncial Antiqua", Georgia, serif', 0.1, 10);
       
       const lines = TEXT.split('\n').map(l=>l.trim()).filter(Boolean);
       
-      // Calcula o tamanho total necessário para o Canvas SDF
       const tempCanvas = document.createElement('canvas');
       const tempCtx = tempCanvas.getContext('2d');
       tempCtx.font = fontSize + 'px "Uncial Antiqua", Georgia, serif';
@@ -214,7 +219,6 @@ E vos chama.`.trim();
       const totalH = lineH * lines.length + buffer; 
       const totalW = maxWidth + 2 * buffer + 50; 
       
-      // Canvas que receberá o SDF final
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = totalW;
       finalCanvas.height = totalH;
@@ -229,16 +233,13 @@ E vos chama.`.trim();
         
         const imageData = finalCtx.createImageData(metrics.width, metrics.height);
         
-        // Converte os dados SDF (Uint8Array) para RGBA para o ImageData
         for (let i = 0; i < data.length; i++) {
-          // Armazenamos o valor SDF no canal R (vermelho)
           imageData.data[i * 4] = data[i]; 	
           imageData.data[i * 4 + 1] = data[i]; 
           imageData.data[i * 4 + 2] = data[i]; 
           imageData.data[i * 4 + 3] = 255; 	
         }
         
-        // Centraliza X e desenha no canvas final
         const x = (totalW - metrics.width) / 2;
         finalCtx.putImageData(imageData, x, currentY);
         currentY += lineH;
