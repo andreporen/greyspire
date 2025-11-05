@@ -417,7 +417,7 @@ E vos chama.`.trim();
         cutoff = 0.25      // corte
       } = opts || {};
 
-      const tiny = new TinySDF(fontSize, buffer, radius, cutoff, fontFamily, fontWeight);
+      const tiny = new window.TinySDF(fontSize, buffer, radius, cutoff, fontFamily, fontWeight);
       // Canvas para medir avanços
       const measure = document.createElement('canvas').getContext('2d');
       measure.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
@@ -712,4 +712,3 @@ E vos chama.`.trim();
   </script>
 </body>
 </html>
-
