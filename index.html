@@ -296,7 +296,7 @@ E vos chama.`.trim();
     let sfx1, sfx2, sfx25, sfx3;
     let sfx2Id = null, sfx25Id = null;
     let binauralTargets = [];
-    let crawlGroup, textMesh, sdfMesh, textHeight;
+    let crawlGroup, textMesh, textHeight;
     let animationInProgress = false;
     let scrollSpeed = 0.7;
     let totalDistance = 0;
@@ -388,7 +388,7 @@ E vos chama.`.trim();
           });
         }
       }, 4500);
-      setTimeout(createSDFText, 3000);
+      setTimeout(createCrawlText, 3000);
     }
     function showInterstitial(ms) {
       const inter = document.getElementById('interstitial');
@@ -403,87 +403,43 @@ E vos chama.`.trim();
         }, 500);
       }, ms);
     }
-    function createSDFText() {
-      // limpa anterior
-      if (textMesh) { scene.remove(crawlGroup); textMesh.geometry && textMesh.geometry.dispose(); textMesh.material && textMesh.material.dispose(); textMesh = null; }
-      if (sdfMesh) { scene.remove(crawlGroup); sdfMesh.geometry && sdfMesh.geometry.dispose(); sdfMesh.material && sdfMesh.material.dispose(); sdfMesh = null; }
-
-      var isMobile = window.innerWidth < 768;
-      var fontPx = Math.max(18, Math.min(32, Math.floor((window.innerHeight * 0.85) / 28)));
-      var buffer = 8;
-      var size = fontPx + buffer*2;
-
-      function drawGlyph(ch){
-        var c=document.createElement('canvas'); c.width=size; c.height=size;
-        var cx=c.getContext('2d', { willReadFrequently:true });
-        cx.font='bold '+fontPx+'px ' + "'Uncial Antiqua', 'Cinzel Decorative', 'MedievalSharp', Georgia, serif";
-        cx.textBaseline='top'; cx.fillStyle='black';
-        cx.clearRect(0,0,size,size); cx.fillText(ch, buffer, buffer);
-        var id=cx.getImageData(0,0,size,size); var a=new Uint8ClampedArray(size*size);
-        for(var i=0;i<a.length;i++){ a[i]=id.data[i*4+3]; }
-        return a;
-      }
-
-      // atlas simples
-      var all = (LOREM_IPSUM_ARCANO + ' ').split('');
-      var uniq=[]; var seen={};
-      for(var i=0;i<all.length;i++){ var ch=all[i]; if(!seen[ch]){seen[ch]=1; uniq.push(ch);} }
-      var cols=Math.ceil(Math.sqrt(uniq.length)); var rows=Math.ceil(uniq.length/cols);
-      var ac=document.createElement('canvas'); ac.width=cols*size; ac.height=rows*size; var ax=ac.getContext('2d');
-      var map=new Map();
-      var meas=document.createElement('canvas').getContext('2d');
-      meas.font='bold '+fontPx+'px ' + "'Uncial Antiqua', 'Cinzel Decorative', 'MedievalSharp', Georgia, serif";
-      for(var n=0;n<uniq.length;n++){
-        var data=drawGlyph(uniq[n]); var img=ax.createImageData(size,size);
-        for(var p=0;p<data.length;p++){ img.data[p*4]=255; img.data[p*4+1]=255; img.data[p*4+2]=255; img.data[p*4+3]=data[p]; }
-        var cx=(n%cols)*size; var cy=Math.floor(n/cols)*size; ax.putImageData(img,cx,cy);
-        var m=meas.measureText(uniq[n]);
-        map.set(uniq[n], {u0:cx/ac.width, v0:cy/ac.height, u1:(cx+size)/ac.width, v1:(cy+size)/ac.height, adv:m.width});
-      }
-
-      function measureStr(str){ var w=0; for(var i=0;i<str.length;i++){ var g=map.get(str[i]); w+= g? g.adv : (map.get(' ') ? map.get(' ').adv : fontPx*0.5); } return w; }
-
-      var maxWidth=Math.min(window.innerWidth*0.9,800);
-      var lineH=fontPx*1.28; var lines=[]; var parts=LOREM_IPSUM_ARCANO.split('\n');
-      for(var li=0;li<parts.length;li++){
-        var words=parts[li].split(/\s+/); var cur='';
-        for(var wi=0;wi<words.length;wi++){
-          var w=words[wi]; var test=cur? (cur+' '+w): w; if(measureStr(test)>maxWidth && cur){ lines.push(cur); cur=w; } else { cur=test; }
-        }
-        if(cur) lines.push(cur);
-      }
-
-      var glyphs=0; for(var l=0;l<lines.length;l++){ glyphs+=lines[l].length; }
-      var positions=new Float32Array(glyphs*6*3);
-      var uvs=new Float32Array(glyphs*6*2);
-      var uvA=new Float32Array(glyphs*6*2);
-      var uvB=new Float32Array(glyphs*6*2);
-
-      var gi=0; var penY=0;
-      for(l=0;l<lines.length;l++){
-        var line=lines[l]; var lineW=measureStr(line); var penX=-lineW*0.5;
-        for(var ci=0;ci<line.length;ci++){
-          var ch2=line[ci]; var meta=map.get(ch2) || map.get(' ');
-          var gw=size, gh=size; var x0=penX, y0=-penY, x1=penX+gw, y1=-penY, x2=penX+gw, y2=-penY+gh, x3=penX, y3=-penY+gh;
-          var u0=meta.u0, v0=meta.v0, u1=meta.u1, v1=meta.v1;
-          var P=[x0,y0, x1,y1, x2,y2,  x0,y0, x2,y2, x3,y3]; var UV=[0,0, 1,0, 1,1, 0,0, 1,1, 0,1];
-          var UVA=[u0,v0, u1,v0, u1,v1,  u0,v0, u1,v1, u0,v1]; var UVB=[u1,v1, u0,v1, u0,v0,  u1,v1, u0,v0, u1,v0];
-          for(var k=0;k<6;k++){ var pi=(gi*6+k)*3; positions[pi]=P[k*2]; positions[pi+1]=P[k*2+1]; positions[pi+2]=0; var ti=(gi*6+k)*2; uvs[ti]=UV[k*2]; uvs[ti+1]=UV[k*2+1]; uvA[ti]=UVA[k*2]; uvA[ti+1]=UVA[k*2+1]; uvB[ti]=UVB[k*2]; uvB[ti+1]=UVB[k*2+1]; }
-          gi++; penX += (meta.adv || fontPx*0.5);
-        }
-        penY += lineH;
-      }
-
-      var geom=new THREE.BufferGeometry();
-      geom.setAttribute('position', new THREE.BufferAttribute(positions,3));
-      geom.setAttribute('uv', new THREE.BufferAttribute(uvs,2));
-      geom.setAttribute('uvA', new THREE.BufferAttribute(uvA,2));
-      geom.setAttribute('uvB', new THREE.BufferAttribute(uvB,2));
-
-      var tex=new THREE.CanvasTexture(ac); tex.minFilter=THREE.LinearFilter; tex.magFilter=THREE.LinearFilter;
-
-      var vsh='attribute vec2 uvA; attribute vec2 uvB; varying vec2 vUv; varying vec2 vUvA; varying vec2 vUvB; void main(){ vUv=uv; vUvA=uvA; vUvB=uvB; gl_Position=projectionMatrix*modelViewMatrix*vec4(position.xy,0.0,1.0);}';
-      var fsh='precision highp float; uniform sampler2D atlas; unif createTextCanvas(text) {
+    function createCrawlText() {
+      const textCanvas = createTextCanvas(LOREM_IPSUM_ARCANO);
+      const isMobile = window.innerWidth < 768;
+      const scale = isMobile ? 3 : 4;
+      const logicalWidth = textCanvas.width / scale;
+      const logicalHeight = textCanvas.height / scale;
+      textHeight = logicalHeight;
+      const texture = new THREE.CanvasTexture(textCanvas);
+      texture.minFilter = texture.magFilter = THREE.LinearFilter;
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      texture.needsUpdate = true;
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          map: { value: texture },
+          time: { value: 0.0 },
+          glowColor: { value: ARCANE_PURPLE },
+          baseDistortion: { value: 0.010 },
+          baseNoise: { value: 0.010 },
+          beatLevel: { value: 0.0 }
+        },
+        vertexShader: document.getElementById('vertexShader').textContent,
+        fragmentShader: document.getElementById('fragmentShader').textContent,
+        transparent: true,
+        side: THREE.DoubleSide
+      });
+      const geometry = new THREE.PlaneGeometry(logicalWidth, logicalHeight);
+      textMesh = new THREE.Mesh(geometry, material);
+      crawlGroup = new THREE.Group();
+      crawlGroup.add(textMesh);
+      crawlGroup.position.y = -textHeight / 2 - 300;
+      scene.add(crawlGroup);
+      const fovRad = camera.fov * Math.PI / 180;
+      const visibleHeight = 2 * Math.tan(fovRad / 2) * camera.position.z;
+      targetDistance = textHeight + visibleHeight * 0.7;
+      totalDistance = 0;
+    }
+    function createTextCanvas(text) {
       const lines = text.split('
 ').map(l => l.trim()).filter(Boolean);
       const isMobile = window.innerWidth < 768;
@@ -545,7 +501,7 @@ E vos chama.`.trim();
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
-      if (crawlGroup) createSDFText();
+      if (crawlGroup) createCrawlText();
     }
     /* ÁUDIO (binaural, reverb, etc.) - mantido igual */
     function makeBinaural(howl, soundId, opts = {}) { /* ... */ }
