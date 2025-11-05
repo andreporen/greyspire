@@ -1,53 +1,714 @@
-// Substitua createCrawlText() por:
-function createCrawlText() {
-  if (textMesh) {
-    textMesh.dispose();
-    if (crawlGroup) scene.remove(crawlGroup);
-  }
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="format-detection" content="telephone=no">
+  <title>O Pergaminho Arcano — TinySDF</title>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+  <!-- TinySDF -->
+  <script src="https://unpkg.com/tiny-sdf@2.0.4/dist/tiny-sdf.umd.js"></script>
+  <style>
+    :root { --cor-arcana: #b24cff; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      background: #000; color: #fff;
+      font-family: 'MedievalSharp', cursive;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    /* Selo */
+    #seal-container {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 160px; height: 160px;
+      display: flex; justify-content: center; align-items: center;
+      cursor: pointer; z-index: 20; pointer-events: auto;
+    }
+    #arcane-seal-img {
+      width: 120px; height: auto; pointer-events: auto;
+      filter: drop-shadow(0 0 22px var(--cor-arcana));
+      transition: opacity .4s ease-out, filter .4s ease-out;
+    }
+    #arcane-seal-img.clicked { opacity: 0; filter: drop-shadow(0 0 5px var(--cor-arcana)); }
 
-  const isMobile = window.innerWidth < 768;
-  const maxWidth = Math.min(window.innerWidth * 0.9, 800);
-  const fontSize = Math.max(20, Math.min(36, Math.floor(window.innerHeight * 0.04)));
+    /* Canvas */
+    #three-canvas { position: fixed; top: 0; left: 0; z-index: 1; }
 
-  const text = new Troika.Text();
-  text.text = LOREM_IPSUM_ARCANO;
-  text.font = 'https://fonts.gstatic.com/s/uncialantiqua/v21/b0ngw4-TgY2-q0WJu1gH0pJ14c2r2tWj5a8.woff2';
-  text.fontSize = fontSize;
-  text.color = 0xffffff;
-  text.anchorX = 'center';
-  text.anchorY = 'top';
-  text.textAlign = 'center';
-  text.maxWidth = maxWidth;
-  text.lineHeight = 1.35;
-  text.letterSpacing = 0.02;
+    /* Interstitial */
+    #interstitial {
+      display: none; opacity: 0;
+      position: fixed; inset: 0; z-index: 9;
+      align-items: center; justify-content: center;
+      pointer-events: none; background: transparent;
+      transition: opacity .5s ease;
+    }
+    #interstitial.show { display: flex; opacity: 1; }
+    #interstitial.hide { opacity: 0; }
+    .interstitial-text {
+      max-width: 800px; padding: 0 24px; text-align: center;
+      font-size: clamp(20px, 4vw, 36px); color: #fff;
+      text-shadow: 0 0 10px var(--cor-arcana), 0 0 20px var(--cor-arcana), 0 0 30px var(--cor-arcana);
+      animation: interstitialGlow 2.8s ease-in-out infinite;
+      filter: brightness(1.05);
+    }
+    @keyframes interstitialGlow {
+      0%, 100% { text-shadow: 0 0 10px #fff, 0 0 18px var(--cor-arcana), 0 0 28px var(--cor-arcana); }
+      50% { text-shadow: 0 0 16px #fff, 0 0 32px var(--cor-arcana), 0 0 50px var(--cor-arcana), 0 0 70px var(--cor-arcana); }
+    }
 
-  text.material = new THREE.ShaderMaterial({
-    uniforms: {
-      map: { value: null },
-      time: { value: 0.0 },
-      glowColor: { value: ARCANE_PURPLE },
-      baseDistortion: { value: 0.010 },
-      baseNoise: { value: 0.010 },
-      beatLevel: { value: 0.0 }
-    },
-    vertexShader: document.getElementById('vertexShader').textContent,
-    fragmentShader: document.getElementById('fragmentShader').textContent,
-    transparent: true,
-    side: THREE.DoubleSide
-  });
+    /* Assinatura Final */
+    #signature-container {
+      display: none; opacity: 0;
+      position: fixed; bottom: 110px; left: 50%;
+      transform: translateX(-50%); z-index: 10;
+      text-align: center; font-size: 1.2rem;
+      font-family: 'MedievalSharp', cursive;
+      transition: opacity 1.2s ease-in;
+      max-width: 600px; line-height: 1.35;
+    }
+    #signature {
+      color: #fff;
+      text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana);
+      animation: pulse-arcano 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse-arcano {
+      0%, 100% { text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana); }
+      50% { text-shadow: 0 0 10px #fff, 0 0 22px var(--cor-arcana), 0 0 32px var(--cor-arcana), 0 0 45px var(--cor-arcana); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Selo -->
+  <div id="seal-container">
+    <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo Arcano">
+  </div>
+  <!-- Canvas 3D -->
+  <canvas id="three-canvas"></canvas>
+  <!-- Interstitial -->
+  <div id="interstitial">
+    <div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div>
+  </div>
+  <!-- Assinatura Final -->
+  <div id="signature-container">
+    <p id="signature">
+      O coração dispara antes que você perceba que deixou a carta cair. O papel atinge o chão, mas a sensação de contato não some com ele. Algo fica preso na sua cabeça, como se um pensamento entrasse sem pedir permissão. Não é visão, nem sonho. É lembrança de algo que você nunca viveu.<br><br>
+      A imagem vem inteira, sem construção, sem origem: uma taverna que você nunca viu, mas reconhece. Tábuas escuras, cheiro de ferrugem, luz baixa demais para ser aconchegante, mesas que já desistiram de permanecer retas. Ferrugem & Ossos. Velha Chama. O nome surge pronto, como se sempre estivesse guardado em algum ponto da sua mente que não era seu.<br><br>
+      Ninguém diz que você deve ir.<br>
+      Mas a sensação é de que você já está atrasado.
+    </p>
+  </div>
 
-  text.sync(() => {
-    const bb = text.geometry.boundingBox;
-    textHeight = bb.max.y - bb.min.y;
-    const fovRad = camera.fov * Math.PI / 180;
-    const visibleHeight = 2 * Math.tan(fovRad / 2) * camera.position.z;
-    targetDistance = textHeight + visibleHeight * 0.7;
-    totalDistance = 0;
+  <!-- SDF SHADERS (Vertex/Fragment) -->
+  <script type="x-shader/x-vertex" id="sdf-vertex">
+    attribute vec2 uvA;
+    attribute vec2 uvB;
+    attribute vec2 offset;    // posição do glyph (em px do plano)
+    attribute vec2 size;      // largura/altura do quad (em px do plano)
 
-    crawlGroup = new THREE.Group();
-    crawlGroup.add(text);
-    crawlGroup.position.y = -textHeight / 2 - 300;
-    scene.add(crawlGroup);
-    textMesh = text;
-  });
-}
+    varying vec2 vUv;
+    varying vec2 vUvA;
+    varying vec2 vUvB;
+
+    void main() {
+      // Quad local space: -0.5..0.5 * size, depois adiciona offset
+      vec2 pos = (position.xy * size) + offset;
+      vUv = uv;
+      vUvA = uvA;
+      vUvB = uvB;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(pos.xy, 0.0, 1.0);
+    }
+  </script>
+  <script type="x-shader/x-fragment" id="sdf-fragment">
+    precision highp float;
+
+    uniform sampler2D atlas;   // atlas SDF
+    uniform vec3 fillColor;
+    uniform vec3 outlineColor;
+    uniform vec3 glowColor;
+    uniform float time;
+    uniform float beatLevel;   // 0..1
+    uniform float smoothing;   // suavização em unidades da SDF
+    uniform float threshold;   // limiar de preenchimento (0..1)
+    uniform float outlineWidth;// 0..1 em espaço SDF
+    uniform float glowStrength;// intensidade do glow
+
+    varying vec2 vUv;
+    varying vec2 vUvA;
+    varying vec2 vUvB;
+
+    // interpola UV por-glyph
+    vec2 glyphUV() {
+      return mix(vUvA, vUvB, vUv);
+    }
+
+    void main() {
+      vec2 guv = glyphUV();
+      float a = texture2D(atlas, guv).a; // SDF no canal A (0..1)
+
+      // Beat: respira contorno/glow
+      float pulse = 0.5 + 0.5 * sin(time * 6.0 + beatLevel * 8.0);
+
+      float dynOutline = outlineWidth * (0.85 + 0.3 * pulse * beatLevel);
+      float dynSmooth  = smoothing * (1.0 + 0.6 * beatLevel);
+
+      // fill
+      float fillAlpha = smoothstep(threshold - dynSmooth, threshold + dynSmooth, a);
+
+      // outline (anel estreito ao redor do limiar)
+      float edge0 = threshold - dynOutline - dynSmooth;
+      float edge1 = threshold - dynOutline + dynSmooth;
+      float outlineMask = smoothstep(edge0, edge1, a) * (1.0 - fillAlpha);
+
+      // glow: decai exponencialmente conforme distancia ao limiar
+      float glowDist = clamp((threshold - a) * 4.0, 0.0, 1.0);
+      float glow = exp(-8.0 * glowDist) * glowStrength * (0.7 + 0.6 * beatLevel);
+
+      vec3 col = fillColor * fillAlpha + outlineColor * outlineMask;
+      col += glowColor * glow;
+
+      float alpha = max(fillAlpha, max(outlineMask, glow * 0.5));
+
+      // blackout sutil com beat forte
+      float blackout = smoothstep(0.93, 1.05, beatLevel) * 0.28;
+      col = mix(col, vec3(0.0), blackout);
+
+      gl_FragColor = vec4(col, alpha);
+    }
+  </script>
+
+  <script>
+    /* ==================== TEXTO ARCANO ==================== */
+    const LOREM_IPSUM_ARCANO = `
+Nas entranhas do real, onde a forma range,
+eles caminham sem saber que já foram colhidos.
+O mundo fede antes de morrer,
+mas vós chamais isso de ordem.
+Sob a pedra há dente,
+sob o dente há fome,
+sob a fome há ritmo,
+e o ritmo vos aguarda.
+Eles respiram, mas o ar não os quer.
+A carne permanece, mas a lembrança apodrece.
+O tempo só mastiga o que ainda resiste,
+e nada resiste por muito.
+O eixo tritura o que ousa lembrar.
+A cidade dorme sobre ossos que não consentem.
+Chama-se paz ao que sangra devagar,
+chama-se vida ao que ainda não cedeu.
+Vós sois as falhas do esquecimento,
+os nomes que o silêncio não digeriu.
+A Fenda não oferece escolha —
+apenas retorno.
+A vinda já começou
+antes do passo.
+A queda já vos guarda
+antes da borda.
+Ouçam.
+Desçam.
+Cedam.
+Retornem.
+A pele racha.
+O selo abre.
+A ruína respira.
+E vos chama.`.trim();
+
+    /* ==================== BEAT DETECTION (mantido) ==================== */
+    let BEAT = { fps: 60, durationSec: 0, values: [], ready: false };
+    async function precomputeBeat(url) {
+      try {
+        const resp = await fetch(url, { cache: 'force-cache' });
+        const arr = await resp.arrayBuffer();
+        const AC = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AC({ sampleRate: 44100 });
+        const decoded = await ctx.decodeAudioData(arr);
+        const chL = decoded.getChannelData(0);
+        const chR = decoded.numberOfChannels > 1 ? decoded.getChannelData(1) : null;
+        const sr = decoded.sampleRate;
+        const hop = Math.max(1, Math.floor(sr / BEAT.fps));
+        const env = [];
+        for (let i = 0; i < decoded.length; i += hop) {
+          let sum = 0, count = 0;
+          for (let j = 0; j < hop && (i + j) < decoded.length; j++) {
+            const sL = chL[i + j];
+            const sR = chR ? chR[i + j] : 0;
+            const m = chR ? (sL + sR) * 0.5 : sL;
+            sum += m * m; count++;
+          }
+          const rms = Math.sqrt(sum / Math.max(1, count));
+          env.push(rms);
+        }
+        const smooth = (arr, k = 0.86) => {
+          const out = new Float32Array(arr.length);
+          let prev = 0;
+          for (let i = 0; i < arr.length; i++) { prev = prev * k + arr[i] * (1 - k); out[i] = prev; }
+          prev = 0;
+          for (let i = arr.length - 1; i >= 0; i--) { prev = prev * k + out[i] * (1 - k); out[i] = Math.max(out[i], prev); }
+          return Array.from(out);
+        };
+        let sm = smooth(env, 0.86);
+        const sorted = [...sm].sort((a, b) => a - b);
+        const p95 = sorted[Math.floor(sorted.length * 0.95)] || 1;
+        sm = sm.map(v => Math.min(1, v / (p95 || 1)));
+        sm = sm.map(v => Math.pow(v, 0.6));
+        BEAT.values = sm;
+        BEAT.durationSec = decoded.duration;
+        BEAT.ready = true;
+        ctx.close && ctx.close();
+      } catch (e) {
+        console.warn('Beat falhou, usando fallback.', e);
+        const total = 60 * 30;
+        const vals = [];
+        for (let i = 0; i < total; i++) {
+          vals.push((Math.sin(i / 60 * 2 * Math.PI * 1.1) * 0.5 + 0.5));
+        }
+        BEAT.values = vals;
+        BEAT.durationSec = total / 60;
+        BEAT.ready = true;
+      }
+    }
+    function getBeatAt(timeSec) {
+      if (!BEAT.ready || BEAT.values.length === 0) {
+        return (Math.sin(timeSec * 2 * Math.PI * 1.0) * 0.5 + 0.5);
+      }
+      const t = timeSec % BEAT.durationSec;
+      const idx = Math.floor(t * BEAT.fps) % BEAT.values.length;
+      return BEAT.values[idx];
+    }
+
+    /* ==================== VARIÁVEIS GLOBAIS ==================== */
+    let scene, camera, renderer;
+    let sfx1, sfx2, sfx25, sfx3;
+    let sfx2Id = null, sfx25Id = null;
+    let binauralTargets = [];
+    let crawlGroup, sdfMesh, textHeight;
+    let animationInProgress = false;
+    let scrollSpeed = 0.7;
+    let totalDistance = 0;
+    let targetDistance = 0;
+    let clock = new THREE.Clock();
+    const ARCANE_PURPLE = new THREE.Color('#b24cff');
+
+    /* ==================== WAKE LOCK ==================== */
+    let wakeLock = null;
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {}
+    }
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState === 'visible' && wakeLock === null) {
+        await requestWakeLock();
+      }
+    });
+
+    /* ==================== INICIALIZAÇÃO ==================== */
+    function init() {
+      setupAudio();
+      setupScene();
+      createParticles();
+      veinsBackground = createVeinsBackground();
+      precomputeBeat('./sfx2_5.mp3');
+      startBinauralLoop();
+      setupListeners();
+      requestWakeLock();
+      animate();
+    }
+
+    function setupAudio() {
+      sfx1 = new Howl({ src: ['./sfx1.mp3'], volume: 0.8, loop: false, html5: false });
+      sfx2 = new Howl({ src: ['./sfx2.mp3'], volume: 0.6, loop: true, html5: false });
+      sfx25 = new Howl({ src: ['./sfx2_5.mp3'], volume: 1.0, loop: true, html5: false });
+      sfx3 = new Howl({ src: ['./sfx3.mp3'], volume: 0.6, loop: false, html5: false });
+    }
+
+    function setupScene() {
+      const canvas = document.getElementById('three-canvas');
+      scene = new THREE.Scene();
+      const aspect = window.innerWidth / window.innerHeight;
+      camera = new THREE.PerspectiveCamera(50, aspect, 1, 10000);
+      camera.position.set(0, 130, 480);
+      camera.lookAt(0, 0, 0);
+      scene.add(camera);
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setClearColor(0x000000, 1);
+    }
+
+    function setupListeners() {
+      document.getElementById('seal-container').addEventListener('click', startExperience, { once: true });
+      window.addEventListener('resize', onWindowResize);
+    }
+
+    /* ==================== VEIAS + PARTÍCULAS (placeholders) ==================== */
+    function createVeinsBackground() { return { update: () => {} }; }
+    function createParticles() {}
+
+    function startExperience() {
+      if (animationInProgress) return;
+      animationInProgress = true;
+      const sealImg = document.getElementById('arcane-seal-img');
+      sealImg.classList.add('clicked');
+      const id1 = sfx1.play();
+      makeBinaural(sfx1, id1, { speed: 1.4, radius: 0.9, jitter: 0.35 });
+      setTimeout(() => { document.getElementById('seal-container').style.display = 'none'; }, 400);
+      showInterstitial(3000);
+      setTimeout(() => {
+        sfx2Id = sfx2.play();
+        makeBinaural(sfx2, sfx2Id, { speed: 1.3, radius: 1.2, jitter: 0.5 });
+        if (sfx25.state() === 'loaded') {
+          sfx25Id = sfx25.play();
+          makeBinaural(sfx25, sfx25Id, { speed: 1.5, radius: 1.0, jitter: 0.45 });
+        } else {
+          sfx25.once('load', () => {
+            sfx25Id = sfx25.play();
+            makeBinaural(sfx25, sfx25Id, { speed: 1.5, radius: 1.0, jitter: 0.45 });
+          });
+        }
+      }, 4500);
+
+      // Troca: TinySDF → cria texto SDF
+      setTimeout(createSDFText, 3000);
+    }
+
+    function showInterstitial(ms) {
+      const inter = document.getElementById('interstitial');
+      inter.style.display = 'flex';
+      requestAnimationFrame(() => inter.classList.add('show'));
+      setTimeout(() => {
+        inter.classList.remove('show');
+        inter.classList.add('hide');
+        setTimeout(() => {
+          inter.style.display = 'none';
+          inter.classList.remove('hide');
+        }, 500);
+      }, ms);
+    }
+
+    /* ==================== TINY SDF: ATLAS + GEOMETRIA ==================== */
+    function uniqueChars(text) {
+      const set = new Set(text.split('').filter(ch => ch !== '\\r'));
+      return Array.from(set);
+    }
+
+    function buildSDFAtlas(chars, opts) {
+      const {
+        fontFamily = "'Uncial Antiqua', 'Cinzel Decorative', 'MedievalSharp', Georgia, serif",
+        fontWeight = 'normal',
+        fontSize = 64,     // tamanho base do SDF
+        buffer = 8,        // margem em pixels (esp. para glow)
+        radius = 12,       // raio da SDF
+        cutoff = 0.25      // corte
+      } = opts || {};
+
+      const tiny = new TinySDF(fontSize, buffer, radius, cutoff, fontFamily, fontWeight);
+      // Canvas para medir avanços
+      const measure = document.createElement('canvas').getContext('2d');
+      measure.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+
+      const glyphs = [];
+      for (const ch of chars) {
+        const data = tiny.draw(ch); // Uint8ClampedArray length = (fontSize+2*buffer)^2
+        const size = tiny.size || (fontSize + buffer * 2);
+        const w = size, h = size;
+        // avanço aproximado
+        const metrics = measure.measureText(ch);
+        const advance = metrics.width;
+        glyphs.push({ ch, data, w, h, advance });
+      }
+
+      // Packing simples em grid
+      const N = glyphs.length;
+      const cols = Math.ceil(Math.sqrt(N));
+      const rows = Math.ceil(N / cols);
+      const cellW = glyphs[0].w;
+      const cellH = glyphs[0].h;
+
+      const atlasCanvas = document.createElement('canvas');
+      atlasCanvas.width = cols * cellW;
+      atlasCanvas.height = rows * cellH;
+      const actx = atlasCanvas.getContext('2d');
+      const imgData = actx.createImageData(cellW, cellH);
+
+      const map = new Map();
+      let x = 0, y = 0, i = 0;
+      for (const g of glyphs) {
+        // copiar alpha para RGBA
+        for (let p = 0; p < g.data.length; p++) {
+          imgData.data[p*4+0] = 255; // RGB branco
+          imgData.data[p*4+1] = 255;
+          imgData.data[p*4+2] = 255;
+          imgData.data[p*4+3] = g.data[p]; // alpha carrega SDF
+        }
+        const cx = (i % cols) * cellW;
+        const cy = Math.floor(i / cols) * cellH;
+        actx.putImageData(imgData, cx, cy);
+        map.set(g.ch, {
+          u0: cx / atlasCanvas.width,
+          v0: cy / atlasCanvas.height,
+          u1: (cx + cellW) / atlasCanvas.width,
+          v1: (cy + cellH) / atlasCanvas.height,
+          advance: g.advance,
+          cellW, cellH
+        });
+        i++;
+      }
+
+      return { atlasCanvas, map, cellW, cellH, fontSize };
+    }
+
+    function layoutParagraph(text, maxWidthPx, lineHeightPx, advanceOf) {
+      const words = text.split(/\s+/);
+      const lines = [];
+      let cur = '';
+      let width = 0;
+      for (const w of words) {
+        const test = cur ? cur + ' ' + w : w;
+        const tw = measureString(test, advanceOf);
+        if (tw > maxWidthPx && cur) {
+          lines.push(cur);
+          cur = w;
+        } else {
+          cur = test;
+        }
+      }
+      if (cur) lines.push(cur);
+      return { lines, height: lines.length * lineHeightPx };
+    }
+
+    function measureString(str, advanceOf) {
+      let w = 0;
+      for (const ch of str) {
+        if (ch === '\n') continue;
+        const g = advanceOf.get(ch);
+        w += g ? g.advance : advanceOf.get(' ')?.advance || 10;
+      }
+      return w;
+    }
+
+    function buildSDFGeometry(text, atlas, options) {
+      const isMobile = window.innerWidth < 768;
+      const pxScale = isMobile ? 0.75 : 1.0; // escala geral do texto no plano
+      const fontPx = Math.max(18, Math.min(32, Math.floor((window.innerHeight * 0.85) / 28)));
+      const lineHeight = fontPx * 1.28;
+      const maxWidth = Math.min(window.innerWidth * 0.9, 800);
+
+      // Prepara mapa de avanços
+      const advanceOf = new Map();
+      for (const [ch, meta] of atlas.map.entries()) {
+        advanceOf.set(ch, { advance: meta.advance * (fontPx / atlas.fontSize) });
+      }
+
+      // Respeita \n do poema e quebra adicional
+      const explicitLines = text.split('\n');
+      const lines = [];
+      for (const line of explicitLines) {
+        const { lines: wrap } = layoutParagraph(line, maxWidth, lineHeight, advanceOf);
+        lines.push(...wrap);
+      }
+
+      // Conta total de glyphs
+      let glyphCount = 0;
+      for (const line of lines) glyphCount += line.length;
+
+      // BufferGeometry (quads)
+      const positions = new Float32Array(glyphCount * 6 * 3); // 2 tri * 3 verts * 3 comps
+      const uvs = new Float32Array(glyphCount * 6 * 2);
+      const uvA = new Float32Array(glyphCount * 6 * 2);
+      const uvB = new Float32Array(glyphCount * 6 * 2);
+
+      let penY = 0;
+      let gIndex = 0;
+
+      const scale = (fontPx / atlas.fontSize) * pxScale;
+
+      // altura total para scroll
+      const totalHeight = lines.length * lineHeight;
+
+      for (let li = 0; li < lines.length; li++) {
+        const line = lines[li];
+        let penX = -maxWidth * 0.5; // centraliza construindo do meio
+        const actualW = measureString(line, advanceOf);
+        penX = -actualW * 0.5; // centraliza por linha
+
+        for (const ch of line) {
+          const meta = atlas.map.get(ch) || atlas.map.get(' ');
+          const gw = atlas.cellW * scale;
+          const gh = atlas.cellH * scale;
+          const x = penX;
+          const y = -penY;
+
+          const x0 = x,       y0 = y;
+          const x1 = x + gw,  y1 = y;
+          const x2 = x + gw,  y2 = y + gh;
+          const x3 = x,       y3 = y + gh;
+
+          const u0 = meta.u0, v0 = meta.v0;
+          const u1 = meta.u1, v1 = meta.v1;
+
+          // dois triângulos: (0,1,2) (0,2,3)
+          const P = [x0,y0,  x1,y1,  x2,y2,  x0,y0,  x2,y2,  x3,y3];
+          const UV = [0,0, 1,0, 1,1, 0,0, 1,1, 0,1];
+          const UVA = [u0,v0, u1,v0, u1,v1, u0,v0, u1,v1, u0,v1];
+          const UVB = [u1,v1, u0,v1, u0,v0, u1,v1, u0,v0, u1,v0]; // não usado, mas mantido para compat
+
+          for (let k = 0; k < 6; k++) {
+            const pi = (gIndex*6 + k) * 3;
+            positions[pi+0] = P[k*2+0];
+            positions[pi+1] = P[k*2+1];
+            positions[pi+2] = 0;
+
+            const ti = (gIndex*6 + k) * 2;
+            uvs[ti+0] = UV[k*2+0];
+            uvs[ti+1] = UV[k*2+1];
+            uvA[ti+0] = UVA[k*2+0];
+            uvA[ti+1] = UVA[k*2+1];
+            uvB[ti+0] = UVB[k*2+0];
+            uvB[ti+1] = UVB[k*2+1];
+          }
+
+          gIndex++;
+          penX += (meta.advance || (fontPx * 0.5));
+        }
+        penY += lineHeight;
+      }
+
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geom.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+      geom.setAttribute('uvA', new THREE.BufferAttribute(uvA, 2));
+      geom.setAttribute('uvB', new THREE.BufferAttribute(uvB, 2));
+
+      // textura do atlas
+      const texture = new THREE.CanvasTexture(atlas.atlasCanvas);
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+      const mat = new THREE.ShaderMaterial({
+        uniforms: {
+          atlas: { value: texture },
+          fillColor: { value: new THREE.Color(0xffffff) },
+          outlineColor: { value: new THREE.Color(ARCANE_PURPLE) },
+          glowColor: { value: new THREE.Color(ARCANE_PURPLE) },
+          time: { value: 0 },
+          beatLevel: { value: 0 },
+          smoothing: { value: 0.06 },
+          threshold: { value: 0.5 },
+          outlineWidth: { value: 0.10 },
+          glowStrength: { value: 0.55 }
+        },
+        transparent: true,
+        depthWrite: false,
+        vertexShader: document.getElementById('sdf-vertex').textContent,
+        fragmentShader: document.getElementById('sdf-fragment').textContent
+      });
+
+      const mesh = new THREE.Mesh(geom, mat);
+      return { mesh, totalHeight: totalHeight * scale };
+    }
+
+    function createSDFText() {
+      if (sdfMesh) {
+        scene.remove(crawlGroup);
+        sdfMesh.geometry.dispose();
+        sdfMesh.material.dispose();
+      }
+
+      const isMobile = window.innerWidth < 768;
+      const scale = isMobile ? 1.0 : 1.0; // escalas já tratadas no layout
+
+      const chars = uniqueChars(LOREM_IPSUM_ARCANO + ' ');
+      const atlas = buildSDFAtlas(chars, {
+        fontFamily: "'Uncial Antiqua', 'Cinzel Decorative', 'MedievalSharp', Georgia, serif",
+        fontWeight: '700',
+        fontSize: 64,
+        buffer: 10,
+        radius: 12,
+        cutoff: 0.25
+      });
+
+      const { mesh, totalHeight: logicalHeight } = buildSDFGeometry(LOREM_IPSUM_ARCANO, atlas, {});
+      sdfMesh = mesh;
+
+      crawlGroup = new THREE.Group();
+      crawlGroup.add(sdfMesh);
+      scene.add(crawlGroup);
+
+      // posiciona para começar fora de quadro
+      const fovRad = camera.fov * Math.PI / 180;
+      const visibleHeight = 2 * Math.tan(fovRad / 2) * camera.position.z;
+      textHeight = logicalHeight;
+      crawlGroup.position.y = -textHeight / 2 - 300;
+      targetDistance = textHeight + visibleHeight * 0.7;
+      totalDistance = 0;
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = clock.getDelta();
+      const t = clock.getElapsedTime();
+      const beat = getBeatAt(t);
+
+      if (sdfMesh?.material?.uniforms) {
+        sdfMesh.material.uniforms.time.value = t;
+        sdfMesh.material.uniforms.beatLevel.value = beat;
+      }
+
+      if (crawlGroup && animationInProgress) {
+        crawlGroup.position.y += scrollSpeed;
+        totalDistance += scrollSpeed;
+        if (totalDistance >= targetDistance) finishAnimation();
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    function finishAnimation() {
+      if (!animationInProgress) return;
+      animationInProgress = false;
+      if (crawlGroup) scene.remove(crawlGroup);
+      if (sfx2Id) sfx2.stop(sfx2Id);
+      if (sfx25Id) sfx25.stop(sfx25Id);
+      const id3 = sfx3.play();
+      makeBinaural(sfx3, id3, { speed: 1.6, radius: 0.8, jitter: 0.4 });
+      const signature = document.getElementById('signature-container');
+      signature.style.display = 'block';
+      requestAnimationFrame(() => signature.style.opacity = '1');
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      if (crawlGroup) createSDFText();
+    }
+
+    /* ÁUDIO (binaural, reverb, etc.) — mantido como placeholders aqui */
+    function makeBinaural(howl, soundId, opts = {}) {}
+    function startBinauralLoop() {}
+
+    // INICIALIZA APÓS FONTES — TinySDF usa o canvas; aguarde fonts
+    document.fonts.ready.then(() => {
+      console.log("Fontes carregadas. Iniciando (TinySDF)...");
+      init();
+    });
+  </script>
+</body>
+</html>
