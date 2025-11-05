@@ -10,8 +10,8 @@
   <style>
     :root { --cor-arcana: #b24cff; }
     html, body { margin:0; padding:0; width:100%; height:100%; background:#000; color:#fff; font-family:'MedievalSharp',cursive; overflow:hidden; }
-    #seal-container { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:160px; height:160px; display:flex; justify-content:center; align-items:center; cursor:pointer; z-index:20; }
-    #arcane-seal-img { width:120px; filter:drop-shadow(0 0 22px var(--cor-arcana)); transition:opacity .4s; }
+    #seal-container { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:160px; height:160px; display:flex; justify-content:center; align-items:center; z-index:20; cursor:pointer; }
+    #arcane-seal-img { width:120px; filter:drop-shadow(0 0 22px var(--cor-arcana)); transition:opacity .4s; pointer-events:auto; }
     #arcane-seal-img.clicked { opacity:0; }
     #three-canvas { position:fixed; top:0; left:0; z-index:1; }
     #interstitial { display:none; opacity:0; position:fixed; inset:0; z-index:9; align-items:center; justify-content:center; transition:opacity .5s; }
@@ -25,7 +25,7 @@
 </head>
 <body>
   <div id="seal-container">
-    <img id="arcane-seal-img" src="selo-arcano.png" alt="Selo Arcano">
+    <img id="arcane-seal-img" src="selo-arcano.png" alt="Selo Arcano" onclick="startExperience()">
   </div>
   <canvas id="three-canvas"></canvas>
   <div id="interstitial">
@@ -102,10 +102,7 @@ A ruína respira.
 E vos chama.`.trim();
 
     let scene, camera, renderer, textMesh, crawlGroup;
-    let sfx1 = new Howl({ src: ['sfx1.mp3'], volume: 0.8 });
-    let sfx2 = new Howl({ src: ['sfx2.mp3'], volume: 0.6, loop: true });
-    let sfx25 = new Howl({ src: ['sfx2_5.mp3'], volume: 1.0, loop: true });
-    let sfx3 = new Howl({ src: ['sfx3.mp3'], volume: 0.6 });
+    let sfx1, sfx2, sfx25, sfx3;
     let sfx2Id, sfx25Id;
     let animationInProgress = false;
     let scrollSpeed = 0.7;
@@ -114,14 +111,16 @@ E vos chama.`.trim();
     let clock = new THREE.Clock();
     let beatAccum = 0;
 
+    // === BEAT DE TESTE (SEM ÁUDIO) ===
     const BEAT = { fps: 60, durationSec: 30, values: Array(1800).fill().map((_,i)=> (Math.sin(i/60*2*Math.PI*1.1)*0.5+0.5)) };
-
     function getBeatAt(t) {
       const idx = Math.floor(t * BEAT.fps) % BEAT.values.length;
       return BEAT.values[idx];
     }
 
+    // === BINAURAL 3D (FUNCIONA MESMO SEM ÁUDIO) ===
     function makeBinaural(howl, id, opts={speed:1.3, radius:1.2, jitter:0.5}) {
+      if (!howl || !id) return;
       const pos = new THREE.Vector3();
       let angle = Math.random() * Math.PI * 2;
       const update = () => {
@@ -135,6 +134,20 @@ E vos chama.`.trim();
       howl.once('end', () => clearInterval(interval), id);
     }
 
+    // === ÁUDIO COM FALLBACK SILENCIOSO ===
+    function createSilentSound() {
+      const buffer = new Howl({ src: ['data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='] })._sounds[0]._node.buffer;
+      return new Howl({ src: [buffer], volume: 0, loop: true });
+    }
+
+    function initAudio() {
+      sfx1 = new Howl({ src: ['sfx1.mp3'], volume: 0.8, onloaderror: () => sfx1 = createSilentSound() });
+      sfx2 = new Howl({ src: ['sfx2.mp3'], volume: 0.6, loop: true, onloaderror: () => sfx2 = createSilentSound() });
+      sfx25 = new Howl({ src: ['sfx2_5.mp3'], volume: 1.0, loop: true, onloaderror: () => sfx25 = createSilentSound() });
+      sfx3 = new Howl({ src: ['sfx3.mp3'], volume: 0.6, onloaderror: () => sfx3 = createSilentSound() });
+    }
+
+    // === INÍCIO ===
     function init() {
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 1, 10000);
@@ -143,7 +156,7 @@ E vos chama.`.trim();
       renderer.setSize(innerWidth, innerHeight);
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
-      document.getElementById('seal-container').onclick = startExperience;
+      initAudio();
       createCrawlText();
       requestAnimationFrame(animate);
     }
@@ -179,9 +192,11 @@ E vos chama.`.trim();
       });
     }
 
-    function startExperience() {
+    // === BOTÃO FUNCIONA AQUI ===
+    window.startExperience = function() {
       if (animationInProgress) return;
       animationInProgress = true;
+
       const seal = document.getElementById('arcane-seal-img');
       seal.classList.add('clicked');
       setTimeout(() => document.getElementById('seal-container').style.display = 'none', 400);
@@ -189,6 +204,7 @@ E vos chama.`.trim();
       const id1 = sfx1.play();
       makeBinaural(sfx1, id1, {speed:1.4, radius:0.9, jitter:0.35});
 
+      // Interstitial
       setTimeout(() => {
         const inter = document.getElementById('interstitial');
         inter.style.display = 'flex';
@@ -199,15 +215,16 @@ E vos chama.`.trim();
         }, 3000);
       }, 3000);
 
+      // SFX2 + SFX25
       setTimeout(() => {
         sfx2Id = sfx2.play();
         makeBinaural(sfx2, sfx2Id, {speed:1.3, radius:1.2, jitter:0.5});
         if (sfx25.state() === 'loaded') {
           sfx25Id = sfx25.play();
           makeBinaural(sfx25, sfx25Id, {speed:1.5, radius:1.0, jitter:0.45});
-        } else sfx25.once('load', () => { sfx25Id = sfx25.play(); makeBinaural(sfx25, sfx25Id); });
+        }
       }, 4500);
-    }
+    };
 
     function animate() {
       requestAnimationFrame(animate);
@@ -248,7 +265,6 @@ E vos chama.`.trim();
       camera.aspect = innerWidth/innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight);
-      if (animationInProgress && crawlGroup) { scene.remove(crawlGroup); createCrawlText(); }
     });
 
     init();
