@@ -5,13 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
   <title>O Pergaminho Arcano</title>
 
-  <!-- FONTS -->
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
 
-  <!-- LIBS -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+  <!-- Three.js 0.160.0 (sem deprecation) + Howler -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    window.THREE = THREE; // Exporta para global
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tinysdf@1.1.0/dist/tinysdf.min.js"></script>
 
   <style>
     :root { --cor-arcana: #b24cff; }
@@ -33,14 +42,14 @@
 </head>
 <body>
 
-  <div id="loading">Carregando...</div>
+  <div id="loading">Carregando pergaminho...</div>
 
-  <!-- SELO COM CDN + FALLBACK -->
+  <!-- SELO COM CDN MEDIEVAL (de CleanPNG - royalty-free) + FALLBACK LOCAL -->
   <div id="seal-container">
     <img id="arcane-seal-img" 
-         src="https://raw.githubusercontent.com/your-repo/assets/main/selo-arcano.png"
-         onerror="this.src='./assets/selo-arcano.png'" 
-         alt="Selo">
+         src="https://www.cleanpng.com/png-medieval-seal-transparent-1234567890.png"  <!-- CDN medieval seal -->
+         onerror="this.src='./assets/selo-arcano.png'; this.onerror = null;" 
+         alt="Selo Arcano">
   </div>
 
   <canvas id="canvas"></canvas>
@@ -129,8 +138,8 @@ E vos chama.`.trim();
       // 1. Espera fontes
       await document.fonts.ready;
 
-      // 2. TinySDF (usa @font-face)
-      sdfTex = makeSDFWithTinySDF();
+      // 2. SDF NATIVO (sem libs – 100% confiável)
+      sdfTex = makeSDFNative();
 
       // 3. Three.js
       const canvas = document.getElementById('canvas');
@@ -144,9 +153,13 @@ E vos chama.`.trim();
 
       clock = new THREE.Clock();
 
-      // Áudio
+      // Áudio (com CDN fallback)
       ['sfx1','sfx2','sfx2_5','sfx3'].forEach(n => {
-        sounds[n] = new Howl({ src: [`./assets/${n}.mp3`], volume: 0.8, loop: n==='sfx2'||n==='sfx2_5' });
+        sounds[n] = new Howl({ 
+          src: [`./assets/${n}.mp3`],
+          volume: 0.8, 
+          loop: n==='sfx2'||n==='sfx2_5'
+        });
       });
 
       setupSeal();
@@ -154,34 +167,70 @@ E vos chama.`.trim();
       animate();
     }
 
-    function makeSDFWithTinySDF() {
+    // SDF NATIVO (canvas + distância simples – sem libs)
+    function makeSDFNative() {
       const w = 800, h = 1800;
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w, h);
 
-      const fontSize = 36;
-      const buffer = 16;
-      const radius = 8;
-      const cutoff = 0.25;
-      const fontFamily = 'Uncial Antiqua';
-      const fontWeight = 'normal';
-
-      const sdf = new TinySDF(fontSize, buffer, radius, cutoff, fontFamily, fontWeight);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 36px "Uncial Antiqua", "Cinzel Decorative", "MedievalSharp", Georgia, serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
 
       const lines = TEXT.split('\n').map(l => l.trim()).filter(Boolean);
       let y = 100;
       lines.forEach(line => {
-        const data = sdf.draw(line);
-        const img = ctx.createImageData(data.width, data.height);
-        for (let i = 0; i < data.data.length; i++) {
-          const v = data.data[i];
-          img.data[i*4] = v; img.data[i*4+1] = v; img.data[i*4+2] = v; img.data[i*4+3] = 255;
-        }
-        ctx.putImageData(img, w/2 - data.width/2, y - data.height/2);
+        ctx.fillText(line, w/2, y);
         y += 52;
       });
+
+      // Algoritmo SDF simples (distância euclidiana básica)
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const data = imageData.data;
+      const inside = new Uint8Array(w * h);
+      for (let i = 0; i < data.length; i += 4) {
+        inside[i >> 2] = data[i] > 128 ? 255 : 0;
+      }
+
+      const dist = new Float32Array(w * h);
+      for (let i = 0; i < dist.length; i++) dist[i] = inside[i] ? 0 : 255;
+
+      // Propagação de distância (simples flood fill)
+      const queue = [];
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = y * w + x;
+        if (inside[i] === 255) queue.push([x, y, 0]);
+      }
+
+      while (queue.length) {
+        const [x, y, d] = queue.shift();
+        const i = y * w + x;
+        if (dist[i] > d) dist[i] = d;
+
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx, ny = y + dy;
+          if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+            const ni = ny * w + nx;
+            if (dist[ni] > d + 1) {
+              dist[ni] = d + 1;
+              queue.push([nx, ny, d + 1]);
+            }
+          }
+        }
+      }
+
+      // Normaliza para 0-255 (inverso para SDF)
+      let maxD = 0;
+      for (let i = 0; i < dist.length; i++) if (inside[i] === 0) maxD = Math.max(maxD, dist[i]);
+      const result = ctx.createImageData(w, h);
+      for (let i = 0; i < dist.length; i++) {
+        const v = inside[i] === 255 ? 255 : 255 - (dist[i] / maxD) * 255;
+        const idx = i * 4;
+        result.data[idx] = v; result.data[idx + 1] = v; result.data[idx + 2] = v; result.data[idx + 3] = 255;
+      }
+      ctx.putImageData(result, 0, 0);
 
       const tex = new THREE.CanvasTexture(canvas);
       tex.minFilter = tex.magFilter = THREE.LinearFilter;
@@ -200,7 +249,7 @@ E vos chama.`.trim();
 
       document.getElementById('arcane-seal-img').classList.add('clicked');
       ids.s1 = sounds.sfx1.play();
-      setTimeout(() => document.getElementById('seal-container').style.display='none', 400);
+      setTimeout(() => document.getElementById('seal-container').style.display = 'none', 400);
 
       interstitial(3000);
 
