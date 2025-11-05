@@ -432,7 +432,7 @@
       <div class="body">
         <div class="row" style="align-items:flex-end;">
           <div class="control" style="width:100%">
-            <label>Resumo</label>
+            <label>Arquivo Público de Greyspire - Versão Autorizada</label>
             <div id="summary" class="pill" style="width:100%; justify-content:space-between">
               <span id="sumText" class="muted">--</span>
               <span id="warnings" style="color:var(--danger)"></span>
@@ -470,7 +470,7 @@
         <strong>Capítulo 1:</strong> A Carta Encontrada
       </button>
       <button class="btn chapter-btn" id="btn-chapter-2">
-        <strong>Capítulo 2:</strong> Arquivo Público de Greyspire - Versão Autorizada
+        <strong>Capítulo 2:</strong> Arquivo Público de Greyspire - Versão Atualizada
       </button>
     </div>
   </div>
@@ -489,7 +489,7 @@
 <!-- RESUMO DO MUNDO (Capítulo 2) -->
 <section id="world-stage">
   <div class="world-wrap">
-    <h1>Arquivo público de Greyspire - Versão Atualizada</h1>
+    <h1>Arquivo Público de Greyspire - Versão Autorizada</h1>
     <div id="world-text"></div>
     <div class="actions">
       <button class="btn" id="btn-world-back-to-lore">Voltar ao Menu</button>
@@ -785,17 +785,17 @@ setInterval(()=>{
 }, 260);
 
 /* =================== CAPÍTULO 2 (Resumo do Mundo) =================== */
-const WORLD_PARAGRAPHS = [
-  "  Greyspire é a maior cidade ainda funcional do Velho Império e, para muitos, o último exemplo de civilização ordenada após a Guerra Arcana. Sua existência não é atribuída à força militar nem à estabilidade política, mas ao fato de ter aprendido a administrar o colapso em vez de resistir a ele. A cidade permanece de pé não porque venceu a devastação, mas porque a organizou.
-  As bases sociais de Greyspire não estão fundadas em riqueza, tradição de sangue ou linhagens nobres. Toda a estrutura da cidade é determinada pela magia, e esta é medida pela runa que cada cidadão recebe ao nascer. As runas não são escolhidas, aplicadas ou herdadas: elas surgem como parte do corpo, e a partir desse instante a pessoa está situada no sistema para o restante da vida. Quanto maior o domínio arcano, maior a posição social. Os portadores de runas elevadas ocupam as camadas superiores, atuando como magos, tecnomantes, decifradores, estrategistas e membros da Liturgia. Os de afinidade moderada assumem funções técnicas ou militares. Os de potencial mínimo são mão de obra descartável, úteis até o ponto em que continuem obedientes. Há ainda os sem-runa, que não pertencem oficialmente a nenhuma categoria. São ignorados pela administração, sem documentos, sem direitos, sem relevância. Existência tolerada, nunca reconhecida.
-  Esse modelo não é considerado injusto em Greyspire. É considerado natural.
-  A guerra que definiu o estado atual do mundo não terminou com ruínas, exércitos vencidos ou tratados políticos. O Velho Império executou o Ritual da Convergência, uma tentativa de eliminar a Federação Arcana de forma absoluta, não militar. O efeito foi imediato. A Federação não foi derrotada. Foi retirada da realidade. Em vez de território conquistado, restou ausência. No lugar onde ficavam cidades, fronteiras e pessoas, estabeleceu-se a Fenda: um espaço onde a lógica não se completa e o tempo não reconhece sequência. A Liturgia afirma que ela é perigosa, irreversível e distante o bastante para que a cidade continue estável. Nenhum texto oficial explica como uma ausência pode continuar ativa.
-  Greyspire, no entanto, não se sustenta apenas pela distância da Fenda. Ela depende da Engrenagem Perpétua, instalada em profundidade desconhecida sob o solo. O mecanismo é reconhecido publicamente, mas não descrito. Nenhum documento civil informa quem a construiu, quando foi iniciada ou de que forma opera. A explicação utilizada pela Liturgia é sempre idêntica: a Engrenagem mantém a sanidade coletiva da cidade. Ela impede que os efeitos da Fenda ultrapassem os limites do controle. O que acontece se ela parar, ninguém diz. A cidade inteira escuta seu ruído subterrâneo, mas finge que não o ouve.
-  A Liturgia é a autoridade máxima de Greyspire. Não governa oficialmente, mas toda decisão real depende de sua aprovação. Ela controla o uso de magia, o registro das runas, o protocolo sobre a Fenda e o acesso a qualquer informação considerada perigosa para a ordem. Não há forma pública de contestar sua doutrina, pois a doutrina não é debate. É estrutura. A Liturgia define o que é estável, o que é anômalo, o que é aceitável e quem deve desaparecer antes que se torne um problema.
-  Magos são a classe mais alta da cidade. São admirados, preservados, estudados e vigiados. Não são apenas indivíduos com poder, mas peças do equilíbrio urbano. Sua existência vale mais do que exércitos, pois sem eles não há rituais, nem tecnologia arcana, nem Engrenagem, nem defesa contra a Fenda. Ao mesmo tempo, o mago é também aquele que mais se aproxima do limite do aceitável. Uma mente poderosa demais pode ser útil. Ou pode ser removida antes que deixe de obedecer.
-  Nada em Greyspire se move sem magia. Nada em Greyspire respira sem controle. A cidade não teme monstros, teme falhas no sistema. A estabilidade é considerada a maior virtude. O preço dela é a ausência de perguntas.
-  Greyspire continua a existir. O que acontece fora dela não é tema de interesse urbano. A Fenda permanece distante, mas permanente. A Engrenagem continua girando, mas ninguém sabe por quanto tempo. As runas continuam surgindo, mas algumas já começaram a mudar. A cidade permanece funcional. A Liturgia afirma que isso é suficiente.
-  Até agora, é. "
+const worldParagraphs = [
+  "Greyspire é a maior cidade ainda funcional do Velho Império e, para muitos, o último exemplo de civilização ordenada após a Guerra Arcana. Sua existência não é atribuída à força militar nem à estabilidade política, mas ao fato de ter aprendido a administrar o colapso em vez de resistir a ele. A cidade permanece de pé não porque venceu a devastação, mas porque a organizou.",
+  "As bases sociais de Greyspire não estão fundadas em riqueza, tradição de sangue ou linhagens nobres. Toda a estrutura da cidade é determinada pela magia, e esta é medida pela runa que cada cidadão recebe ao nascer. As runas não são escolhidas, aplicadas ou herdadas: elas surgem como parte do corpo, e a partir desse instante a pessoa está situada no sistema para o restante da vida. Quanto maior o domínio arcano, maior a posição social. Os portadores de runas elevadas ocupam as camadas superiores, atuando como magos, tecnomantes, decifradores, estrategistas e membros da Liturgia. Os de afinidade moderada assumem funções técnicas ou militares. Os de potencial mínimo são mão de obra descartável, úteis até o ponto em que continuem obedientes. Há ainda os sem-runa, que não pertencem oficialmente a nenhuma categoria. São ignorados pela administração, sem documentos, sem direitos, sem relevância. Existência tolerada, nunca reconhecida.",
+  "Esse modelo não é considerado injusto em Greyspire. É considerado natural.",
+  "A guerra que definiu o estado atual do mundo não terminou com ruínas, exércitos vencidos ou tratados políticos. O Velho Império executou o Ritual da Convergência, uma tentativa de eliminar a Federação Arcana de forma absoluta, não militar. O efeito foi imediato. A Federação não foi derrotada. Foi retirada da realidade. Em vez de território conquistado, restou ausência. No lugar onde ficavam cidades, fronteiras e pessoas, estabeleceu-se a Fenda: um espaço onde a lógica não se completa e o tempo não reconhece sequência. A Liturgia afirma que ela é perigosa, irreversível e distante o bastante para que a cidade continue estável. Nenhum texto oficial explica como uma ausência pode continuar ativa.",
+  "Greyspire, no entanto, não se sustenta apenas pela distância da Fenda. Ela depende da Engrenagem Perpétua, instalada em profundidade desconhecida sob o solo. O mecanismo é reconhecido publicamente, mas não descrito. Nenhum documento civil informa quem a construiu, quando foi iniciada ou de que forma opera. A explicação utilizada pela Liturgia é sempre idêntica: a Engrenagem mantém a sanidade coletiva da cidade. Ela impede que os efeitos da Fenda ultrapassem os limites do controle. O que acontece se ela parar, ninguém diz. A cidade inteira escuta seu ruído subterrâneo, mas finge que não o ouve.",
+  "A Liturgia é a autoridade máxima de Greyspire. Não governa oficialmente, mas toda decisão real depende de sua aprovação. Ela controla o uso de magia, o registro das runas, o protocolo sobre a Fenda e o acesso a qualquer informação considerada perigosa para a ordem. Não há forma pública de contestar sua doutrina, pois a doutrina não é debate. É estrutura. A Liturgia define o que é estável, o que é anômalo, o que é aceitável e quem deve desaparecer antes que se torne um problema.",
+  "Magos são a classe mais alta da cidade. São admirados, preservados, estudados e vigiados. Não são apenas indivíduos com poder, mas peças do equilíbrio urbano. Sua existência vale mais do que exércitos, pois sem eles não há rituais, nem tecnologia arcana, nem Engrenagem, nem defesa contra a Fenda. Ao mesmo tempo, o mago é também aquele que mais se aproxima do limite do aceitável. Uma mente poderosa demais pode ser útil. Ou pode ser removida antes que deixe de obedecer.",
+  "Nada em Greyspire se move sem magia. Nada em Greyspire respira sem controle. A cidade não teme monstros, teme falhas no sistema. A estabilidade é considerada a maior virtude. O preço dela é a ausência de perguntas.",
+  "Greyspire continua a existir. O que acontece fora dela não é tema de interesse urbano. A Fenda permanece distante, mas permanente. A Engrenagem continua girando, mas ninguém sabe por quanto tempo. As runas continuam surgindo, mas algumas já começaram a mudar. A cidade permanece funcional. A Liturgia afirma que isso é suficiente.",
+  "Até agora, é."
 ];
 document.getElementById('world-text').innerHTML =
   WORLD_PARAGRAPHS.map(p=>`<p style="text-indent:2ch">${p}</p>`).join("");
