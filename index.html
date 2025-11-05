@@ -60,15 +60,20 @@
 
     /* Interstitial */
     #interstitial {
-      display: none; opacity: 0;
+      display: none;
+      opacity: 0;
       position: fixed; inset: 0; z-index: 9;
-      display: flex; align-items: center; justify-content: center;
+      align-items: center; justify-content: center;
       pointer-events: none; background: transparent;
       transition: opacity .5s ease;
-      -webkit-transition: opacity .5s ease;
     }
-    #interstitial.show { opacity: 1; }
-    #interstitial.hide { opacity: 0; }
+    #interstitial.show { 
+      display: flex; 
+      opacity: 1; 
+    }
+    #interstitial.hide { 
+      opacity: 0; 
+    }
 
     .interstitial-text {
       max-width: 800px; padding: 0 24px; text-align: center;
@@ -97,7 +102,6 @@
       text-align: center; font-size: 1.2rem;
       font-family: 'MedievalSharp', cursive;
       transition: opacity 1.2s ease-in;
-      -webkit-transition: opacity 1.2s ease-in;
       max-width: 600px; line-height: 1.35;
     }
     #signature {
@@ -162,7 +166,6 @@
 
     varying vec2 vUv;
 
-    // Função de ruído melhorada
     float hash(vec2 p) {
       p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
       return fract(sin(p) * 43758.5453);
@@ -181,27 +184,16 @@
 
     void main() {
       vec2 uv = vUv;
-
-      // EFEITO 3D PERSPECTIVA APRIMORADO - curvatura mais suave e realista
       float bend = 0.4;
       vec2 p = uv * 2.0 - 1.0;
-      
-      // Curvatura 3D em perspectiva com melhor suavização
       float curve = p.y * p.y;
       p.y = p.y + bend * curve * (1.0 - abs(p.x) * 0.3);
-      
-      // Perspectiva 3D mais realista
       float perspective = 1.0 + bend * (p.y + 1.0) * 0.6;
       p /= perspective;
       vec2 warpedUv = p * 0.5 + 0.5;
 
-      // Efeitos com intensidade controlada
       float intensity = 0.15;
-
-      // ONDAS 3D MELHORADAS - mais suaves e naturais
       float waveAmp = baseDistortion * intensity * (0.8 + 2.0 * beatLevel);
-      
-      // Múltiplas ondas para efeito mais rico
       float wave1 = waveAmp * sin(warpedUv.y * 15.0 + time * 1.5);
       float wave2 = waveAmp * 0.5 * sin(warpedUv.y * 25.0 + time * 2.2 + beatLevel * 2.0);
       float wave = wave1 + wave2;
@@ -209,7 +201,6 @@
       vec2 distortedUv = warpedUv;
       distortedUv.x += wave;
 
-      // RUÍDO 3D REFINADO - menos agressivo, mais orgânico
       float nAmp = baseNoise * intensity * (0.5 + 1.5 * beatLevel);
       float n = noise(warpedUv * 12.0 + time * 0.5);
       float n2 = noise(warpedUv * 20.0 - time * 0.7 + beatLevel);
@@ -218,10 +209,8 @@
       distortedUv.y += noiseValue * 0.7;
       distortedUv.x += noiseValue * 0.4;
 
-      // AMOSTRAGEM COM FILTRO MELHORADO para preservar qualidade
       vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
 
-      // EFEITO ESTROBOSCÓPICO - oscila entre branco, cinza e roxo (mais agressivo)
       float b = clamp(beatLevel, 0.0, 1.2);
       float strobeSpeed = time * 6.0;
       float strobePhase = mod(strobeSpeed, 3.0);
@@ -232,42 +221,28 @@
       
       vec3 colorText;
       if (strobePhase < 1.0) {
-        // Fase 1: Branco para Cinza
         colorText = mix(white, gray, strobePhase);
       } else if (strobePhase < 2.0) {
-        // Fase 2: Cinza para Roxo
         colorText = mix(gray, purple, strobePhase - 1.0);
       } else {
-        // Fase 3: Roxo para Branco
         colorText = mix(purple, white, strobePhase - 2.0);
       }
       
-      // Adiciona pulsação mais forte com beat
       float beatPulse = sin(time * 8.0 + beatLevel * 4.0) * 0.5 + 0.5;
       colorText = mix(colorText, white, beatPulse * 0.4);
-
       float blackout = smoothstep(0.93, 1.05, b) * intensity;
       colorText = mix(colorText, vec3(0.0), 0.38 * blackout);
 
-      // GLOW ROXO - reduzido e com cor variando para o estroboscópico funcionar
       vec3 glowBase = glowColor * texel.a * (1.5 + 1.2 * beatLevel) * 4.0;
-      // Aplica a cor estroboscópica ao glow para manter sincronizado
       vec3 glow = glowBase * mix(vec3(1.0), colorText, 0.6);
 
-      // COR DO TEXTO EM SI MUDANDO - aplica diretamente a cor estroboscópica ao texto
-      // Usa a cor do texel (branco) multiplicada pela cor estroboscópica
       vec3 textColor = texel.rgb * colorText;
-      // Garante que o texto tenha a cor estroboscópica visível
       textColor = mix(textColor, colorText, 0.85);
       
-      // ANTIALIASING MELHORADO - suaviza bordas do texto
       float alpha = texel.a;
-      // Sharpening sutil para melhor definição
       alpha = smoothstep(0.3, 0.7, alpha);
       
-      // Texto principal com cor estroboscópica dominante e qualidade preservada
       vec3 finalColor = textColor * alpha * 2.8 + glow;
-
       gl_FragColor = vec4(finalColor, alpha);
     }
   </script>
@@ -400,7 +375,7 @@ E vos chama.`.trim();
 
     const ARCANE_PURPLE = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--cor-arcana').trim());
 
-    /* ==================== WAKE LOCK (PREVENIR TELA DORMIR) ==================== */
+    /* ==================== WAKE LOCK ==================== */
     let wakeLock = null;
     
     async function requestWakeLock() {
@@ -416,7 +391,6 @@ E vos chama.`.trim();
       }
     }
     
-    // Tenta manter wake lock ativo
     document.addEventListener('visibilitychange', async () => {
       if (document.visibilityState === 'visible' && wakeLock === null) {
         await requestWakeLock();
@@ -432,7 +406,7 @@ E vos chama.`.trim();
       precomputeBeat('./sfx2_5.mp3');
       startBinauralLoop();
       setupListeners();
-      requestWakeLock(); // Previne tela dormir
+      requestWakeLock();
       animate();
     }
 
@@ -464,19 +438,14 @@ E vos chama.`.trim();
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setClearColor(0x000000, 1);
-      // Otimizações para Safari mobile
       renderer.shadowMap.enabled = false;
     }
 
     function setupListeners() {
       document.getElementById('seal-container').addEventListener('click', startExperience, { once: true });
       window.addEventListener('resize', onWindowResize);
-      
-      // Reativa wake lock quando a página ganha foco
       window.addEventListener('focus', async () => {
-        if (wakeLock === null) {
-          await requestWakeLock();
-        }
+        if (wakeLock === null) await requestWakeLock();
       });
     }
 
@@ -521,24 +490,14 @@ E vos chama.`.trim();
           void main() {
             vec2 uv = vUv;
             vec2 p = uv * 8.0;
-            
-            // Cria padrão de veias usando noise
             float n = noise(p + time * 0.3);
             float n2 = noise(p * 2.0 - time * 0.4);
             float n3 = noise(p * 0.5 + time * 0.2);
-            
-            // Combina os noise layers para criar veias
             float veins = n * 0.5 + n2 * 0.3 + n3 * 0.2;
             veins = smoothstep(0.5, 0.85, veins);
-            
-            // Pulsação baseada no beat - mais forte
             float pulse = sin(time * 2.5 + beatLevel * 4.0) * 0.5 + 0.5;
             veins *= (0.5 + pulse * 0.5);
-            
-            // Intensidade aumentada para ser visível
             veins *= 0.8;
-            
-            // Cria cores roxas desfocadas - mais visíveis
             vec3 color = purpleColor * veins * 2.0;
             gl_FragColor = vec4(color, min(veins * 1.2, 0.9));
           }
@@ -552,7 +511,6 @@ E vos chama.`.trim();
       veinMesh.position.set(0, 0, -400);
       scene.add(veinMesh);
       
-      // MÁSCARA SEMITRANSPARENTE PRETA (vidro fumê) sobre as veias
       const maskGeometry = new THREE.PlaneGeometry(2000, 2000);
       const maskMaterial = new THREE.MeshBasicMaterial({
         color: 0x000000,
@@ -561,10 +519,9 @@ E vos chama.`.trim();
         depthWrite: false
       });
       const maskMesh = new THREE.Mesh(maskGeometry, maskMaterial);
-      maskMesh.position.set(0, 0, -399); // Logo na frente das veias
+      maskMesh.position.set(0, 0, -399);
       scene.add(maskMesh);
       
-      // Atualiza o tempo no shader
       function updateVeins(time, beat) {
         if (veinMaterial.uniforms) {
           veinMaterial.uniforms.time.value = time;
@@ -572,9 +529,7 @@ E vos chama.`.trim();
         }
       }
       
-      // Inicializa com tempo 0
       updateVeins(0, 0);
-      
       return { mesh: veinMesh, mask: maskMesh, material: veinMaterial, update: updateVeins };
     }
     
@@ -668,7 +623,6 @@ E vos chama.`.trim();
         }
       }, 4500);
 
-      // Texto começa logo quando o interstitial começa a desaparecer (3000ms)
       setTimeout(() => {
         createCrawlText();
       }, 3000);
@@ -688,10 +642,9 @@ E vos chama.`.trim();
       }, ms);
     }
 
-    /* ================= DETECÇÃO EXATA DO FINAL ================= */
+    /* ==================== TEXTO NO CANVAS (CORRIGIDO) ==================== */
     function createCrawlText() {
       const textCanvas = createTextCanvas(LOREM_IPSUM_ARCANO);
-      // Ajusta para dimensões lógicas (canvas tem scale 3x mobile, 4x desktop)
       const isMobile = window.innerWidth < 768 || window.innerHeight < 768;
       const scale = isMobile ? 3 : 4;
       const logicalWidth = textCanvas.width / scale;
@@ -699,7 +652,6 @@ E vos chama.`.trim();
       textHeight = logicalHeight;
 
       const texture = new THREE.CanvasTexture(textCanvas);
-      // Filtros de alta qualidade para preservar nitidez
       texture.minFilter = THREE.LinearFilter;
       texture.magFilter = THREE.LinearFilter;
       texture.generateMipmaps = false;
@@ -731,105 +683,68 @@ E vos chama.`.trim();
 
       const fovRad = camera.fov * Math.PI / 180;
       const visibleHeight = 2 * Math.tan(fovRad / 2) * camera.position.z;
-      // Margin reduzida para mobile - texto aparece mais rápido
       const safeMargin = visibleHeight * 0.3;
 
       const startY = -textHeight / 2 - visibleHeight / 2 - safeMargin;
       crawlGroup.position.y = startY;
 
-      // DISTÂNCIA TOTAL A SER PERCORRIDA - ajustada para detectar quando última palavra sai
       targetDistance = textHeight + visibleHeight + safeMargin;
-
       totalDistance = 0;
       scene.add(crawlGroup);
     }
 
     function createTextCanvas(text) {
       const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-      
-      // Detecta se é mobile e orientação
       const isMobile = window.innerWidth < 768 || window.innerHeight < 768;
-      const isPortrait = window.innerHeight > window.innerWidth;
-      
-      // Calcula dimensões baseadas no tamanho real da tela
       const screenWidth = window.innerWidth;
-      const screenHeight = window.innerHeight;
-      
-      // Largura adaptativa: 90% da largura da tela, máximo 800px
       const maxWidth = Math.min(screenWidth * 0.9, 800);
-      
-      // Fonte adaptativa baseada na altura da tela e número de linhas
-      const availableHeight = screenHeight * 0.85; // 85% da altura disponível
-      const minFontSize = 12;
-      const maxFontSize = isMobile ? 18 : 24;
-      
-      // Calcula tamanho ideal baseado no espaço disponível
-      let fontSize = Math.floor((availableHeight / lines.length) * 0.4);
+      const availableHeight = window.innerHeight * 0.85;
+      const minFontSize = 14;
+      const maxFontSize = isMobile ? 20 : 28;
+
+      let fontSize = Math.floor((availableHeight / lines.length) * 0.45);
       fontSize = Math.max(minFontSize, Math.min(fontSize, maxFontSize));
-      
-      // Se ainda não cabe, reduz mais
-      const lineHeight = fontSize * 1.25;
-      const estimatedHeight = lines.length * lineHeight + fontSize * 2;
-      
-      if (estimatedHeight > availableHeight && isMobile) {
-        fontSize = Math.floor((availableHeight / lines.length) * 0.35);
-        fontSize = Math.max(minFontSize, fontSize);
-      }
-      
-      const lineHeightFinal = fontSize * 1.25;
-      const canvasHeight = lines.length * lineHeightFinal + fontSize * 1.5;
+
+      const lineHeight = fontSize * 1.3;
+      const canvasHeight = lines.length * lineHeight + fontSize * 2;
       const canvasWidth = maxWidth;
 
-      // ALTA RESOLUÇÃO para qualidade vetorial - aumenta para 3x no mobile, 4x no desktop
       const scale = isMobile ? 3 : 4;
       const canvas = document.createElement('canvas');
       canvas.width = canvasWidth * scale;
       canvas.height = canvasHeight * scale;
 
-      const ctx = canvas.getContext('2d', { 
-        alpha: true,
-        desynchronized: false,
-        willReadFrequently: false
-      });
-      
-      // Configurações para texto de máxima qualidade
+      const ctx = canvas.getContext('2d', { alpha: true });
+      if (!ctx) return canvas;
+
       ctx.scale(scale, scale);
-      
-      // Usa fonte Uncial Antiqua para melhor legibilidade e qualidade
-      ctx.font = `bold ${fontSize}px 'Uncial Antiqua', 'Cinzel Decorative', serif`;
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+      const fonts = ['Uncial Antiqua', 'Cinzel Decorative', 'MedievalSharp', 'Georgia', 'Times New Roman', 'serif'];
+      ctx.font = `bold ${fontSize}px ${fonts.join(', ')}`;
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'alphabetic';
-      
-      // OTIMIZAÇÕES DE RENDERIZAÇÃO VETORIAL
-      // textRenderingOptimization não é uma propriedade padrão, mas mantemos para referência
-      
-      // Melhora a renderização de texto - qualidade máxima
+      ctx.textBaseline = 'middle';
+
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-      
-      // Sharpening sutil para melhor definição das letras
-      ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
-      ctx.shadowBlur = 1;
-      ctx.shadowOffsetX = 0.5;
-      ctx.shadowOffsetY = 0.5;
-      
-      // Desenha o texto com alta qualidade
-      let y = fontSize * 1.5;
-      for (const line of lines) {
-        // Desenha múltiplas vezes com pequenos offsets para melhor antialiasing
+
+      ctx.shadowColor = 'rgba(180, 100, 255, 0.6)';
+      ctx.shadowBlur = 2;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 1;
+
+      let y = fontSize;
+      lines.forEach(line => {
         ctx.fillText(line, canvasWidth / 2, y);
-        y += lineHeightFinal;
-      }
-      
-      // Remove shadow para não interferir
+        y += lineHeight;
+      });
+
       ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
-      
       return canvas;
     }
 
-    /* ==================== ANIMAÇÃO (COM FINAL GARANTIDO) ==================== */
+    /* ==================== ANIMAÇÃO ==================== */
     function animate() {
       requestAnimationFrame(animate);
 
@@ -837,7 +752,6 @@ E vos chama.`.trim();
       beatAccum += dt;
       const beat = getBeatAt(beatAccum);
 
-      // Atualiza veias no fundo
       if (veinsBackground && veinsBackground.update) {
         veinsBackground.update(clock.getElapsedTime(), beat);
       }
@@ -852,7 +766,6 @@ E vos chama.`.trim();
         crawlGroup.position.y += move;
         totalDistance += move;
 
-        // FINAL DETECTADO COM PRECISÃO
         if (totalDistance >= targetDistance) {
           finishAnimation();
         }
@@ -861,23 +774,19 @@ E vos chama.`.trim();
       renderer.render(scene, camera);
     }
 
-    /* ==================== FINALIZAÇÃO IMEDIATA ==================== */
+    /* ==================== FINALIZAÇÃO ==================== */
     function finishAnimation() {
       if (!animationInProgress) return;
       animationInProgress = false;
 
-      // Remove poema
       if (crawlGroup) scene.remove(crawlGroup);
 
-      // PARA SFX2 E SFX2_5
       if (sfx2Id !== null) sfx2.stop(sfx2Id);
       if (sfx25Id !== null) sfx25.stop(sfx25Id);
 
-      // TOCA SFX3
       const id3 = sfx3.play();
       makeBinaural(sfx3, id3, { speed: 1.6, radius: 0.8, jitter: 0.4 });
 
-      // ASSINATURA APARECE IMEDIATAMENTE após última palavra sair
       requestAnimationFrame(() => {
         const signature = document.getElementById('signature-container');
         signature.style.display = 'block';
@@ -968,8 +877,11 @@ E vos chama.`.trim();
       return impulse;
     }
 
-    /* ==================== INICIALIZAÇÃO FINAL ==================== */
-    init();
+    /* ==================== INICIALIZAÇÃO FINAL (APÓS FONTES) ==================== */
+    document.fonts.ready.then(() => {
+      console.log("Fontes carregadas. Iniciando experiência arcana...");
+      init();
+    });
   </script>
 </body>
 </html>
