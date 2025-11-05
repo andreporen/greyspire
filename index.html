@@ -1,306 +1,53 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>O Pergaminho Arcano - Glitch Edition</title>
-  <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=MedievalSharp&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
-  <style>
-    :root { --cor-arcana: #b24cff; }
-    html, body { margin:0; padding:0; width:100%; height:100%; background:#000; color:#fff; font-family:'MedievalSharp',cursive; overflow:hidden; }
-    #seal-container { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:160px; height:160px; display:flex; justify-content:center; align-items:center; z-index:20; cursor:pointer; }
-    #arcane-seal-img { width:120px; filter:drop-shadow(0 0 22px var(--cor-arcana)); transition:opacity .4s; pointer-events:auto; }
-    #arcane-seal-img.clicked { opacity:0; }
-    #three-canvas { position:fixed; top:0; left:0; z-index:1; }
-    #interstitial { display:none; opacity:0; position:fixed; inset:0; z-index:9; align-items:center; justify-content:center; transition:opacity .5s; }
-    #interstitial.show { display:flex; opacity:1; }
-    .interstitial-text { font-size:clamp(20px,4vw,36px); text-shadow:0 0 20px var(--cor-arcana); animation:glow 2.8s infinite; }
-    @keyframes glow { 0%,100% { text-shadow:0 0 20px var(--cor-arcana); } 50% { text-shadow:0 0 50px var(--cor-arcana); } }
-    #signature-container { display:none; opacity:0; position:fixed; bottom:110px; left:50%; transform:translateX(-50%); z-index:10; max-width:600px; transition:opacity 1.2s; }
-    #signature { text-shadow:0 0 12px var(--cor-arcana); animation:pulse 1.4s infinite; }
-    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.8; } }
-    /* Estilo para o botão de iniciar */
-    #start-button {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 24px;
-      font-size: 1.2em;
-      background-color: var(--cor-arcana);
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      z-index: 30;
-      display: none; /* escondido inicialmente */
-    }
-    #start-button.show {
-      display: block;
-    }
-  </style>
-</head>
-<body>
-  <!-- Botão para iniciar, inicialmente escondido -->
-  <button id="start-button">Começar</button>
+// Substitua createCrawlText() por:
+function createCrawlText() {
+  if (textMesh) {
+    textMesh.dispose();
+    if (crawlGroup) scene.remove(crawlGroup);
+  }
 
-  <div id="seal-container">
-    <img id="arcane-seal-img" src="selo-arcano.png" alt="Selo Arcano">
-  </div>
-  <canvas id="three-canvas"></canvas>
-  <div id="interstitial">
-    <div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div>
-  </div>
-  <div id="signature-container">
-    <p id="signature">
-      O coração dispara antes que você perceba que deixou a carta cair. O papel atinge o chão, mas a sensação de contato não some com ele. Algo fica preso na sua cabeça, como se um pensamento entrasse sem pedir permissão. Não é visão, nem sonho. É lembrança de algo que você nunca viveu.<br><br>
-      A imagem vem inteira, sem construção, sem origem: uma taverna que você nunca viu, mas reconhece. Tábuas escuras, cheiro de ferrugem, luz baixa demais para ser aconchegante, mesas que já desistiram de permanecer retas. Ferrugem & Ossos. Velha Chama. O nome surge pronto, como se sempre estivesse guardado em algum ponto da sua mente que não era seu.<br><br>
-      Ninguém diz que você deve ir.<br>
-      Mas a sensação é de que você já está atrasado.
-    </p>
-  </div>
+  const isMobile = window.innerWidth < 768;
+  const maxWidth = Math.min(window.innerWidth * 0.9, 800);
+  const fontSize = Math.max(20, Math.min(36, Math.floor(window.innerHeight * 0.04)));
 
-  <script type="x-shader/x-vertex" id="vertexShader">
-    varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
-  </script>
-  <script type="x-shader/x-fragment" id="fragmentShader">
-    uniform sampler2D map; uniform float time, beatLevel, glitchAmount, chromaticAberrationIntensity;
-    uniform vec3 glowColor; varying vec2 vUv;
-    float hash(vec2 p){p=vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3)));return fract(sin(p.x+p.y)*43758.5453);}
-    float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);float a=hash(i),b=hash(i+vec2(1,0)),c=hash(i+vec2(0,1)),d=hash(i+1.0);return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);}
-    vec2 bend(vec2 uv){float b=0.4;vec2 p=uv*2.0-1.0;float c=p.y*p.y;p.y+=b*c*(1.0-abs(p.x)*0.3);float pers=1.0+b*(p.y+1.0)*0.6;p/=pers;return p*0.5+0.5;}
-    void main(){
-      vec2 uv=bend(vUv);float bb=clamp(beatLevel,0.0,1.2);
-      float wave=0.15*(1.2+3.0*bb)*0.01*(sin(uv.y*18.0+time*2.5)+0.8*sin(uv.y*35.0+time*3.5+bb*3.0));
-      float n=(noise(uv*16.0+time*1.5)*0.7+noise(uv*28.0-time*2.0+bb)*0.3-0.5)*0.15*(0.8+2.5*bb)*0.01;
-      vec2 d=uv;d.x+=wave+n*1.6;d.y+=n;
-      float g=glitchAmount*(0.5+1.5*bb);if(mod(d.y*80.0,1.0)<g*0.5)d.x+=sin(d.y*100.0+time*50.0)*g*0.01;
-      if(hash(d*20.0+time*100.0)<g*0.1)d.y+=sin(time*50.0)*g*0.05;
-      float ca=chromaticAberrationIntensity*(0.01+0.04*bb);
-      vec4 r=texture2D(map,clamp(d+vec2(ca,0),0.0,1.0)),g=texture2D(map,clamp(d,0.0,1.0)),b=texture2D(map,clamp(d-vec2(ca,0),0.0,1.0));
-      vec4 t=vec4(r.r,g.g,b.b,g.a);
-      vec3 col=t.rgb*(1.0+beatLevel*0.5)+glowColor*t.a*5.0*(1.8+1.5*bb);
-      float a=smoothstep(0.3,0.7,t.a);vec2 v=vUv-0.5;float vig=smoothstep(1.0,0.2,dot(v,v)*4.0);
-      gl_FragColor=vec4(col*a*vig*3.2,a);
-    }
-  </script>
+  const text = new Troika.Text();
+  text.text = LOREM_IPSUM_ARCANO;
+  text.font = 'https://fonts.gstatic.com/s/uncialantiqua/v21/b0ngw4-TgY2-q0WJu1gH0pJ14c2r2tWj5a8.woff2';
+  text.fontSize = fontSize;
+  text.color = 0xffffff;
+  text.anchorX = 'center';
+  text.anchorY = 'top';
+  text.textAlign = 'center';
+  text.maxWidth = maxWidth;
+  text.lineHeight = 1.35;
+  text.letterSpacing = 0.02;
 
-  <script type="module">
-    import { Text } from 'https://unpkg.com/troika-three-text@0.49.0/dist/troika-three-text.esm.js';
+  text.material = new THREE.ShaderMaterial({
+    uniforms: {
+      map: { value: null },
+      time: { value: 0.0 },
+      glowColor: { value: ARCANE_PURPLE },
+      baseDistortion: { value: 0.010 },
+      baseNoise: { value: 0.010 },
+      beatLevel: { value: 0.0 }
+    },
+    vertexShader: document.getElementById('vertexShader').textContent,
+    fragmentShader: document.getElementById('fragmentShader').textContent,
+    transparent: true,
+    side: THREE.DoubleSide
+  });
 
-    const LOREM_IPSUM_ARCANO = `Nas entranhas do real, onde a forma range,
-eles caminham sem saber que já foram colhidos.
-O mundo fede antes de morrer,
-mas vós chamais isso de ordem.
-Sob a pedra há dente,
-sob o dente há fome,
-sob a fome há ritmo,
-e o ritmo vos aguarda.
-Eles respiram, mas o ar não os quer.
-A carne permanece, mas a lembrança apodrece.
-O tempo só mastiga o que ainda resiste,
-e nada resiste por muito.
-O eixo tritura o que ousa lembrar.
-A cidade dorme sobre ossos que não consentem.
-Chama-se paz ao que sangra devagar,
-chama-se vida ao que ainda não cedeu.
-Vós sois as falhas do esquecimento,
-os nomes que o silêncio não digeriu.
-A Fenda não oferece escolha —
-apenas retorno.
-A vinda já começou
-antes do passo.
-A queda já vos guarda
-antes da borda.
-Ouçam.
-Desçam.
-Cedam.
-Retornem.
-A pele racha.
-O selo abre.
-A ruína respira.
-E vos chama.`.trim();
+  text.sync(() => {
+    const bb = text.geometry.boundingBox;
+    textHeight = bb.max.y - bb.min.y;
+    const fovRad = camera.fov * Math.PI / 180;
+    const visibleHeight = 2 * Math.tan(fovRad / 2) * camera.position.z;
+    targetDistance = textHeight + visibleHeight * 0.7;
+    totalDistance = 0;
 
-    let scene, camera, renderer, textMesh, crawlGroup;
-    let sfx1, sfx2, sfx25, sfx3;
-    let sfx2Id, sfx25Id;
-    let animationInProgress = false;
-    let scrollSpeed = 0.7;
-    let totalDistance = 0;
-    let targetDistance = 0;
-    let clock = new THREE.Clock();
-    let beatAccum = 0;
-
-    // === BEAT DE TESTE (SEM ÁUDIO) ===
-    const BEAT = { fps: 60, durationSec: 30, values: Array(1800).fill().map((_,i)=> (Math.sin(i/60*2*Math.PI*1.1)*0.5+0.5)) };
-    function getBeatAt(t) {
-      const idx = Math.floor(t * BEAT.fps) % BEAT.values.length;
-      return BEAT.values[idx];
-    }
-
-    // === BINAURAL 3D (FUNCIONA MESMO SEM ÁUDIO) ===
-    function makeBinaural(howl, id, opts={speed:1.3, radius:1.2, jitter:0.5}) {
-      if (!howl || !id) return;
-      const pos = new THREE.Vector3();
-      let angle = Math.random() * Math.PI * 2;
-      const update = () => {
-        angle += opts.speed * 0.1;
-        const jx = (Math.random()-0.5)*opts.jitter;
-        const jy = (Math.random()-0.5)*opts.jitter;
-        pos.set(Math.cos(angle)*opts.radius + jx, Math.sin(angle*0.7)*opts.radius*0.5 + jy, Math.sin(angle)*opts.radius);
-        howl.pos(pos.x, pos.y, pos.z, id);
-      };
-      const interval = setInterval(update, 16);
-      howl.once('end', () => clearInterval(interval), id);
-    }
-
-    // === ÁUDIO COM FALLBACK SILENCIOSO ===
-    function createSilentSound() {
-      const buffer = new Howl({ src: ['data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='] })._sounds[0]._node.buffer;
-      return new Howl({ src: [buffer], volume: 0, loop: true });
-    }
-
-    function initAudio() {
-      sfx1 = new Howl({ src: ['sfx1.mp3'], volume: 0.8, onloaderror: () => sfx1 = createSilentSound() });
-      sfx2 = new Howl({ src: ['sfx2.mp3'], volume: 0.6, loop: true, onloaderror: () => sfx2 = createSilentSound() });
-      sfx25 = new Howl({ src: ['sfx2_5.mp3'], volume: 1.0, loop: true, onloaderror: () => sfx25 = createSilentSound() });
-      sfx3 = new Howl({ src: ['sfx3.mp3'], volume: 0.6, onloaderror: () => sfx3 = createSilentSound() });
-    }
-
-    // === INÍCIO ===
-    function init() {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 1, 10000);
-      camera.position.set(0, 130, 480);
-      renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), antialias: true, alpha: true });
-      renderer.setSize(innerWidth, innerHeight);
-      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-
-      initAudio();
-      createCrawlText();
-      requestAnimationFrame(animate);
-    }
-
-    function createCrawlText() {
-      const text = new Text();
-      text.text = LOREM_IPSUM_ARCANO;
-      text.font = 'https://fonts.gstatic.com/s/uncialantiqua/v21/b0ngw4-TgY2-q0WJu1gH0pJ14c2r2tWj5a8.woff2';
-      text.fontSize = Math.min(36, Math.max(20, innerHeight * 0.04));
-      text.color = 0xffffff;
-      text.anchorX = 'center';
-      text.maxWidth = Math.min(innerWidth * 0.9, 800);
-      text.lineHeight = 1.35;
-      text.material = new THREE.ShaderMaterial({
-        uniforms: {
-          map: { value: null },
-          time: { value: 0 },
-          glowColor: { value: new THREE.Color('#b24cff') },
-          beatLevel: { value: 0 },
-          glitchAmount: { value: 0.008 },
-          chromaticAberrationIntensity: { value: 0.003 }
-        },
-        vertexShader: document.getElementById('vertexShader').textContent,
-        fragmentShader: document.getElementById('fragmentShader').textContent,
-        transparent: true
-      });
-      text.sync(() => {
-        const h = text.geometry.boundingBox.max.y - text.geometry.boundingBox.min.y;
-        targetDistance = h + innerHeight * 1.5;
-        crawlGroup = new THREE.Group(); crawlGroup.add(text); scene.add(crawlGroup);
-        crawlGroup.position.y = -h/2 - 300;
-        textMesh = text;
-      });
-    }
-
-    // === FUNÇÃO DE INÍCIO, agora acessível ao clicar no botão ===
-    window.startExperience = function() {
-      if (animationInProgress) return;
-      animationInProgress = true;
-
-      const seal = document.getElementById('arcane-seal-img');
-      seal.classList.add('clicked');
-      setTimeout(() => {
-        document.getElementById('seal-container').style.display = 'none';
-        document.getElementById('start-button').classList.remove('show');
-      }, 400);
-
-      const id1 = sfx1.play();
-      makeBinaural(sfx1, id1, {speed:1.4, radius:0.9, jitter:0.35});
-
-      // Interstitial
-      setTimeout(() => {
-        const inter = document.getElementById('interstitial');
-        inter.style.display = 'flex';
-        requestAnimationFrame(() => inter.classList.add('show'));
-        setTimeout(() => {
-          inter.classList.remove('show');
-          setTimeout(() => inter.style.display = 'none', 500);
-        }, 3000);
-      }, 3000);
-
-      // SFX2 + SFX25
-      setTimeout(() => {
-        sfx2Id = sfx2.play();
-        makeBinaural(sfx2, sfx2Id, {speed:1.3, radius:1.2, jitter:0.5});
-        if (sfx25.state() === 'loaded') {
-          sfx25Id = sfx25.play();
-          makeBinaural(sfx25, sfx25Id, {speed:1.5, radius:1.0, jitter:0.45});
-        }
-        // Aqui pode ativar o botão para próximo passo se desejar
-        document.getElementById('start-button').classList.remove('show');
-      }, 4500);
-    };
-
-    function animate() {
-      requestAnimationFrame(animate);
-      const dt = clock.getDelta();
-      beatAccum += dt;
-      const beat = getBeatAt(beatAccum);
-      const elapsed = clock.getElapsedTime();
-
-      if (textMesh?.material?.uniforms) {
-        textMesh.material.uniforms.time.value = elapsed;
-        textMesh.material.uniforms.beatLevel.value = beat;
-        const pulse = 0.5 + beat * 0.5;
-        const phase = Math.min(1, elapsed / 15);
-        textMesh.material.uniforms.chromaticAberrationIntensity.value = 0.002 + 0.008 * pulse * phase;
-        textMesh.material.uniforms.glitchAmount.value = 0.005 + 0.012 * pulse * phase;
-      }
-
-      if (crawlGroup && animationInProgress) {
-        crawlGroup.position.y += scrollSpeed;
-        totalDistance += scrollSpeed;
-        if (totalDistance >= targetDistance) {
-          animationInProgress = false;
-          scene.remove(crawlGroup);
-          if (sfx2Id) sfx2.stop(sfx2Id);
-          if (sfx25Id) sfx25.stop(sfx25Id);
-          const id3 = sfx3.play();
-          makeBinaural(sfx3, id3, {speed:1.6, radius:0.8, jitter:0.4});
-          const sig = document.getElementById('signature-container');
-          sig.style.display = 'block';
-          requestAnimationFrame(() => sig.style.opacity = '1');
-        }
-      }
-
-      renderer.render(scene, camera);
-    }
-
-    // Evento para redimensionar
-    window.addEventListener('resize', () => {
-      camera.aspect = innerWidth/innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(innerWidth, innerHeight);
-    });
-
-    // Ao carregar, inicializa tudo e mostra o botão
-    window.onload = () => {
-      init();
-      // Mostra o botão após a inicialização
-      document.getElementById('start-button').classList.add('show');
-    };
-
-  </script>
-</body>
-</html>
+    crawlGroup = new THREE.Group();
+    crawlGroup.add(text);
+    crawlGroup.position.y = -textHeight / 2 - 300;
+    scene.add(crawlGroup);
+    textMesh = text;
+  });
+}
