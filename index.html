@@ -31,8 +31,9 @@
 </head>
 <body>
 
+  <!-- SELO COM CAMINHO CORRETO -->
   <div id="seal-container">
-    <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo">
+    <img id="arcane-seal-img" src="./assets/selo-arcano.png" alt="Selo">
   </div>
 
   <canvas id="canvas"></canvas>
@@ -56,31 +57,20 @@
     uniform sampler2D tSDF; uniform float uTime,uBeat; varying vec2 vUv;
     void main(){
       vec2 uv = vUv;
-      
-      // 1. Perspectiva Sutil (remove o warp agressivo)
       vec2 p = uv*2.0-1.0; 
-      float depth = 1.0 + (p.y * 0.18); // Perspectiva suave
+      float depth = 1.0 + (p.y * 0.18);
       p /= depth;
       uv = p*.5+.5;
-
-      // 2. Distorção de onda SUTIL e LEGÍVEL
       float d_base = 0.0005; 
       float d_peak = 0.0030; 
-      // A distorção aumenta com o uBeat
       float distortion_k = d_base + (d_peak - d_base) * uBeat;
-      
-      // Ondulação Lenta (Frequências baixas para não granular)
       uv.x += distortion_k * sin(uv.y * 4.0 + uTime * 0.5);
       uv.y += distortion_k * cos(uv.x * 3.0 + uTime * 0.6);
-      
       float s = texture2D(tSDF, uv).r;
-      float alpha = smoothstep(0.48, 0.52, s); // Renderiza o texto SDF
+      float alpha = smoothstep(0.48, 0.52, s);
       float glow = smoothstep(0.0, 0.6, s);
-      
       vec3 color = vec3(1.0);
-      // Glow pulsando com a batida
       vec3 glowColor = vec3(0.7, 0.3, 1.0) * glow * (1.0 + 1.2 * uBeat); 
-      
       gl_FragColor = vec4(color * alpha + glowColor, alpha);
     }
   </script>
@@ -126,7 +116,6 @@ O selo abre.
 A ruína respira.
 E vos chama.`.trim();
 
-    // === CONFIGURAÇÕES DE VELOCIDADE PROGRESSIVA ===
     const SETTINGS = {
       CRAWL_BASE: 0.60,
       CRAWL_MAX: 1.15,
@@ -142,13 +131,11 @@ E vos chama.`.trim();
       return rate;
     }
 
-    // === VARIÁVEIS GLOBAIS ===
     let scene, camera, renderer, clock = new THREE.Clock();
     let crawl, material, sdfTex, running = false, scroll = 0, target = 0;
     const sounds = {}, ids = {};
     let initialized = false;
 
-    // === LISTENER DO SELO (IMEDIATO) ===
     function setupSealListener() {
       const seal = document.getElementById('seal-container');
       seal.oncontextmenu = (e) => e.preventDefault();
@@ -158,7 +145,6 @@ E vos chama.`.trim();
       };
     }
 
-    // === INICIALIZAÇÃO DO THREE.JS ===
     function init() {
       if (initialized) return;
       initialized = true;
@@ -174,7 +160,6 @@ E vos chama.`.trim();
 
       sdfTex = makeSDFWithTinySDF();
 
-      // === ÁUDIO COM assets/ ===
       ['sfx1','sfx2','sfx2_5','sfx3'].forEach(n=>sounds[n]=new Howl({src:[`./assets/${n}.mp3`],volume:0.8,loop:n==='sfx2'||n==='sfx2_5'}));
       
       window.onresize = () => {
@@ -187,7 +172,6 @@ E vos chama.`.trim();
       animate();
     }
 
-    // === START EXPERIENCE ===
     function start() {
       if (!initialized) return; 
 
@@ -201,11 +185,10 @@ E vos chama.`.trim();
         running = true; 
         ids.s2 = sounds.sfx2.play(); 
         ids.s25 = sounds.sfx2_5.play(); 
-        makeText();
-      }, 3800); 
+        makeText(); // CRIA O TEXTO AQUI
+      }, 3800); // 3000 + 800ms
     }
 
-    // === INTERSTICIAL COM FADE ===
     function interstitial(t) {
       const el = document.getElementById('interstitial');
       el.style.display='flex'; 
@@ -217,7 +200,6 @@ E vos chama.`.trim();
       }, t);
     }
 
-    // === TEXTO COM TINYSDF ===
     function makeSDFWithTinySDF() {
       const w = 800, h = 1800;
       const canvas = document.createElement('canvas');
@@ -254,7 +236,6 @@ E vos chama.`.trim();
       return tex;
     }
 
-    // === CRIA O PLANO DE TEXTO ===
     function makeText() {
       const scale = innerWidth<768?1.8:2.2, w=800*scale, h=1800*scale;
       material = new THREE.ShaderMaterial({
@@ -265,13 +246,16 @@ E vos chama.`.trim();
       });
       const geo = new THREE.PlaneGeometry(w, h);
       const mesh = new THREE.Mesh(geo, material);
-      crawl = new THREE.Group(); crawl.add(mesh); crawl.position.y = -h/2-300;
+      crawl = new THREE.Group(); crawl.add(mesh);
+
+      // POSIÇÃO CORRIGIDA: topo do texto começa no centro da tela
+      crawl.position.y = -h/2;
+
       scene.add(crawl);
       target = h + 2*Math.tan(camera.fov*Math.PI/360)*camera.position.z*0.7;
       scroll = 0;
     }
 
-    // === ANIMAÇÃO COM PROGRESSO DINÂMICO ===
     function animate() {
       requestAnimationFrame(animate);
       const t = clock.getElapsedTime();
@@ -296,7 +280,6 @@ E vos chama.`.trim();
       if (renderer) renderer.render(scene, camera);
     }
 
-    // === FINALIZAÇÃO ===
     function end() {
       running=false; scene.remove(crawl);
       ['s2','s25'].forEach(k=>sounds[k]?.stop(ids[k]));
@@ -305,7 +288,6 @@ E vos chama.`.trim();
       sig.style.display='block'; requestAnimationFrame(()=>sig.style.opacity='1');
     }
 
-    // === INICIALIZAÇÃO FINAL ===
     setupSealListener(); 
 
     const tinysdfScript = document.createElement('script');
