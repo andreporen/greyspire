@@ -1,84 +1,74 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>O Pergaminho Arcano</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+  <title>O Pergaminho Arcano</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
+  <!-- Fonts + Libs -->
+  <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
-
-  <style>
-    :root { --cor-arcana: #b24cff; }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { width:100%; height:100%; background:#000; overflow:hidden; touch-action:none; -webkit-tap-highlight-color:transparent; }
-    #seal-container { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:160px; height:160px; display:flex; justify-content:center; align-items:center; cursor:pointer; z-index:100; pointer-events:auto; }
-    #arcane-seal-img { width:120px; filter:drop-shadow(0 0 22px var(--cor-arcana)); transition:opacity .4s; }
-    #arcane-seal-img.clicked { opacity:0; filter:drop-shadow(0 0 5px var(--cor-arcana)); }
-    canvas { position:fixed; top:0; left:0; z-index:1; }
-    #interstitial, #signature-container { position:fixed; z-index:10; opacity:0; transition:opacity .8s; pointer-events:none; }
-    #interstitial { inset:0; display:flex; align-items:center; justify-content:center; }
-    #interstitial.show { opacity:1; pointer-events:auto; }
-    .interstitial-text { max-width:90%; text-align:center; font:clamp(20px,4vw,36px)/1.3 'MedievalSharp',cursive; color:#fff; text-shadow:0 0 10px var(--cor-arcana),0 0 20px var(--cor-arcana); animation:g 2.8s infinite; }
-    @keyframes g { 50% { text-shadow:0 0 16px #fff,0 0 32px var(--cor-arcana),0 0 50px var(--cor-arcana); } }
-    #signature-container { bottom:10vh; left:50%; transform:translateX(-50%); max-width:90%; font:1.2rem/1.4 'MedievalSharp',cursive; color:#fff; text-shadow:0 0 6px #fff,0 0 12px var(--cor-arcana); animation:p 1.4s infinite; }
-    @keyframes p { 50% { text-shadow:0 0 10px #fff,0 0 22px var(--cor-arcana),0 0 32px var(--cor-arcana); } }
-  </style>
+  <style>
+    :root { --cor-arcana: #b24cff; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; background:#000; overflow:hidden; touch-action:none; }
+    #seal-container { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:160px; height:160px; display:flex; justify-content:center; align-items:center; cursor:pointer; z-index:100; }
+    #arcane-seal-img { width:120px; filter:drop-shadow(0 0 22px var(--cor-arcana)); transition:opacity .4s; }
+    #arcane-seal-img.clicked { opacity:0; }
+    canvas { position:fixed; top:0; left:0; z-index:1; }
+    #interstitial, #signature-container { position:fixed; z-index:10; opacity:0; transition:opacity .8s; }
+    #interstitial { inset:0; display:flex; align-items:center; justify-content:center; }
+    #interstitial.show { opacity:1; }
+    .interstitial-text { max-width:90%; text-align:center; font:clamp(20px,4vw,36px)/1.3 'MedievalSharp',cursive; color:#fff; text-shadow:0 0 10px var(--cor-arcana),0 0 20px var(--cor-arcana); animation:g 2.8s infinite; }
+    @keyframes g { 50% { text-shadow:0 0 16px #fff,0 0 32px var(--cor-arcana),0 0 50px var(--cor-arcana); } }
+    #signature-container { bottom:10vh; left:50%; transform:translateX(-50%); max-width:90%; font:1.2rem/1.4 'MedievalSharp',cursive; color:#fff; text-shadow:0 0 6px #fff,0 0 12px var(--cor-arcana); animation:p 1.4s infinite; }
+    @keyframes p { 50% { text-shadow:0 0 10px #fff,0 0 22px var(--cor-arcana),0 0 32px var(--cor-arcana); } }
+  </style>
 </head>
 <body>
 
-  <div id="seal-container">
-    <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo">
-  </div>
+  <div id="seal-container">
+    <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo">
+  </div>
 
-  <canvas id="canvas"></canvas>
+  <canvas id="canvas"></canvas>
 
-  <div id="interstitial"><div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div></div>
+  <div id="interstitial"><div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div></div>
 
-  <div id="signature-container">
-    <p id="signature">
-      O coração dispara antes que você perceba que deixou a carta cair. O papel atinge o chão, mas a sensação de contato não some com ele. Algo fica preso na sua cabeça, como se um pensamento entrasse sem pedir permissão. Não é visão, nem sonho. É lembrança de algo que você nunca viveu.<br><br>
-      A imagem vem inteira, sem construção, sem origem: uma taverna que você nunca viu, mas reconhece. Tábuas escuras, cheiro de ferrugem, luz baixa demais para ser aconchegante, mesas que já desistiram de permanecer retas. Ferrugem & Ossos. Velha Chama. O nome surge pronto, como se sempre estivesse guardado em algum ponto da sua mente que não era seu.<br><br>
-      Ninguém diz que você deve ir.<br>
-      Mas a sensação é de que você já está atrasado.
-    </p>
-  </div>
+  <div id="signature-container">
+    <p>
+      O coração dispara antes que você perceba que deixou a carta cair. O papel atinge o chão, mas a sensação de contato não some com ele. Algo fica preso na sua cabeça, como se um pensamento entrasse sem pedir permissão. Não é visão, nem sonho. É lembrança de algo que você nunca viveu.<br><br>
+      A imagem vem inteira, sem construção, sem origem: uma taverna que você nunca viu, mas reconhece. Tábuas escuras, cheiro de ferrugem, luz baixa demais para ser aconchegante, mesas que já desistiram de permanecer retas. Ferrugem & Ossos. Velha Chama. O nome surge pronto, como se sempre estivesse guardado em algum ponto da sua mente que não era seu.<br><br>
+      Ninguém diz que você deve ir.<br>
+      Mas a sensação é de que você já está atrasado.
+    </p>
+  </div>
 
-    <script type="x-shader/x-vertex" id="vs">
-    varying vec2 vUv;
-    void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }
-  </script>
-  <script type="x-shader/x-fragment" id="fs">
-    uniform sampler2D tSDF; uniform float uTime,uBeat; varying vec2 vUv;
-    void main(){
-      // Efeito de distorção de perspectiva
-      vec2 uv=vUv*2.0-1.0; uv.y+=.3*uv.y*uv.y*(1.0-abs(uv.x)*.3); uv/=1.0+.3*(uv.y+1.0)*.6; uv=uv*.5+.5;
-      
-      // Efeito de ondulação/glitch
-      float w=.01*(1.0+2.0*uBeat); uv.x+=w*sin(uv.y*25.0+uTime*2.0)+w*.5*sin(uv.y*40.0+uTime*3.0);
-      
-      // Obtém o valor da textura de máscara (o texto)
-      float s=texture2D(tSDF,uv).r; 
-      
-      // Usamos smoothstep com valores fixos para criar a borda suavizada da máscara (mais estável)
-      float border_start = 0.5 - 0.05; 
-      float border_end = 0.5 + 0.05;
-      float a = smoothstep(border_start, border_end, s); 
-      float g = smoothstep(0.0, 0.6, s); // Para o brilho
-      
-      vec3 c=mix(vec3(.8),vec3(1.0),sin(uTime*6.0)*.5+.5);
-      vec3 gc=vec3(.7,.3,1.0)*g*(2.0+uBeat);
-      gl_FragColor=vec4(c*a*3.0+gc,a);
-    }
-  </script>
+  <!-- SHADERS -->
+  <script type="x-shader/x-vertex" id="vs">
+    varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }
+  </script>
+  <script type="x-shader/x-fragment" id="fs">
+    uniform sampler2D tSDF; uniform float uTime,uBeat; varying vec2 vUv;
+    void main(){
+      vec2 uv = vUv;
+      // Distorção leve
+      vec2 p = uv*2.0-1.0; p.y += .3*p.y*p.y*(1.0-abs(p.x)*.3); p /= 1.0+.3*(p.y+1.0)*.6; uv = p*.5+.5;
+      float w = .01*(1.0+2.0*uBeat); uv.x += w*sin(uv.y*25.0+uTime*2.0) + w*.5*sin(uv.y*40.0+uTime*3.0);
+      // SDF
+      float s = texture2D(tSDF, uv).r;
+      float alpha = smoothstep(0.48, 0.52, s);  // borda nítida
+      float glow = smoothstep(0.0, 0.5, s);
+      vec3 color = vec3(1.0);
+      vec3 glowColor = vec3(0.7, 0.3, 1.0) * glow * (1.5 + uBeat);
+      gl_FragColor = vec4(color * alpha + glowColor, alpha);
+    }
+  </script>
 
-  <script>
-    const TEXT = `Nas entranhas do real, onde a forma range,
+  <script>
+    const TEXT = `Nas entranhas do real, onde a forma range,
 eles caminham sem saber que já foram colhidos.
 O mundo fede antes de morrer,
 mas vós chamais isso de ordem.
@@ -118,118 +108,133 @@ O selo abre.
 A ruína respira.
 E vos chama.`.trim();
 
-    // === OTIMIZAÇÕES THREE.JS ===
-    let scene, camera, renderer, clock = new THREE.Clock();
-    let crawl, material, sdfTex, running = false, scroll = 0, target = 0;
-    const sounds = {}, ids = {};
+    let scene, camera, renderer, clock = new THREE.Clock();
+    let crawl, material, sdfTex, running = false, scroll = 0, target = 0;
+    const sounds = {}, ids = {};
 
-    function init() {
-      const canvas = document.getElementById('canvas');
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 1, 1e4);
-      camera.position.z = 480;
+    function init() {
+      const canvas = document.getElementById('canvas');
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 1, 1e4);
+      camera.position.z = 480;
 
-      // OTIMIZAÇÃO: WebGLRenderer otimizado
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, powerPreference: "high-performance" });
-      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-      renderer.setSize(innerWidth, innerHeight);
-      renderer.setClearColor(0x000000, 1);
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setSize(innerWidth, innerHeight);
 
-      // CORRIGIDO: makeSDF agora é uma máscara simples, estável
-      sdfTex = makeSDF();
+      sdfTex = makeSDF();  // SDF CORRETO
 
-      // Sons
-      ['sfx1','sfx2','sfx2_5','sfx3'].forEach(n=>sounds[n]=new Howl({src:[`./${n}.mp3`],volume:n==='sfx1'||n==='sfx3'?0.8:0.7,loop:n!=='sfx1'&&n!=='sfx3'}));
+      ['sfx1','sfx2','sfx2_5','sfx3'].forEach(n=>sounds[n]=new Howl({src:[`./${n}.mp3`],volume:0.8,loop:n==='sfx2'||n==='sfx2_5'}));
 
-      // Clique no selo (mobile + desktop)
-      const seal = document.getElementById('seal-container');
-      seal.onclick = seal.ontouchstart = (e) => { e.preventDefault(); if(!running) start(); };
+      const seal = document.getElementById('seal-container');
+      seal.onclick = seal.ontouchstart = (e) => { e.preventDefault(); if(!running) start(); };
 
-      window.onresize = () => {
-        camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
-        renderer.setSize(innerWidth, innerHeight);
-        if(crawl){ scene.remove(crawl); makeText(); }
-      };
+      window.onresize = () => {
+        camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+        if(crawl){ scene.remove(crawl); makeText(); }
+      };
 
-      animate();
-    }
+      animate();
+    }
 
-    function start() {
-      running = true;
-      document.getElementById('arcane-seal-img').classList.add('clicked');
-      ids.s1 = sounds.sfx1.play();
-      setTimeout(() => document.getElementById('seal-container').style.display='none', 400);
-      interstitial(3000);
-      setTimeout(() => { ids.s2=sounds.sfx2.play(); ids.s25=sounds.sfx2_5.play(); }, 4500);
-      setTimeout(makeText, 3000);
-    }
+    function start() {
+      running = true;
+      document.getElementById('arcane-seal-img').classList.add('clicked');
+      ids.s1 = sounds.sfx1.play();
+      setTimeout(() => document.getElementById('seal-container').style.display='none', 400);
+      interstitial(3000);
+      setTimeout(() => { ids.s2=sounds.sfx2.play(); ids.s25=sounds.sfx2_5.play(); }, 4500);
+      setTimeout(makeText, 3000);
+    }
 
-    function interstitial(t) {
-      const el = document.getElementById('interstitial');
-      el.style.display='flex'; requestAnimationFrame(()=>el.classList.add('show'));
-      setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.style.display='none', 600); }, t);
-    }
+    function interstitial(t) {
+      const el = document.getElementById('interstitial');
+      el.style.display='flex'; requestAnimationFrame(()=>el.classList.add('show'));
+      setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.style.display='none', 600); }, t);
+    }
 
-    function makeText() {
-      const scale = innerWidth<768?1.8:2.2, w=800*scale, h=1800*scale;
-      material = new THREE.ShaderMaterial({
-        uniforms: { tSDF:{value:sdfTex}, uTime:{value:0}, uBeat:{value:0} },
-        vertexShader: document.getElementById('vs').textContent,
-        fragmentShader: document.getElementById('fs').textContent,
-        transparent: true, side: THREE.DoubleSide
-      });
-      const geo = new THREE.PlaneGeometry(w, h);
-      const mesh = new THREE.Mesh(geo, material);
-      crawl = new THREE.Group(); crawl.add(mesh); crawl.position.y = -h/2-300;
-      scene.add(crawl);
-      target = h + 2*Math.tan(camera.fov*Math.PI/360)*camera.position.z*0.7;
-      scroll = 0;
-    }
+    function makeText() {
+      const scale = innerWidth<768?1.8:2.2, w=800*scale, h=1800*scale;
+      material = new THREE.ShaderMaterial({
+        uniforms: { tSDF:{value:sdfTex}, uTime:{value:0}, uBeat:{value:0} },
+        vertexShader: document.getElementById('vs').textContent,
+        fragmentShader: document.getElementById('fs').textContent,
+        transparent: true, side: THREE.DoubleSide, depthWrite: false
+      });
+      const geo = new THREE.PlaneGeometry(w, h);
+      const mesh = new THREE.Mesh(geo, material);
+      crawl = new THREE.Group(); crawl.add(mesh); crawl.position.y = -h/2-300;
+      scene.add(crawl);
+      target = h + 2*Math.tan(camera.fov*Math.PI/360)*camera.position.z*0.7;
+      scroll = 0;
+    }
 
-    // FUNÇÃO CORRIGIDA: Cria uma máscara de texto simples (sem cálculo de SDF quebrado)
-    function makeSDF() {
-      const w=800, h=1800, canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
-      const ctx=canvas.getContext('2d'); ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
-      
-      // Estilo do Texto
-      ctx.fillStyle='#fff'; 
-      ctx.font='bold 36px Uncial Antiqua,Georgia,serif'; 
-      ctx.textAlign='center';
-      
-      const lines=TEXT.split('\n').map(l=>l.trim()).filter(Boolean); let y=100;
-      
-      // Renderiza o texto no Canvas
-      lines.forEach(l=>{ ctx.fillText(l,w/2,y); y+=52; });
+    function makeSDF() {
+      const w=800, h=1800, canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      const ctx=canvas.getContext('2d');
+      ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
+      ctx.fillStyle='#fff';
+      ctx.font='bold 36px "Uncial Antiqua", "Cinzel Decorative", "MedievalSharp", Georgia, serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      const lines=TEXT.split('\n').map(l=>l.trim()).filter(Boolean);
+      let y=100;
+      lines.forEach(l=>{ ctx.fillText(l, w/2, y); y+=52; });
 
-      // Cria e retorna a textura diretamente do Canvas
-      const tex=new THREE.CanvasTexture(canvas); 
-      tex.minFilter=tex.magFilter=THREE.LinearFilter; 
-      tex.needsUpdate=true;
-      return tex;
-    }
+      // SDF CORRETO: apenas borda
+      const img=ctx.getImageData(0,0,w,h), d=img.data;
+      const sdf=new Uint8Array(w*h).fill(0);
+      for(let i=0;i<d.length;i+=4) if(d[i]>128) sdf[i>>2]=255;
 
-    function animate() {
-      requestAnimationFrame(animate);
-      const dt = clock.getDelta(), t = clock.getElapsedTime();
-      const beat = Math.sin(t*2*Math.PI)*.5+.5; 
+      const temp=new Uint8Array(sdf);
+      for(let r=0;r<30;r++){
+        for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+          const i=y*w+x; let maxV=temp[i];
+          for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+            const nx=x+dx, ny=y+dy;
+            if(nx>=0&&nx<w&&ny>=0&&ny<h) maxV=Math.max(maxV, temp[ny*w+nx]);
+          }
+          if(sdf[i]<maxV) sdf[i]=maxV>0?maxV-1:0;
+        }
+        temp.set(sdf);
+      }
 
-      if(material) { material.uniforms.uTime.value = t; material.uniforms.uBeat.value = beat; }
-      if(crawl && running) {
-        crawl.position.y += 0.7; scroll += 0.7;
-        if(scroll >= target) end();
-      }
-      renderer.render(scene, camera);
-    }
+      const res=ctx.createImageData(w,h);
+      for(let i=0;i<sdf.length;i++){
+        const v=Math.min(255, sdf[i]*8); // intensifica
+        res.data[i*4]=v; res.data[i*4+1]=v; res.data[i*4+2]=v; res.data[i*4+3]=255;
+      }
+      ctx.putImageData(res,0,0);
 
-    function end() {
-      running = false; scene.remove(crawl);
-      ['s2','s25'].forEach(k=>sounds[k.split('s')[1]]?.stop(ids[k]));
-      sounds.sfx3.play();
-      const sig = document.getElementById('signature-container');
-      sig.style.display='block'; requestAnimationFrame(()=>sig.style.opacity='1');
-    }
+      const tex=new THREE.CanvasTexture(canvas);
+      tex.minFilter=tex.magFilter=THREE.LinearFilter;
+      tex.needsUpdate=true;
+      return tex;
+    }
 
-    document.fonts.ready.then(() => { console.log("Fontes OK"); init(); });
-  </script>
+    function animate() {
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+      const beat = Math.sin(t*2*Math.PI)*.5+.5;
+
+      if(material){ material.uniforms.uTime.value=t; material.uniforms.uBeat.value=beat; }
+      if(crawl && running){
+        crawl.position.y += 0.7; scroll += 0.7;
+        if(scroll >= target) end();
+      }
+      renderer.render(scene, camera);
+    }
+
+    function end() {
+      running=false; scene.remove(crawl);
+      ['s2','s25'].forEach(k=>sounds[k]?.stop(ids[k]));
+      sounds.sfx3.play();
+      const sig=document.getElementById('signature-container');
+      sig.style.display='block'; requestAnimationFrame(()=>sig.style.opacity='1');
+    }
+
+    document.fonts.ready.then(init);
+  </script>
 </body>
 </html>
