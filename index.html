@@ -2,54 +2,51 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0,
-                 user-scalable=no, viewport-fit=cover"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="format-detection" content="telephone=no">
-  <title>Pergaminho Arcano — Troika SDF</title>
+  <title>Pergaminho Arcano — Troika SDF (fix)</title>
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet"/>
 
-  <!-- Howler (áudio global, funciona com script type=module) -->
   <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.core.min.js"></script>
-  <!-- GSAP para animações suaves -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 
   <style>
     :root { --cor-arcana: #b24cff; }
-
     html, body {
       margin: 0; padding: 0; width: 100%; height: 100%;
-      background: #000; color: #fff;
-      font-family: 'MedievalSharp', cursive;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      overscroll-behavior: none;
-      touch-action: manipulation;
+      background: #000; color: #fff; font-family: 'MedievalSharp', cursive;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+      overscroll-behavior: none; touch-action: manipulation;
     }
 
-    /* Camadas */
-    #stage       { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
-    #ui          { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
-    #seal-layer  { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: auto; }
-    #seal-button { display: inline-grid; place-items: center; gap: 8px;
-                   background: transparent; border: 0; cursor: pointer; }
-    #seal-img    { width: 140px; height: auto; filter: drop-shadow(0 0 24px var(--cor-arcana)); }
-    #seal-hint   { font-size: 14px; opacity: .85; }
+    /* Canvas no fundo e SEM cliques */
+    #stage { position: fixed; inset: 0; z-index: 0; display: block; pointer-events: none !important; }
 
-    #seal-layer.hidden { display: none; }
+    /* UI plenamente clicável */
+    #ui { position: fixed; inset: 0; z-index: 10; pointer-events: auto; }
 
-    #interstitial {
-      position: absolute; inset: 0; display: none; place-items: center;
-      text-align: center; padding: 24px; pointer-events: none;
+    /* Selo central absoluto e clicável */
+    #seal-layer { position: absolute; inset: 0; display: grid; place-items: center; }
+    #seal-button {
+      background: transparent; border: 0; display: grid; gap: 10px; place-items: center;
+      cursor: pointer; padding: 0; pointer-events: auto; outline: none;
     }
+    #seal-img {
+      width: 160px; height: auto;
+      filter: drop-shadow(0 0 24px var(--cor-arcana));
+      transition: transform .18s ease, opacity .25s ease;
+      pointer-events: auto;
+    }
+    #seal-button:active #seal-img { transform: scale(.98); }
+    #seal-hint { font-size: 14px; opacity: .85; }
+    .hidden { display: none !important; }
+
+    /* Interstitial */
+    #interstitial { position: absolute; inset: 0; display: none; place-items: center; text-align: center; padding: 24px; }
     #interstitial.show { display: grid; }
     .interstitial-text {
       font-size: clamp(20px, 4vw, 36px);
@@ -61,11 +58,8 @@
       50%     { text-shadow: 0 0 16px #fff, 0 0 32px var(--cor-arcana), 0 0 50px var(--cor-arcana), 0 0 70px var(--cor-arcana); }
     }
 
-    #signature-container {
-      position: absolute; left: 50%; bottom: 110px; transform: translateX(-50%);
-      text-align: center; max-width: 640px; line-height: 1.35;
-      display: none;
-    }
+    /* Assinatura */
+    #signature-container { position: absolute; left: 50%; bottom: 110px; transform: translateX(-50%); max-width: 640px; line-height: 1.35; text-align: center; display: none; }
     #signature {
       text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana);
       animation: pulse 1.4s ease-in-out infinite;
@@ -74,33 +68,24 @@
       0%,100% { text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana); }
       50%     { text-shadow: 0 0 10px #fff, 0 0 22px var(--cor-arcana), 0 0 32px var(--cor-arcana), 0 0 45px var(--cor-arcana); }
     }
-
-    /* Blindagem total: nada bloqueia clique do selo */
-    canvas, #stage, #stage * { pointer-events: none !important; }
-    #seal-layer, #seal-layer * { pointer-events: auto !important; }
   </style>
 </head>
 <body>
-  <!-- Cena -->
   <canvas id="stage"></canvas>
 
-  <!-- UI -->
   <div id="ui" aria-hidden="false">
-    <!-- Selo -->
     <div id="seal-layer">
-      <button id="seal-button" aria-label="Entrar">
+      <button id="seal-button" tabindex="0" aria-label="Entrar">
         <img id="seal-img" src="./selo-arcano.png" alt="Selo Arcano"
              onerror="this.onerror=null; this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAAAAYLlVAAAAPElEQVR42u3PMQEAIAzAsK3/0c6gC3gRUk4kq3gkAAAAAAAAAAAAAAD4V1Hk8c3cH0s0i8kq3uB8v1eU2m1oA1QAAq3w4e7a7dQAAAABJRU5ErkJggg==';">
         <span id="seal-hint">toque/click para invocar</span>
       </button>
     </div>
 
-    <!-- Interstitial -->
     <div id="interstitial">
       <div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div>
     </div>
 
-    <!-- Assinatura -->
     <div id="signature-container">
       <p id="signature">
         O coração dispara antes que você perceba que deixou a carta cair. O papel atinge o chão, mas a sensação de contato não some com ele. Algo fica preso na sua cabeça, como se um pensamento entrasse sem pedir permissão. Não é visão, nem sonho. É lembrança de algo que você nunca viveu.<br><br>
@@ -111,12 +96,10 @@
     </div>
   </div>
 
-  <!-- App (ESM) -->
   <script type="module">
     import * as THREE from "https://unpkg.com/three@0.155.0/build/three.module.js";
-    import {Text}   from "https://unpkg.com/troika-three-text@0.49.0/dist/troika-three-text.esm.js";
+    import { Text }  from "https://unpkg.com/troika-three-text@0.49.0/dist/troika-three-text.esm.js";
 
-    // ===== Texto =====
     const POEM = `Nas entranhas do real, onde a forma range,
 eles caminham sem saber que já foram colhidos.
 O mundo fede antes de morrer,
@@ -150,109 +133,95 @@ O selo abre.
 A ruína respira.
 E vos chama.`;
 
-    // ===== Cena =====
-    const canvas  = document.getElementById('stage');
-    const scene   = new THREE.Scene();
-    const camera  = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 5000);
+    /* ===== THREE ===== */
+    const canvas   = document.getElementById('stage');
+    const scene    = new THREE.Scene();
+    const camera   = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 5000);
     camera.position.set(0, 0, 200);
     const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
     renderer.setSize(innerWidth, innerHeight);
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 1);
+    const light = new THREE.AmbientLight(0xffffff, 0.9); scene.add(light);
 
-    // Luz sutil
-    const light = new THREE.AmbientLight(0xffffff, 0.9);
-    scene.add(light);
+    const crawl = new THREE.Group(); scene.add(crawl);
 
-    // Grupo do crawl
-    const crawl = new THREE.Group();
-    scene.add(crawl);
-
-    // Texto SDF (Troika)
     const text = new Text();
     text.text = POEM;
-    text.fontSize = 5.2;              // ajustado via scale global
+    text.fontSize = 5.2;
     text.maxWidth = Math.min(innerWidth * 0.36, 320);
     text.lineHeight = 1.28;
     text.textAlign = 'center';
     text.color = 0xffffff;
-    text.font = 'https://fonts.gstatic.com/s/uncialantiqua/v19/N0bM2S5C8e7-ht7PwhWQaP5B.woff'; // fallback SDF interno
+    text.font = 'https://fonts.gstatic.com/s/uncialantiqua/v19/N0bM2S5C8e7-ht7PwhWQaP5B.woff';
     text.anchorX = 'center';
     text.anchorY = 'top';
-    text.outlineWidth = 0;            // troika outline interno (opcional)
+    text.outlineWidth = 0;
     text.depthOffset = -1;
     text.sync();
     crawl.add(text);
 
-    // Glow fake
-    const glowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#b24cff'), transparent:true, opacity:0.25 });
-    const glowGeo = new THREE.PlaneGeometry(2,2);
-    const glow    = new THREE.Mesh(glowGeo, glowMat);
-    glow.scale.set(600, 600, 1);
-    glow.position.z = -50;
-    scene.add(glow);
+    const glow = new THREE.Mesh(
+      new THREE.PlaneGeometry(2,2),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color('#b24cff'), transparent:true, opacity:0.22 })
+    );
+    glow.scale.set(600, 600, 1); glow.position.z = -50; scene.add(glow);
 
-    // Escala responsiva
     function fit() {
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight);
-
-      const targetWidth = Math.min(innerWidth * 0.9, 800);
-      text.maxWidth = targetWidth * 0.4;
+      text.maxWidth = Math.min(innerWidth * 0.36, 360);
       text.fontSize = Math.max(3.8, Math.min(6.2, innerHeight / 120));
       text.sync();
     }
     addEventListener('resize', fit, {passive:true});
     fit();
 
-    // ===== Áudio =====
+    /* ===== ÁUDIO ===== */
     const sfx1  = new Howl({ src: ['./sfx1.mp3'], volume: 0.9 });
     const sfx2  = new Howl({ src: ['./sfx2.mp3'], volume: 0.6, loop:true });
     const sfx25 = new Howl({ src: ['./sfx2_5.mp3'], volume: 1.0, loop:true });
     const sfx3  = new Howl({ src: ['./sfx3.mp3'], volume: 0.7 });
 
-    // ===== UI / Selo =====
+    /* ===== UI ===== */
     const sealLayer = document.getElementById('seal-layer');
     const inter     = document.getElementById('interstitial');
     const sigWrap   = document.getElementById('signature-container');
     const sealBtn   = document.getElementById('seal-button');
+    const sealImg   = document.getElementById('seal-img');
 
-    // Garantia de clique
-    ['click','pointerdown','touchstart','keydown'].forEach(ev => {
-      sealBtn.addEventListener(ev, (e) => {
-        if (ev === 'keydown') {
-          const k = e.key?.toLowerCase();
-          if (k !== 'enter' && k !== ' ') return;
-        }
-        e.preventDefault();
-        e.stopPropagation();
-        startExperience();
-      }, {passive:false});
-    });
+    // Força clique em todos os cenários
+    function bindClick(el, fn){
+      el.addEventListener('click', fn, {passive:false});
+      el.addEventListener('pointerdown', fn, {passive:false});
+      el.addEventListener('touchstart', (e)=>{e.preventDefault(); fn(e);}, {passive:false});
+      el.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fn(e);} }, {passive:false});
+    }
 
     let running = false;
+    bindClick(sealBtn, startExperience);
+    bindClick(sealImg, startExperience);
+    bindClick(sealLayer, startExperience);
 
-    function startExperience(){
+    function startExperience(e){
       if (running) return;
       running = true;
 
-      // Esconde selo + interstitial breve
       sealLayer.classList.add('hidden');
-      inter.classList.add('show');
+
+      inter.style.display = 'grid';
+      inter.style.opacity = '0';
       gsap.to(inter, {opacity: 1, duration: 0.25, onComplete(){
         gsap.to(inter, {opacity: 0, delay: 2.8, duration: 0.5, onComplete(){
-          inter.classList.remove('show');
+          inter.style.display = 'none';
         }});
       }});
 
-      // Áudio
       sfx1.play();
       setTimeout(()=>{ sfx2.play(); sfx25.play(); }, 1200);
 
-      // Posição inicial do crawl e animação
-      text.sync(); // garante layout
-      // mede altura aproximada: número de linhas * fontSize * lineHeight
+      text.sync();
       const approxLines = POEM.split('\n').length + 8;
       const approxHeight = approxLines * text.fontSize * text.lineHeight;
 
@@ -263,23 +232,21 @@ E vos chama.`;
         duration: 55,
         ease: "none",
         onComplete(){
-          sfx2.stop(); sfx25.stop();
-          sfx3.play();
+          sfx2.stop(); sfx25.stop(); sfx3.play();
           sigWrap.style.display = 'block';
           gsap.fromTo(sigWrap, {opacity:0}, {opacity:1, duration:1.2});
         }
       });
     }
 
-    // ===== Loop =====
+    /* ===== Loop ===== */
     const clock = new THREE.Clock();
-    function tick(){
+    (function tick(){
       const t = clock.getElapsedTime();
       glow.material.opacity = 0.18 + Math.sin(t * 1.6) * 0.06;
       renderer.render(scene, camera);
       requestAnimationFrame(tick);
-    }
-    tick();
+    })();
   </script>
 </body>
 </html>
