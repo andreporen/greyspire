@@ -1,92 +1,74 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>O Pergaminho Arcano</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+  <title>O Pergaminho Arcano</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tiny-sdf@latest/dist/tiny-sdf.min.js"></script> 
+  <!-- Fonts + Libs -->
+  <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
+  <!-- TINYSDF (1.5 KB) -->
+  <script src="https://cdn.jsdelivr.net/npm/tinysdf@1.1.0/dist/tinysdf.min.js"></script>
 
-  <style>
-    :root { --cor-arcana: #b24cff; }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { width:100%; height:100%; background:#000; overflow:hidden; touch-action:none; -webkit-tap-highlight-color:transparent; }
-    #seal-container { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:160px; height:160px; display:flex; justify-content:center; align-items:center; cursor:pointer; z-index:100; pointer-events:auto; }
-    #arcane-seal-img { width:120px; filter:drop-shadow(0 0 22px var(--cor-arcana)); transition:opacity .4s; }
-    #arcane-seal-img.clicked { opacity:0; filter:drop-shadow(0 0 5px var(--cor-arcana)); }
-    canvas { position:fixed; top:0; left:0; z-index:1; }
-    #interstitial, #signature-container { position:fixed; z-index:10; opacity:0; transition:opacity .8s; pointer-events:none; }
-    #interstitial { inset:0; display:flex; align-items:center; justify-content:center; }
-    #interstitial.show { opacity:1; pointer-events:auto; }
-    .interstitial-text { max-width:90%; text-align:center; font:clamp(20px,4vw,36px)/1.3 'MedievalSharp',cursive; color:#fff; text-shadow:0 0 10px var(--cor-arcana),0 0 20px var(--cor-arcana); animation:g 2.8s infinite; }
-    @keyframes g { 50% { text-shadow:0 0 16px #fff,0 0 32px var(--cor-arcana),0 0 50px var(--cor-arcana); } }
-    #signature-container { bottom:10vh; left:50%; transform:translateX(-50%); max-width:90%; font:1.2rem/1.4 'MedievalSharp',cursive; color:#fff; text-shadow:0 0 6px #fff,0 0 12px var(--cor-arcana); animation:p 1.4s infinite; }
-    @keyframes p { 50% { text-shadow:0 0 10px #fff,0 0 22px var(--cor-arcana),0 0 32px var(--cor-arcana); } }
-  </style>
+  <style>
+    :root { --cor-arcana: #b24cff; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; background:#000; overflow:hidden; touch-action:none; }
+    #seal-container { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:160px; height:160px; display:flex; justify-content:center; align-items:center; cursor:pointer; z-index:100; }
+    #arcane-seal-img { width:120px; filter:drop-shadow(0 0 22px var(--cor-arcana)); transition:opacity .4s; }
+    #arcane-seal-img.clicked { opacity:0; }
+    canvas { position:fixed; top:0; left:0; z-index:1; }
+    #interstitial, #signature-container { position:fixed; z-index:10; opacity:0; transition:opacity .8s; }
+    #interstitial { inset:0; display:flex; align-items:center; justify-content:center; }
+    #interstitial.show { opacity:1; }
+    .interstitial-text { max-width:90%; text-align:center; font:clamp(20px,4vw,36px)/1.3 'MedievalSharp',cursive; color:#fff; text-shadow:0 0 10px var(--cor-arcana),0 0 20px var(--cor-arcana); animation:g 2.8s infinite; }
+    @keyframes g { 50% { text-shadow:0 0 16px #fff,0 0 32px var(--cor-arcana),0 0 50px var(--cor-arcana); } }
+    #signature-container { bottom:10vh; left:50%; transform:translateX(-50%); max-width:90%; font:1.2rem/1.4 'MedievalSharp',cursive; color:#fff; text-shadow:0 0 6px #fff,0 0 12px var(--cor-arcana); animation:p 1.4s infinite; }
+    @keyframes p { 50% { text-shadow:0 0 10px #fff,0 0 22px var(--cor-arcana),0 0 32px var(--cor-arcana); } }
+  </style>
 </head>
 <body>
 
-  <div id="seal-container">
-    <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo">
-  </div>
+  <div id="seal-container">
+    <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo">
+  </div>
 
-  <canvas id="canvas"></canvas>
+  <canvas id="canvas"></canvas>
 
-  <div id="interstitial"><div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div></div>
+  <div id="interstitial"><div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div></div>
 
-  <div id="signature-container">
-    <p id="signature">
-      O coração dispara antes que você perceba que deixou a carta cair. O papel atinge o chão, mas a sensação de contato não some com ele. Algo fica preso na sua cabeça, como se um pensamento entrasse sem pedir permissão. Não é visão, nem sonho. É lembrança de algo que você nunca viveu.<br><br>
-      A imagem vem inteira, sem construção, sem origem: uma taverna que você nunca viu, mas reconhece. Tábuas escuras, cheiro de ferrugem, luz baixa demais para ser aconchegante, mesas que já desistiram de permanecer retas. Ferrugem & Ossos. Velha Chama. O nome surge pronto, como se sempre estivesse guardado em algum ponto da sua mente que não era seu.<br><br>
-      Ninguém diz que você deve ir.<br>
-      Mas a sensação é de que você já está atrasado.
-    </p>
-  </div>
+  <div id="signature-container">
+    <p>
+      O coração dispara antes que você perceba que deixou a carta cair. O papel atinge o chão, mas a sensação de contato não some com ele. Algo fica preso na sua cabeça, como se um pensamento entrasse sem pedir permissão. Não é visão, nem sonho. É lembrança de algo que você nunca viveu.<br><br>
+      A imagem vem inteira, sem construção, sem origem: uma taverna que você nunca viu, mas reconhece. Tábuas escuras, cheiro de ferrugem, luz baixa demais para ser aconchegante, mesas que já desistiram de permanecer retas. Ferrugem & Ossos. Velha Chama. O nome surge pronto, como se sempre estivesse guardado em algum ponto da sua mente que não era seu.<br><br>
+      Ninguém diz que você deve ir.<br>
+      Mas a sensação é de que você já está atrasado.
+    </p>
+  </div>
 
-    <script type="x-shader/x-vertex" id="vs">
-    varying vec2 vUv;
-    void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }
-  </script>
-  <script type="x-shader/x-fragment" id="fs">
-    uniform sampler2D tSDF; uniform float uTime,uBeat; varying vec2 vUv;
-    void main(){
-      vec2 uv = vUv;
-      // Efeito de distorção de perspectiva
-      vec2 p = uv*2.0-1.0; p.y += .3*p.y*p.y*(1.0-abs(p.x)*.3); p /= 1.0+.3*(p.y+1.0)*.6; uv = p*.5+.5;
-      
-      // Efeito de ondulação/glitch
-      float w = .01*(1.0+2.0*uBeat); uv.x += w*sin(uv.y*25.0+uTime*2.0) + w*.5*sin(uv.y*40.0+uTime*3.0);
-      
-      // Lê o valor SDF (0.5 é a borda do caractere)
-      float s = texture2D(tSDF, uv).r;
-      
-      // O fwidth calcula o gradiente de 's' para anti-aliasing perfeito.
-      float border = 0.5;
-      float stroke_width = fwidth(s); 
-      
-      // 1. Opacidade: Nítida e anti-aliased
-      float alpha = smoothstep(border - stroke_width, border + stroke_width, s);
-      
-      // 2. Brilho (Glow): Espalha-se para fora do caractere (valores abaixo de 0.5)
-      float glow_radius = 0.4; 
-      float glow = smoothstep(border - glow_radius, border, s);
-      
-      vec3 color = mix(vec3(.8), vec3(1.0), sin(uTime*6.0)*.5+.5);
-      vec3 glowColor = vec3(0.7, 0.3, 1.0) * glow * (2.0 + uBeat);
-      
-      // Combina cor, brilho e opacidade
-      gl_FragColor = vec4(color * alpha * 3.0 + glowColor * alpha, alpha);
-    }
-  </script>
+  <!-- SHADERS -->
+  <script type="x-shader/x-vertex" id="vs">
+    varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }
+  </script>
+  <script type="x-shader/x-fragment" id="fs">
+    uniform sampler2D tSDF; uniform float uTime,uBeat; varying vec2 vUv;
+    void main(){
+      vec2 uv = vUv;
+      vec2 p = uv*2.0-1.0; p.y += .3*p.y*p.y*(1.0-abs(p.x)*.3); p /= 1.0+.3*(p.y+1.0)*.6; uv = p*.5+.5;
+      float w = .01*(1.0+2.0*uBeat); uv.x += w*sin(uv.y*25.0+uTime*2.0) + w*.5*sin(uv.y*40.0+uTime*3.0);
+      float s = texture2D(tSDF, uv).r;
+      float alpha = smoothstep(0.48, 0.52, s);
+      float glow = smoothstep(0.0, 0.6, s);
+      vec3 color = vec3(1.0);
+      vec3 glowColor = vec3(0.7, 0.3, 1.0) * glow * (1.5 + uBeat);
+      gl_FragColor = vec4(color * alpha + glowColor, alpha);
+    }
+  </script>
 
-  <script>
-    const TEXT = `Nas entranhas do real, onde a forma range,
+  <script>
+    const TEXT = `Nas entranhas do real, onde a forma range,
 eles caminham sem saber que já foram colhidos.
 O mundo fede antes de morrer,
 mas vós chamais isso de ordem.
@@ -126,155 +108,133 @@ O selo abre.
 A ruína respira.
 E vos chama.`.trim();
 
-    let scene, camera, renderer, clock = new THREE.Clock();
-    let crawl, material, sdfTex, running = false, scroll = 0, target = 0;
-    const sounds = {}, ids = {};
+    let scene, camera, renderer, clock = new THREE.Clock();
+    let crawl, material, sdfTex, running = false, scroll = 0, target = 0;
+    const sounds = {}, ids = {};
 
-    function init() {
-      const canvas = document.getElementById('canvas');
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 1, 1e4);
-      camera.position.z = 480;
+    function init() {
+      const canvas = document.getElementById('canvas');
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 1, 1e4);
+      camera.position.z = 480;
 
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, powerPreference: "high-performance" });
-      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-      renderer.setSize(innerWidth, innerHeight);
-      renderer.setClearColor(0x000000, 1);
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setSize(innerWidth, innerHeight);
 
-      // GERAÇÃO SDF ATUALIZADA
-      sdfTex = makeSDF();
+      // === TINYSDF: SDF PERFEITO ===
+      sdfTex = makeSDFWithTinySDF();
 
-      ['sfx1','sfx2','sfx2_5','sfx3'].forEach(n=>sounds[n]=new Howl({src:[`./${n}.mp3`],volume:0.8,loop:n==='sfx2'||n==='sfx2_5'}));
+      ['sfx1','sfx2','sfx2_5','sfx3'].forEach(n=>sounds[n]=new Howl({src:[`./${n}.mp3`],volume:0.8,loop:n==='sfx2'||n==='sfx2_5'}));
 
-      const seal = document.getElementById('seal-container');
-      seal.onclick = seal.ontouchstart = (e) => { e.preventDefault(); if(!running) start(); };
+      const seal = document.getElementById('seal-container');
+      seal.onclick = seal.ontouchstart = (e) => { e.preventDefault(); if(!running) start(); };
 
-      window.onresize = () => {
-        camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
-        renderer.setSize(innerWidth, innerHeight);
-        if(crawl){ scene.remove(crawl); makeText(); }
-      };
+      window.onresize = () => {
+        camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+        if(crawl){ scene.remove(crawl); makeText(); }
+      };
 
-      animate();
-    }
+      animate();
+    }
 
-    function start() {
-      running = true;
-      document.getElementById('arcane-seal-img').classList.add('clicked');
-      ids.s1 = sounds.sfx1.play();
-      setTimeout(() => document.getElementById('seal-container').style.display='none', 400);
-      interstitial(3000);
-      setTimeout(() => { ids.s2=sounds.sfx2.play(); ids.s25=sounds.sfx2_5.play(); }, 4500);
-      setTimeout(makeText, 3000);
-    }
+    function makeSDFWithTinySDF() {
+      const w = 800, h = 1800;
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
 
-    function interstitial(t) {
-      const el = document.getElementById('interstitial');
-      el.style.display='flex'; requestAnimationFrame(()=>el.classList.add('show'));
-      setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.style.display='none', 600); }, t);
-    }
+      // Fundo preto
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, w, h);
 
-    function makeText() {
-      const scale = innerWidth<768?1.8:2.2; 
-      // CORREÇÃO: Usamos dimensões base (originais) para o plano e o valor de escala para o dimensionamento
-      const w = 800 * scale; 
-      const h = 1800 * scale;
+      // Config TinySDF
+      const fontSize = 36;
+      const buffer = 16;
+      const radius = 8;
+      const cutoff = 0.25;
+      const fontFamily = 'Uncial Antiqua, Cinzel Decorative, MedievalSharp, Georgia, serif';
+      const fontWeight = 'bold';
 
-      material = new THREE.ShaderMaterial({
-        uniforms: { tSDF:{value:sdfTex}, uTime:{value:0}, uBeat:{value:0} },
-        vertexShader: document.getElementById('vs').textContent,
-        fragmentShader: document.getElementById('fs').textContent,
-        transparent: true, side: THREE.DoubleSide, 
-        depthWrite: false
-      });
-      
-      // Usamos w e h do cálculo original, que é mais estável.
-      const geo = new THREE.PlaneGeometry(w, h); 
-      const mesh = new THREE.Mesh(geo, material);
-      crawl = new THREE.Group(); crawl.add(mesh); crawl.position.y = -h/2-300;
-      scene.add(crawl);
-      target = h + 2*Math.tan(camera.fov*Math.PI/360)*camera.position.z*0.7;
-      scroll = 0;
-    }
-    
-    // FUNÇÃO makeSDF PERMANECE CORRETA COM TINY-SDF
-    function makeSDF() {
-      const fontSize = 64; 
-      const buffer = 8; 
-      const radius = 16; 
-      const cutoff = 0.25; 
-      
-      const sdfGenerator = new TinySDF(fontSize, buffer, radius, cutoff, '"Uncial Antiqua", Georgia, serif', 0.1, 10);
-      
-      const lines = TEXT.split('\n').map(l=>l.trim()).filter(Boolean);
-      
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-      tempCtx.font = fontSize + 'px "Uncial Antiqua", Georgia, serif';
-      
-      let maxWidth = 0;
-      lines.forEach(l => { maxWidth = Math.max(maxWidth, tempCtx.measureText(l).width); });
-      
-      const lineH = fontSize + 2 * buffer;
-      const totalH = lineH * lines.length + buffer; 
-      const totalW = maxWidth + 2 * buffer + 50; 
-      
-      const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = totalW;
-      finalCanvas.height = totalH;
-      const finalCtx = finalCanvas.getContext('2d');
-      finalCtx.fillStyle = 'black';
-      finalCtx.fillRect(0, 0, totalW, totalH);
+      const sdf = new TinySDF(fontSize, buffer, radius, cutoff, fontFamily, fontWeight);
+      ctx.fillStyle = '#fff';
 
-      let currentY = buffer;
-      lines.forEach((line) => {
-        const data = sdfGenerator.draw(line); 
-        const metrics = sdfGenerator.getMetrics();
-        
-        const imageData = finalCtx.createImageData(metrics.width, metrics.height);
-        
-        for (let i = 0; i < data.length; i++) {
-          imageData.data[i * 4] = data[i]; 	
-          imageData.data[i * 4 + 1] = data[i]; 
-          imageData.data[i * 4 + 2] = data[i]; 
-          imageData.data[i * 4 + 3] = 255; 	
-        }
-        
-        const x = (totalW - metrics.width) / 2;
-        finalCtx.putImageData(imageData, x, currentY);
-        currentY += lineH;
-      });
+      const lines = TEXT.split('\n').map(l => l.trim()).filter(Boolean);
+      let y = 100;
+      lines.forEach(line => {
+        const metrics = ctx.measureText(line);
+        const x = w / 2;
+        const sdfData = sdf.draw(line, x, y, w, h);
+        const imgData = ctx.createImageData(sdfData.width, sdfData.height);
+        for (let i = 0; i < sdfData.data.length; i++) {
+          const v = sdfData.data[i];
+          imgData.data[i*4] = v; imgData.data[i*4+1] = v; imgData.data[i*4+2] = v; imgData.data[i*4+3] = 255;
+        }
+        ctx.putImageData(imgData, x - sdfData.width/2, y - sdfData.height/2);
+        y += 52;
+      });
 
-      const tex = new THREE.CanvasTexture(finalCanvas);
-      tex.minFilter = THREE.LinearFilter;
-      tex.magFilter = THREE.LinearFilter;
-      tex.needsUpdate = true;
-      
-      return tex;
-    }
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.minFilter = tex.magFilter = THREE.LinearFilter;
+      tex.needsUpdate = true;
+      return tex;
+    }
 
-    function animate() {
-      requestAnimationFrame(animate);
-      const t = clock.getElapsedTime();
-      const beat = Math.sin(t*2*Math.PI)*.5+.5; 
+    function start() {
+      running = true;
+      document.getElementById('arcane-seal-img').classList.add('clicked');
+      ids.s1 = sounds.sfx1.play();
+      setTimeout(() => document.getElementById('seal-container').style.display='none', 400);
+      interstitial(3000);
+      setTimeout(() => { ids.s2=sounds.sfx2.play(); ids.s25=sounds.sfx2_5.play(); }, 4500);
+      setTimeout(makeText, 3000);
+    }
 
-      if(material){ material.uniforms.uTime.value=t; material.uniforms.uBeat.value=beat; }
-      if(crawl && running){
-        crawl.position.y += 0.7; scroll += 0.7;
-        if(scroll >= target) end();
-      }
-      renderer.render(scene, camera);
-    }
+    function interstitial(t) {
+      const el = document.getElementById('interstitial');
+      el.style.display='flex'; requestAnimationFrame(()=>el.classList.add('show'));
+      setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.style.display='none', 600); }, t);
+    }
 
-    function end() {
-      running=false; scene.remove(crawl);
-      ['s2','s25'].forEach(k=>sounds[k]?.stop(ids[k]));
-      sounds.sfx3.play();
-      const sig=document.getElementById('signature-container');
-      sig.style.display='block'; requestAnimationFrame(()=>sig.style.opacity='1');
-    }
+    function makeText() {
+      const scale = innerWidth<768?1.8:2.2, w=800*scale, h=1800*scale;
+      material = new THREE.ShaderMaterial({
+        uniforms: { tSDF:{value:sdfTex}, uTime:{value:0}, uBeat:{value:0} },
+        vertexShader: document.getElementById('vs').textContent,
+        fragmentShader: document.getElementById('fs').textContent,
+        transparent: true, side: THREE.DoubleSide, depthWrite: false
+      });
+      const geo = new THREE.PlaneGeometry(w, h);
+      const mesh = new THREE.Mesh(geo, material);
+      crawl = new THREE.Group(); crawl.add(mesh); crawl.position.y = -h/2-300;
+      scene.add(crawl);
+      target = h + 2*Math.tan(camera.fov*Math.PI/360)*camera.position.z*0.7;
+      scroll = 0;
+    }
 
-    document.fonts.ready.then(init);
-  </script>
+    function animate() {
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+      const beat = Math.sin(t*2*Math.PI)*.5+.5;
+
+      if(material){ material.uniforms.uTime.value=t; material.uniforms.uBeat.value=beat; }
+      if(crawl && running){
+        crawl.position.y += 0.7; scroll += 0.7;
+        if(scroll >= target) end();
+      }
+      renderer.render(scene, camera);
+    }
+
+    function end() {
+      running=false; scene.remove(crawl);
+      ['s2','s25'].forEach(k=>sounds[k]?.stop(ids[k]));
+      sounds.sfx3.play();
+      const sig=document.getElementById('signature-container');
+      sig.style.display='block'; requestAnimationFrame(()=>sig.style.opacity='1');
+    }
+
+    document.fonts.ready.then(init);
+  </script>
 </body>
 </html>
