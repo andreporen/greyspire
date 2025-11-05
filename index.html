@@ -18,104 +18,32 @@
 
   <style>
     :root { --cor-arcana: #b24cff; }
-
-    html, body {
-      margin: 0; padding: 0; width: 100%; height: 100%;
-      background: #000; color: #fff;
-      font-family: 'MedievalSharp', cursive;
-      overflow: hidden;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
-      -webkit-tap-highlight-color: transparent;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-
-    /* Selo */
-    #seal-container {
-      position: fixed; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 160px; height: 160px;
-      display: flex; justify-content: center; align-items: center;
-      cursor: pointer; z-index: 20; pointer-events: auto;
-    }
-    #arcane-seal-img {
-      width: 120px; height: auto; pointer-events: auto;
-      filter: drop-shadow(0 0 22px var(--cor-arcana));
-      transition: opacity .4s ease-out, filter .4s ease-out;
-    }
-    #arcane-seal-img.clicked {
-      opacity: 0; filter: drop-shadow(0 0 5px var(--cor-arcana));
-    }
-
-    /* Canvas */
-    #three-canvas {
-      position: fixed; top: 0; left: 0; z-index: 1;
-    }
-
-    /* Interstitial */
-    #interstitial {
-      display: none;
-      opacity: 0;
-      position: fixed; inset: 0; z-index: 9;
-      align-items: center; justify-content: center;
-      pointer-events: none; background: transparent;
-      transition: opacity .5s ease;
-    }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #fff; font-family: 'MedievalSharp', cursive; overflow: hidden; -webkit-font-smoothing: antialiased; user-select: none; }
+    #seal-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 160px; height: 160px; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 20; }
+    #arcane-seal-img { width: 120px; filter: drop-shadow(0 0 22px var(--cor-arcana)); transition: opacity .4s ease-out; }
+    #arcane-seal-img.clicked { opacity: 0; filter: drop-shadow(0 0 5px var(--cor-arcana)); }
+    #three-canvas { position: fixed; top: 0; left: 0; z-index: 1; }
+    #interstitial { display: none; opacity: 0; position: fixed; inset: 0; z-index: 9; align-items: center; justify-content: center; transition: opacity .5s ease; }
     #interstitial.show { display: flex; opacity: 1; }
-    #interstitial.hide { opacity: 0; }
-
-    .interstitial-text {
-      max-width: 800px; padding: 0 24px; text-align: center;
-      font-size: clamp(20px, 4vw, 36px); color: #fff;
-      text-shadow: 0 0 10px var(--cor-arcana), 0 0 20px var(--cor-arcana), 0 0 30px var(--cor-arcana);
-      animation: interstitialGlow 2.8s ease-in-out infinite;
-      filter: brightness(1.05);
-    }
-    @keyframes interstitialGlow {
-      0%, 100% { text-shadow: 0 0 10px #fff, 0 0 18px var(--cor-arcana), 0 0 28px var(--cor-arcana); }
-      50% { text-shadow: 0 0 16px #fff, 0 0 32px var(--cor-arcana), 0 0 50px var(--cor-arcana), 0 0 70px var(--cor-arcana); }
-    }
-
-    /* Assinatura Final */
-    #signature-container {
-      display: none; opacity: 0;
-      position: fixed; bottom: 110px; left: 50%;
-      transform: translateX(-50%); z-index: 10;
-      text-align: center; font-size: 1.2rem;
-      font-family: 'MedievalSharp', cursive;
-      transition: opacity 1.2s ease-in;
-      max-width: 600px; line-height: 1.35;
-    }
-    #signature {
-      color: #fff;
-      text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana);
-      animation: pulse-arcano 1.4s ease-in-out infinite;
-    }
-    @keyframes pulse-arcano {
-      0%, 100% { text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana); }
-      50% { text-shadow: 0 0 10px #fff, 0 0 22px var(--cor-arcana), 0 0 32px var(--cor-arcana), 0 0 45px var(--cor-arcana); }
-    }
+    .interstitial-text { max-width: 800px; padding: 0 24px; text-align: center; font-size: clamp(20px, 4vw, 36px); color: #fff; text-shadow: 0 0 10px var(--cor-arcana), 0 0 20px var(--cor-arcana), 0 0 30px var(--cor-arcana); animation: g 2.8s ease-in-out infinite; }
+    @keyframes g { 0%,100% { text-shadow: 0 0 10px #fff, 0 0 18px var(--cor-arcana), 0 0 28px var(--cor-arcana); } 50% { text-shadow: 0 0 16px #fff, 0 0 32px var(--cor-arcana), 0 0 50px var(--cor-arcana), 0 0 70px var(--cor-arcana); } }
+    #signature-container { display: none; opacity: 0; position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%); z-index: 10; text-align: center; font-size: 1.2rem; max-width: 600px; line-height: 1.35; transition: opacity 1.2s ease-in; }
+    #signature { color: #fff; text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana); animation: p 1.4s ease-in-out infinite; }
+    @keyframes p { 0%,100% { text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana); } 50% { text-shadow: 0 0 10px #fff, 0 0 22px var(--cor-arcana), 0 0 32px var(--cor-arcana), 0 0 45px var(--cor-arcana); } }
   </style>
 </head>
 <body>
 
-  <!-- Selo -->
   <div id="seal-container">
     <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo Arcano">
   </div>
 
-  <!-- Canvas 3D -->
   <canvas id="three-canvas"></canvas>
 
-  <!-- Interstitial -->
   <div id="interstitial">
     <div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div>
   </div>
 
-  <!-- Assinatura Final -->
   <div id="signature-container">
     <p id="signature">
       O coração dispara antes que você perceba que deixou a carta cair. O papel atinge o chão, mas a sensação de contato não some com ele. Algo fica preso na sua cabeça, como se um pensamento entrasse sem pedir permissão. Não é visão, nem sonho. É lembrança de algo que você nunca viveu.<br><br>
@@ -125,108 +53,65 @@
     </p>
   </div>
 
-  <!-- Shaders -->
+  <!-- SHADERS -->
   <script type="x-shader/x-vertex" id="vertexShader">
     varying vec2 vUv;
-    void main() {
-      vUv = uv;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
+    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
   </script>
 
-  <!-- SHADER CORRIGIDO (SEM normalize() perigoso) -->
-  <script type="x-shader/x-fragment" id="fragmentShader">
-    uniform sampler2D map;
-    uniform float time;
-    uniform vec3 glowColor;
-    uniform float baseDistortion;
-    uniform float baseNoise;
-    uniform float beatLevel;
+  <!-- SDF FRAGMENT SHADER (TEXTO VETORIAL) -->
+  <script type="x-shader/x-fragment" id="sdfFragmentShader">
+    uniform sampler2D tMap;
+    uniform float uTime;
+    uniform vec3 uGlowColor;
+    uniform float uBeat;
+    uniform vec2 uResolution;
+    uniform float uDistortion;
+    uniform float uNoise;
 
     varying vec2 vUv;
 
-    float hash(vec2 p) {
-      p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
-      return fract(sin(p.x + p.y) * 43758.5453);
-    }
-    
+    float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
     float noise(vec2 p) {
-      vec2 i = floor(p);
-      vec2 f = fract(p);
-      f = f * f * (3.0 - 2.0 * f);
-      float a = hash(i);
-      float b = hash(i + vec2(1.0, 0.0));
-      float c = hash(i + vec2(0.0, 1.0));
-      float d = hash(i + vec2(1.0, 1.0));
-      return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+      vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+                 mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
     }
 
     void main() {
       vec2 uv = vUv;
-      float bend = 0.4;
       vec2 p = uv * 2.0 - 1.0;
       float curve = p.y * p.y;
-      p.y = p.y + bend * curve * (1.0 - abs(p.x) * 0.3);
-      float perspective = 1.0 + bend * (p.y + 1.0) * 0.6;
+      p.y += 0.4 * curve * (1.0 - abs(p.x) * 0.3);
+      float perspective = 1.0 + 0.4 * (p.y + 1.0) * 0.6;
       p /= perspective;
-      vec2 warpedUv = p * 0.5 + 0.5;
+      vec2 warped = p * 0.5 + 0.5;
 
-      float intensity = 0.15;
-      float waveAmp = baseDistortion * intensity * (0.8 + 2.0 * beatLevel);
-      float wave1 = waveAmp * sin(warpedUv.y * 15.0 + time * 1.5);
-      float wave2 = waveAmp * 0.5 * sin(warpedUv.y * 25.0 + time * 2.2 + beatLevel * 2.0);
-      float wave = wave1 + wave2;
-      
-      vec2 distortedUv = warpedUv;
-      distortedUv.x += wave;
+      float wave = uDistortion * 15.0 * (0.8 + 2.0 * uBeat);
+      warped.x += wave * sin(warped.y * 20.0 + uTime * 1.5);
+      warped.x += wave * 0.5 * sin(warped.y * 35.0 + uTime * 2.2);
 
-      float nAmp = baseNoise * intensity * (0.5 + 1.5 * beatLevel);
-      float n = noise(warpedUv * 12.0 + time * 0.5);
-      float n2 = noise(warpedUv * 20.0 - time * 0.7 + beatLevel);
-      float noiseValue = (n * 0.7 + n2 * 0.3 - 0.5) * nAmp;
-      
-      distortedUv.y += noiseValue * 0.7;
-      distortedUv.x += noiseValue * 0.4;
+      float n = noise(warped * 12.0 + uTime * 0.5) * 0.7 + noise(warped * 20.0 - uTime * 0.7) * 0.3;
+      warped += (n - 0.5) * uNoise * 20.0 * (0.5 + 1.5 * uBeat);
 
-      vec4 texel = texture2D(map, clamp(distortedUv, 0.0, 1.0));
+      float sdf = texture2D(tMap, warped).r;
+      float alpha = smoothstep(0.4, 0.6, sdf);
+      float glow = smoothstep(0.0, 0.5, sdf);
+      vec3 glowColor = uGlowColor * glow * (2.0 + 1.5 * uBeat);
 
-      float b = clamp(beatLevel, 0.0, 1.2);
-      float strobeSpeed = time * 6.0;
-      float strobePhase = mod(strobeSpeed, 3.0);
-      
-      vec3 white = vec3(1.0);
-      vec3 gray = vec3(0.6);
-      vec3 purple = glowColor; // CORRIGIDO: sem normalize()
+      float strobe = mod(uTime * 6.0, 3.0);
+      vec3 color = vec3(1.0);
+      if (strobe < 1.0) color = mix(vec3(1.0), vec3(0.6), strobe);
+      else if (strobe < 2.0) color = mix(vec3(0.6), uGlowColor, strobe - 1.0);
+      else color = mix(uGlowColor, vec3(1.0), strobe - 2.0);
+      color = mix(color, vec3(1.0), sin(uTime * 8.0 + uBeat * 4.0) * 0.5 + 0.5 * 0.4);
 
-      vec3 colorText;
-      if (strobePhase < 1.0) {
-        colorText = mix(white, gray, strobePhase);
-      } else if (strobePhase < 2.0) {
-        colorText = mix(gray, purple, strobePhase - 1.0);
-      } else {
-        colorText = mix(purple, white, strobePhase - 2.0);
-      }
-      
-      float beatPulse = sin(time * 8.0 + beatLevel * 4.0) * 0.5 + 0.5;
-      colorText = mix(colorText, white, beatPulse * 0.4);
-      float blackout = smoothstep(0.93, 1.05, b) * intensity;
-      colorText = mix(colorText, vec3(0.0), 0.38 * blackout);
-
-      vec3 glowBase = glowColor * texel.a * (1.5 + 1.2 * beatLevel) * 4.0;
-      vec3 glow = glowBase * mix(vec3(1.0), colorText, 0.6);
-
-      vec3 textColor = texel.rgb * colorText;
-      textColor = mix(textColor, colorText, 0.85);
-      
-      float alpha = smoothstep(0.3, 0.7, texel.a);
-      
-      vec3 finalColor = textColor * alpha * 2.8 + glow;
-      gl_FragColor = vec4(finalColor, alpha);
+      vec3 final = color * alpha * 3.0 + glowColor;
+      gl_FragColor = vec4(final, alpha);
     }
   </script>
 
   <script>
-    /* ==================== TEXTO ARCANO ==================== */
     const LOREM_IPSUM_ARCANO = `
 Nas entranhas do real, onde a forma range,
 eles caminham sem saber que já foram colhidos.
@@ -268,265 +153,174 @@ O selo abre.
 A ruína respira.
 E vos chama.`.trim();
 
-    /* ==================== BEAT DETECTION ==================== */
     let BEAT = { fps: 60, durationSec: 0, values: [], ready: false };
-
     async function precomputeBeat(url) {
       try {
         const resp = await fetch(url, { cache: 'force-cache' });
         const arr = await resp.arrayBuffer();
-        const AC = window.AudioContext || window.webkitAudioContext;
-        const ctx = new AC({ sampleRate: 44100 });
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const decoded = await ctx.decodeAudioData(arr);
-
         const chL = decoded.getChannelData(0);
-        const chR = decoded.numberOfChannels > 1 ? decoded.getChannelData(1) : null;
         const sr = decoded.sampleRate;
-        const hop = Math.max(1, Math.floor(sr / BEAT.fps));
-
+        const hop = Math.floor(sr / BEAT.fps);
         const env = [];
         for (let i = 0; i < decoded.length; i += hop) {
           let sum = 0, count = 0;
-          for (let j = 0; j < hop && (i + j) < decoded.length; j++) {
-            const sL = chL[i + j];
-            const sR = chR ? chR[i + j] : 0;
-            const m = chR ? (sL + sR) * 0.5 : sL;
-            sum += m * m; count++;
-          }
-          const rms = Math.sqrt(sum / Math.max(1, count));
-          env.push(rms);
+          for (let j = 0; j < hop && i + j < decoded.length; j++) { sum += chL[i + j] ** 2; count++; }
+          env.push(Math.sqrt(sum / count));
         }
-
         const smooth = (arr, k = 0.86) => {
-          const out = new Float32Array(arr.length);
-          let prev = 0;
+          const out = new Float32Array(arr.length); let prev = 0;
           for (let i = 0; i < arr.length; i++) { prev = prev * k + arr[i] * (1 - k); out[i] = prev; }
           prev = 0;
           for (let i = arr.length - 1; i >= 0; i--) { prev = prev * k + out[i] * (1 - k); out[i] = Math.max(out[i], prev); }
           return Array.from(out);
         };
-
-        let sm = smooth(env, 0.86);
-        const sorted = [...sm].sort((a, b) => a - b);
-        const p95 = sorted[Math.floor(sorted.length * 0.95)] || 1;
-        sm = sm.map(v => Math.min(1, v / (p95 || 1)));
-        sm = sm.map(v => Math.pow(v, 0.6));
-
-        BEAT.values = sm;
+        let sm = smooth(env);
+        const sorted = [...sm].sort((a,b)=>a-b);
+        const p95 = sorted[Math.floor(sorted.length*0.95)]||1;
+        sm = sm.map(v=>Math.min(1,v/(p95||1)));
+        BEAT.values = sm.map(v=>v**0.6);
         BEAT.durationSec = decoded.duration;
         BEAT.ready = true;
-        ctx.close && ctx.close();
-      } catch (e) {
-        console.warn('Beat falhou, usando fallback.', e);
-        const total = 60 * 30;
-        const vals = [];
-        for (let i = 0; i < total; i++) {
-          vals.push((Math.sin(i / 60 * 2 * Math.PI * 1.1) * 0.5 + 0.5));
-        }
-        BEAT.values = vals;
-        BEAT.durationSec = total / 60;
-        BEAT.ready = true;
-      }
+      } catch { BEAT.values = Array.from({length:1800},(_,i)=> (Math.sin(i/60*2*Math.PI*1.1)*0.5+0.5)); BEAT.durationSec=30; BEAT.ready=true; }
     }
+    function getBeatAt(t) { return BEAT.ready ? BEAT.values[Math.floor(t*BEAT.fps)%BEAT.values.length] : (Math.sin(t*2*Math.PI)*0.5+0.5); }
 
-    function getBeatAt(timeSec) {
-      if (!BEAT.ready || BEAT.values.length === 0) {
-        return (Math.sin(timeSec * 2 * Math.PI * 1.0) * 0.5 + 0.5);
-      }
-      const t = timeSec % BEAT.durationSec;
-      const idx = Math.floor(t * BEAT.fps) % BEAT.values.length;
-      return BEAT.values[idx];
-    }
-
-    /* ==================== VARIAVEIS GLOBAIS ==================== */
-    let scene, camera, renderer;
-    let sfx1, sfx2, sfx25, sfx3;
-    let sfx2Id = null, sfx25Id = null;
-    let binauralTargets = [];
-    let crawlGroup, textMesh, textHeight;
-    let animationInProgress = false;
-    let scrollSpeed = 0.7;
-    let totalDistance = 0;
-    let targetDistance = 0;
-    let clock = new THREE.Clock();
-    let beatAccum = 0;
-
+    let scene, camera, renderer, sfx1, sfx2, sfx25, sfx3, sfx2Id, sfx25Id, crawlGroup, textMesh, textHeight, animationInProgress = false, scrollSpeed = 0.7, totalDistance = 0, targetDistance = 0, clock = new THREE.Clock(), beatAccum = 0;
     const ARCANE_PURPLE = new THREE.Color('#b24cff');
-
-    /* ==================== WAKE LOCK ==================== */
     let wakeLock = null;
-    async function requestWakeLock() {
-      try {
-        if ('wakeLock' in navigator) {
-          wakeLock = await navigator.wakeLock.request('screen');
-        }
-      } catch (err) {}
-    }
-    document.addEventListener('visibilitychange', async () => {
-      if (document.visibilityState === 'visible' && wakeLock === null) {
-        await requestWakeLock();
-      }
-    });
+    async function requestWakeLock() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch {} }
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) requestWakeLock(); });
 
-    /* ==================== INICIALIZAÇÃO ==================== */
     function init() {
-      setupAudio();
-      setupScene();
-      createParticles();
-      veinsBackground = createVeinsBackground();
+      sfx1 = new Howl({ src: ['./sfx1.mp3'], volume: 0.8, loop: false });
+      sfx2 = new Howl({ src: ['./sfx2.mp3'], volume: 0.6, loop: true });
+      sfx25 = new Howl({ src: ['./sfx2_5.mp3'], volume: 1.0, loop: true });
+      sfx3 = new Howl({ src: ['./sfx3.mp3'], volume: 0.6, loop: false });
+      const canvas = document.getElementById('three-canvas');
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
+      camera.position.set(0, 130, 480); camera.lookAt(0,0,0);
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setClearColor(0x000000, 1);
+      document.getElementById('seal-container').addEventListener('click', startExperience, { once: true });
+      window.addEventListener('resize', onWindowResize);
       precomputeBeat('./sfx2_5.mp3');
-      startBinauralLoop();
-      setupListeners();
       requestWakeLock();
       animate();
     }
 
-    function setupAudio() {
-      sfx1 = new Howl({ src: ['./sfx1.mp3'], volume: 0.8, loop: false, html5: false });
-      sfx2 = new Howl({ src: ['./sfx2.mp3'], volume: 0.6, loop: true, html5: false });
-      sfx25 = new Howl({ src: ['./sfx2_5.mp3'], volume: 1.0, loop: true, html5: false });
-      sfx3 = new Howl({ src: ['./sfx3.mp3'], volume: 0.6, loop: false, html5: false });
-    }
-
-    function setupScene() {
-      const canvas = document.getElementById('three-canvas');
-      scene = new THREE.Scene();
-      const aspect = window.innerWidth / window.innerHeight;
-      camera = new THREE.PerspectiveCamera(50, aspect, 1, 10000);
-      camera.position.set(0, 130, 480);
-      camera.lookAt(0, 0, 0);
-      scene.add(camera);
-
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setClearColor(0x000000, 1);
-    }
-
-    function setupListeners() {
-      document.getElementById('seal-container').addEventListener('click', startExperience, { once: true });
-      window.addEventListener('resize', onWindowResize);
-    }
-
-    /* ==================== VEIAS + PARTÍCULAS + CRAWL (CORRIGIDO) ==================== */
-    function createVeinsBackground() { /* ... (mantido igual) ... */ }
-    function createParticles() { /* ... (mantido igual) ... */ }
-
     function startExperience() {
       if (animationInProgress) return;
       animationInProgress = true;
-
-      const sealImg = document.getElementById('arcane-seal-img');
-      sealImg.classList.add('clicked');
+      document.getElementById('arcane-seal-img').classList.add('clicked');
       const id1 = sfx1.play();
-      makeBinaural(sfx1, id1, { speed: 1.4, radius: 0.9, jitter: 0.35 });
-
       setTimeout(() => { document.getElementById('seal-container').style.display = 'none'; }, 400);
       showInterstitial(3000);
-
-      setTimeout(() => {
-        sfx2Id = sfx2.play();
-        makeBinaural(sfx2, sfx2Id, { speed: 1.3, radius: 1.2, jitter: 0.5 });
-        if (sfx25.state() === 'loaded') {
-          sfx25Id = sfx25.play();
-          makeBinaural(sfx25, sfx25Id, { speed: 1.5, radius: 1.0, jitter: 0.45 });
-        } else {
-          sfx25.once('load', () => {
-            sfx25Id = sfx25.play();
-            makeBinaural(sfx25, sfx25Id, { speed: 1.5, radius: 1.0, jitter: 0.45 });
-          });
-        }
-      }, 4500);
-
+      setTimeout(() => { sfx2Id = sfx2.play(); sfx25Id = sfx25.play(); }, 4500);
       setTimeout(createCrawlText, 3000);
     }
 
     function showInterstitial(ms) {
-      const inter = document.getElementById('interstitial');
-      inter.style.display = 'flex';
-      requestAnimationFrame(() => inter.classList.add('show'));
-      setTimeout(() => {
-        inter.classList.remove('show');
-        inter.classList.add('hide');
-        setTimeout(() => {
-          inter.style.display = 'none';
-          inter.classList.remove('hide');
-        }, 500);
-      }, ms);
+      const el = document.getElementById('interstitial');
+      el.style.display = 'flex';
+      requestAnimationFrame(() => el.classList.add('show'));
+      setTimeout(() => { el.classList.remove('show'); el.classList.add('hide'); setTimeout(() => { el.style.display = 'none'; el.classList.remove('hide'); }, 500); }, ms);
     }
 
+    let sdfTexture = null;
     function createCrawlText() {
-      const textCanvas = createTextCanvas(LOREM_IPSUM_ARCANO);
+      if (!sdfTexture) sdfTexture = generateSDFTexture(LOREM_IPSUM_ARCANO);
       const isMobile = window.innerWidth < 768;
-      const scale = isMobile ? 3 : 4;
-      const logicalWidth = textCanvas.width / scale;
-      const logicalHeight = textCanvas.height / scale;
-      textHeight = logicalHeight;
-
-      const texture = new THREE.CanvasTexture(textCanvas);
-      texture.minFilter = texture.magFilter = THREE.LinearFilter;
-      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-      texture.needsUpdate = true;
-
+      const scale = isMobile ? 1.5 : 2.0;
+      const width = 800 * scale;
+      const height = 1600 * scale;
       const material = new THREE.ShaderMaterial({
         uniforms: {
-          map: { value: texture },
-          time: { value: 0.0 },
-          glowColor: { value: ARCANE_PURPLE },
-          baseDistortion: { value: 0.010 },
-          baseNoise: { value: 0.010 },
-          beatLevel: { value: 0.0 }
+          tMap: { value: sdfTexture },
+          uTime: { value: 0 },
+          uGlowColor: { value: ARCANE_PURPLE },
+          uBeat: { value: 0 },
+          uResolution: { value: new THREE.Vector2(width, height) },
+          uDistortion: { value: 0.010 },
+          uNoise: { value: 0.010 }
         },
         vertexShader: document.getElementById('vertexShader').textContent,
-        fragmentShader: document.getElementById('fragmentShader').textContent,
+        fragmentShader: document.getElementById('sdfFragmentShader').textContent,
         transparent: true,
         side: THREE.DoubleSide
       });
-
-      const geometry = new THREE.PlaneGeometry(logicalWidth, logicalHeight);
+      const geometry = new THREE.PlaneGeometry(width, height);
       textMesh = new THREE.Mesh(geometry, material);
-
       crawlGroup = new THREE.Group();
       crawlGroup.add(textMesh);
-      crawlGroup.position.y = -textHeight / 2 - 300;
+      crawlGroup.position.y = -height / 2 - 300;
       scene.add(crawlGroup);
-
-      const fovRad = camera.fov * Math.PI / 180;
-      const visibleHeight = 2 * Math.tan(fovRad / 2) * camera.position.z;
-      targetDistance = textHeight + visibleHeight * 0.7;
+      const visibleHeight = 2 * Math.tan(camera.fov * Math.PI / 180 / 2) * camera.position.z;
+      targetDistance = height + visibleHeight * 0.7;
       totalDistance = 0;
     }
 
-    function createTextCanvas(text) {
-      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    function generateSDFTexture(text) {
+      const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
       const isMobile = window.innerWidth < 768;
-      const maxWidth = Math.min(window.innerWidth * 0.9, 800);
-      const availableHeight = window.innerHeight * 0.85;
-      const fontSize = Math.max(14, Math.min(28, Math.floor(availableHeight / lines.length * 0.45)));
-      const lineHeight = fontSize * 1.3;
-      const canvasHeight = lines.length * lineHeight + fontSize * 2;
-      const scale = isMobile ? 3 : 4;
-
+      const fontSize = isMobile ? 28 : 36;
+      const lineHeight = fontSize * 1.4;
+      const padding = 60;
+      const width = 800;
+      const height = Math.max(1200, lines.length * lineHeight + padding * 2);
       const canvas = document.createElement('canvas');
-      canvas.width = maxWidth * scale;
-      canvas.height = canvasHeight * scale;
+      canvas.width = width; canvas.height = height;
       const ctx = canvas.getContext('2d');
-      ctx.scale(scale, scale);
-      ctx.clearRect(0, 0, maxWidth, canvasHeight);
+      ctx.fillStyle = 'black'; ctx.fillRect(0,0,width,height);
+      ctx.font = `bold ${fontSize}px 'Uncial Antiqua', 'Cinzel Decorative', 'MedievalSharp', serif`;
+      ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      let y = padding + fontSize/2;
+      lines.forEach(l => { ctx.fillText(l, width/2, y); y += lineHeight; });
+      const imageData = ctx.getImageData(0,0,width,height);
+      const sdfData = generateSDF(imageData, width, height);
+      const sdfCanvas = document.createElement('canvas');
+      sdfCanvas.width = width; sdfCanvas.height = height;
+      const sdfCtx = sdfCanvas.getContext('2d');
+      const img = sdfCtx.createImageData(width, height);
+      for (let i=0; i<sdfData.length; i++) { const v=sdfData[i]; img.data[i*4]=v; img.data[i*4+1]=v; img.data[i*4+2]=v; img.data[i*4+3]=255; }
+      sdfCtx.putImageData(img,0,0);
+      const tex = new THREE.CanvasTexture(sdfCanvas);
+      tex.minFilter = tex.magFilter = THREE.LinearFilter;
+      tex.generateMipmaps = false;
+      tex.needsUpdate = true;
+      return tex;
+    }
 
-      ctx.font = `bold ${fontSize}px 'Uncial Antiqua', 'Cinzel Decorative', 'MedievalSharp', Georgia, serif`;
-      ctx.fillStyle = '#FFFFFF';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.imageSmoothingQuality = 'high';
-
-      let y = fontSize;
-      lines.forEach(line => {
-        ctx.fillText(line, maxWidth / 2, y);
-        y += lineHeight;
-      });
-
-      return canvas;
+    function generateSDF(img, w, h) {
+      const data = img.data;
+      const grid = new Float32Array(w*h);
+      for (let i=0; i<data.length; i+=4) grid[i/4] = data[i]>128 ? 0 : 1;
+      const dist = new Float32Array(w*h);
+      let step = 1 << (Math.log2(Math.max(w,h))|0) - 1;
+      while (step > 0) {
+        for (let y=0; y<h; y++) for (let x=0; x<w; x++) {
+          const idx = y*w + x; let minD = Infinity;
+          for (let dy=-1; dy<=1; dy++) for (let dx=-1; dx<=1; dx++) {
+            const nx = x + dx*step, ny = y + dy*step;
+            if (nx>=0 && nx<w && ny>=0 && ny<h && grid[ny*w + nx] < 0.5) {
+              const d = Math.hypot(dx, dy) * step;
+              if (d < minD) minD = d;
+            }
+          }
+          if (minD < Infinity) dist[idx] = grid[idx] < 0.5 ? -minD : minD;
+        }
+        step >>= 1;
+      }
+      let minD = Infinity, maxD = -Infinity;
+      for (let i=0; i<dist.length; i++) { const d=Math.abs(dist[i]); if(d<minD)minD=d; if(d>maxD)maxD=d; }
+      const range = maxD - minD || 1;
+      const out = new Uint8ClampedArray(dist.length);
+      for (let i=0; i<dist.length; i++) out[i] = ((dist[i]-minD)/range)*255;
+      return out;
     }
 
     function animate() {
@@ -534,19 +328,15 @@ E vos chama.`.trim();
       const dt = clock.getDelta();
       beatAccum += dt;
       const beat = getBeatAt(beatAccum);
-
-      if (veinsBackground?.update) veinsBackground.update(clock.getElapsedTime(), beat);
       if (textMesh?.material?.uniforms) {
-        textMesh.material.uniforms.time.value = clock.getElapsedTime();
-        textMesh.material.uniforms.beatLevel.value = beat;
+        textMesh.material.uniforms.uTime.value = clock.getElapsedTime();
+        textMesh.material.uniforms.uBeat.value = beat;
       }
-
       if (crawlGroup && animationInProgress) {
         crawlGroup.position.y += scrollSpeed;
         totalDistance += scrollSpeed;
         if (totalDistance >= targetDistance) finishAnimation();
       }
-
       renderer.render(scene, camera);
     }
 
@@ -556,30 +346,20 @@ E vos chama.`.trim();
       if (crawlGroup) scene.remove(crawlGroup);
       if (sfx2Id) sfx2.stop(sfx2Id);
       if (sfx25Id) sfx25.stop(sfx25Id);
-      const id3 = sfx3.play();
-      makeBinaural(sfx3, id3, { speed: 1.6, radius: 0.8, jitter: 0.4 });
-
-      const signature = document.getElementById('signature-container');
-      signature.style.display = 'block';
-      requestAnimationFrame(() => signature.style.opacity = '1');
+      sfx3.play();
+      const sig = document.getElementById('signature-container');
+      sig.style.display = 'block';
+      requestAnimationFrame(() => sig.style.opacity = '1');
     }
 
     function onWindowResize() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
-      if (crawlGroup) createCrawlText();
+      if (crawlGroup) { scene.remove(crawlGroup); createCrawlText(); }
     }
 
-    /* ÁUDIO (binaural, reverb, etc.) - mantido igual */
-    function makeBinaural(howl, soundId, opts = {}) { /* ... */ }
-    function startBinauralLoop() { /* ... */ }
-
-    /* INICIALIZA APÓS FONTES */
-    document.fonts.ready.then(() => {
-      console.log("Fontes carregadas. Iniciando...");
-      init();
-    });
+    document.fonts.ready.then(() => { console.log("Fontes carregadas."); init(); });
   </script>
 </body>
 </html>
