@@ -1,365 +1,100 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="format-detection" content="telephone=no">
-  <title>O Pergaminho Arcano</title>
+<!-- 1. Substitua createCrawlText() -->
+<script>
+  // ... (código anterior até init)
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
+  function createCrawlText() {
+    if (!sdfTexture) sdfTexture = createPrecomputedSDFTexture();
+    const isMobile = window.innerWidth < 768;
+    const scale = isMobile ? 1.8 : 2.2;
+    const width = 800 * scale;
+    const height = 1800 * scale;
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        tSDF: { value: sdfTexture },
+        uTime: { value: 0 },
+        uBeat: { value: 0 },
+        uResolution: { value: new THREE.Vector2(width, height) }
+      },
+      vertexShader: document.getElementById('vertexShader').textContent,
+      fragmentShader: document.getElementById('sdfFragmentShader').textContent,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
+    const geometry = new THREE.PlaneGeometry(width, height);
+    textMesh = new THREE.Mesh(geometry, material);
+    crawlGroup = new THREE.Group();
+    crawlGroup.add(textMesh);
+    crawlGroup.position.y = -height / 2 - 300;
+    scene.add(crawlGroup);
+    const visibleHeight = 2 * Math.tan(camera.fov * Math.PI / 180 / 2) * camera.position.z;
+    targetDistance = height + visibleHeight * 0.7;
+    totalDistance = 0;
+  }
 
-  <!-- Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+  function createPrecomputedSDFTexture() {
+    const width = 800, height = 1800;
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'black'; ctx.fillRect(0,0,width,height);
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 36px "Uncial Antiqua", "Cinzel Decorative", "MedievalSharp", Georgia, serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const lines = LOREM_IPSUM_ARCANO.split('\n').map(l=>l.trim()).filter(Boolean);
+    let y = 100;
+    lines.forEach(l => { ctx.fillText(l, width/2, y); y += 52; });
 
-  <style>
-    :root { --cor-arcana: #b24cff; }
-    html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #fff; font-family: 'MedievalSharp', cursive; overflow: hidden; -webkit-font-smoothing: antialiased; user-select: none; }
-    #seal-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 160px; height: 160px; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 20; }
-    #arcane-seal-img { width: 120px; filter: drop-shadow(0 0 22px var(--cor-arcana)); transition: opacity .4s ease-out; }
-    #arcane-seal-img.clicked { opacity: 0; filter: drop-shadow(0 0 5px var(--cor-arcana)); }
-    #three-canvas { position: fixed; top: 0; left: 0; z-index: 1; }
-    #interstitial { display: none; opacity: 0; position: fixed; inset: 0; z-index: 9; align-items: center; justify-content: center; transition: opacity .5s ease; }
-    #interstitial.show { display: flex; opacity: 1; }
-    .interstitial-text { max-width: 800px; padding: 0 24px; text-align: center; font-size: clamp(20px, 4vw, 36px); color: #fff; text-shadow: 0 0 10px var(--cor-arcana), 0 0 20px var(--cor-arcana), 0 0 30px var(--cor-arcana); animation: g 2.8s ease-in-out infinite; }
-    @keyframes g { 0%,100% { text-shadow: 0 0 10px #fff, 0 0 18px var(--cor-arcana), 0 0 28px var(--cor-arcana); } 50% { text-shadow: 0 0 16px #fff, 0 0 32px var(--cor-arcana), 0 0 50px var(--cor-arcana), 0 0 70px var(--cor-arcana); } }
-    #signature-container { display: none; opacity: 0; position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%); z-index: 10; text-align: center; font-size: 1.2rem; max-width: 600px; line-height: 1.35; transition: opacity 1.2s ease-in; }
-    #signature { color: #fff; text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana); animation: p 1.4s ease-in-out infinite; }
-    @keyframes p { 0%,100% { text-shadow: 0 0 6px #fff, 0 0 12px var(--cor-arcana), 0 0 18px var(--cor-arcana); } 50% { text-shadow: 0 0 10px #fff, 0 0 22px var(--cor-arcana), 0 0 32px var(--cor-arcana), 0 0 45px var(--cor-arcana); } }
-  </style>
-</head>
-<body>
-
-  <div id="seal-container">
-    <img id="arcane-seal-img" src="./selo-arcano.png" alt="Selo Arcano">
-  </div>
-
-  <canvas id="three-canvas"></canvas>
-
-  <div id="interstitial">
-    <div class="interstitial-text">Sua mente é preenchida por um fluxo de pensamentos</div>
-  </div>
-
-  <div id="signature-container">
-    <p id="signature">
-      O coração dispara antes que você perceba que deixou a carta cair. O papel atinge o chão, mas a sensação de contato não some com ele. Algo fica preso na sua cabeça, como se um pensamento entrasse sem pedir permissão. Não é visão, nem sonho. É lembrança de algo que você nunca viveu.<br><br>
-      A imagem vem inteira, sem construção, sem origem: uma taverna que você nunca viu, mas reconhece. Tábuas escuras, cheiro de ferrugem, luz baixa demais para ser aconchegante, mesas que já desistiram de permanecer retas. Ferrugem & Ossos. Velha Chama. O nome surge pronto, como se sempre estivesse guardado em algum ponto da sua mente que não era seu.<br><br>
-      Ninguém diz que você deve ir.<br>
-      Mas a sensação é de que você já está atrasado.
-    </p>
-  </div>
-
-  <!-- SHADERS -->
-  <script type="x-shader/x-vertex" id="vertexShader">
-    varying vec2 vUv;
-    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
-  </script>
-
-  <!-- SDF FRAGMENT SHADER (TEXTO VETORIAL) -->
-  <script type="x-shader/x-fragment" id="sdfFragmentShader">
-    uniform sampler2D tMap;
-    uniform float uTime;
-    uniform vec3 uGlowColor;
-    uniform float uBeat;
-    uniform vec2 uResolution;
-    uniform float uDistortion;
-    uniform float uNoise;
-
-    varying vec2 vUv;
-
-    float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-    float noise(vec2 p) {
-      vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-      return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
-                 mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
-    }
-
-    void main() {
-      vec2 uv = vUv;
-      vec2 p = uv * 2.0 - 1.0;
-      float curve = p.y * p.y;
-      p.y += 0.4 * curve * (1.0 - abs(p.x) * 0.3);
-      float perspective = 1.0 + 0.4 * (p.y + 1.0) * 0.6;
-      p /= perspective;
-      vec2 warped = p * 0.5 + 0.5;
-
-      float wave = uDistortion * 15.0 * (0.8 + 2.0 * uBeat);
-      warped.x += wave * sin(warped.y * 20.0 + uTime * 1.5);
-      warped.x += wave * 0.5 * sin(warped.y * 35.0 + uTime * 2.2);
-
-      float n = noise(warped * 12.0 + uTime * 0.5) * 0.7 + noise(warped * 20.0 - uTime * 0.7) * 0.3;
-      warped += (n - 0.5) * uNoise * 20.0 * (0.5 + 1.5 * uBeat);
-
-      float sdf = texture2D(tMap, warped).r;
-      float alpha = smoothstep(0.4, 0.6, sdf);
-      float glow = smoothstep(0.0, 0.5, sdf);
-      vec3 glowColor = uGlowColor * glow * (2.0 + 1.5 * uBeat);
-
-      float strobe = mod(uTime * 6.0, 3.0);
-      vec3 color = vec3(1.0);
-      if (strobe < 1.0) color = mix(vec3(1.0), vec3(0.6), strobe);
-      else if (strobe < 2.0) color = mix(vec3(0.6), uGlowColor, strobe - 1.0);
-      else color = mix(uGlowColor, vec3(1.0), strobe - 2.0);
-      color = mix(color, vec3(1.0), sin(uTime * 8.0 + uBeat * 4.0) * 0.5 + 0.5 * 0.4);
-
-      vec3 final = color * alpha * 3.0 + glowColor;
-      gl_FragColor = vec4(final, alpha);
-    }
-  </script>
-
-  <script>
-    const LOREM_IPSUM_ARCANO = `
-Nas entranhas do real, onde a forma range,
-eles caminham sem saber que já foram colhidos.
-O mundo fede antes de morrer,
-mas vós chamais isso de ordem.
-
-Sob a pedra há dente,
-sob o dente há fome,
-sob a fome há ritmo,
-e o ritmo vos aguarda.
-
-Eles respiram, mas o ar não os quer.
-A carne permanece, mas a lembrança apodrece.
-O tempo só mastiga o que ainda resiste,
-e nada resiste por muito.
-
-O eixo tritura o que ousa lembrar.
-A cidade dorme sobre ossos que não consentem.
-Chama-se paz ao que sangra devagar,
-chama-se vida ao que ainda não cedeu.
-
-Vós sois as falhas do esquecimento,
-os nomes que o silêncio não digeriu.
-A Fenda não oferece escolha —
-apenas retorno.
-
-A vinda já começou
-antes do passo.
-A queda já vos guarda
-antes da borda.
-
-Ouçam.
-Desçam.
-Cedam.
-Retornem.
-
-A pele racha.
-O selo abre.
-A ruína respira.
-E vos chama.`.trim();
-
-    let BEAT = { fps: 60, durationSec: 0, values: [], ready: false };
-    async function precomputeBeat(url) {
-      try {
-        const resp = await fetch(url, { cache: 'force-cache' });
-        const arr = await resp.arrayBuffer();
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const decoded = await ctx.decodeAudioData(arr);
-        const chL = decoded.getChannelData(0);
-        const sr = decoded.sampleRate;
-        const hop = Math.floor(sr / BEAT.fps);
-        const env = [];
-        for (let i = 0; i < decoded.length; i += hop) {
-          let sum = 0, count = 0;
-          for (let j = 0; j < hop && i + j < decoded.length; j++) { sum += chL[i + j] ** 2; count++; }
-          env.push(Math.sqrt(sum / count));
+    const imageData = ctx.getImageData(0,0,width,height);
+    const data = imageData.data;
+    const sdf = new Uint8Array(width*height);
+    for (let i=0; i<data.length; i+=4) sdf[i>>2] = data[i]>200 ? 255 : 0;
+    const temp = new Uint8Array(sdf);
+    for (let r=0; r<40; r++) {
+      for (let y=0; y<height; y++) for (let x=0; x<width; x++) {
+        const idx = y*width + x; let maxVal = temp[idx];
+        for (let dy=-1; dy<=1; dy++) for (let dx=-1; dx<=1; dx++) {
+          const nx=x+dx, ny=y+dy;
+          if (nx>=0&&nx<width&&ny>=0&&ny<height) maxVal = Math.max(maxVal, temp[ny*width+nx]);
         }
-        const smooth = (arr, k = 0.86) => {
-          const out = new Float32Array(arr.length); let prev = 0;
-          for (let i = 0; i < arr.length; i++) { prev = prev * k + arr[i] * (1 - k); out[i] = prev; }
-          prev = 0;
-          for (let i = arr.length - 1; i >= 0; i--) { prev = prev * k + out[i] * (1 - k); out[i] = Math.max(out[i], prev); }
-          return Array.from(out);
-        };
-        let sm = smooth(env);
-        const sorted = [...sm].sort((a,b)=>a-b);
-        const p95 = sorted[Math.floor(sorted.length*0.95)]||1;
-        sm = sm.map(v=>Math.min(1,v/(p95||1)));
-        BEAT.values = sm.map(v=>v**0.6);
-        BEAT.durationSec = decoded.duration;
-        BEAT.ready = true;
-      } catch { BEAT.values = Array.from({length:1800},(_,i)=> (Math.sin(i/60*2*Math.PI*1.1)*0.5+0.5)); BEAT.durationSec=30; BEAT.ready=true; }
-    }
-    function getBeatAt(t) { return BEAT.ready ? BEAT.values[Math.floor(t*BEAT.fps)%BEAT.values.length] : (Math.sin(t*2*Math.PI)*0.5+0.5); }
-
-    let scene, camera, renderer, sfx1, sfx2, sfx25, sfx3, sfx2Id, sfx25Id, crawlGroup, textMesh, textHeight, animationInProgress = false, scrollSpeed = 0.7, totalDistance = 0, targetDistance = 0, clock = new THREE.Clock(), beatAccum = 0;
-    const ARCANE_PURPLE = new THREE.Color('#b24cff');
-    let wakeLock = null;
-    async function requestWakeLock() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch {} }
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) requestWakeLock(); });
-
-    function init() {
-      sfx1 = new Howl({ src: ['./sfx1.mp3'], volume: 0.8, loop: false });
-      sfx2 = new Howl({ src: ['./sfx2.mp3'], volume: 0.6, loop: true });
-      sfx25 = new Howl({ src: ['./sfx2_5.mp3'], volume: 1.0, loop: true });
-      sfx3 = new Howl({ src: ['./sfx3.mp3'], volume: 0.6, loop: false });
-      const canvas = document.getElementById('three-canvas');
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
-      camera.position.set(0, 130, 480); camera.lookAt(0,0,0);
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setClearColor(0x000000, 1);
-      document.getElementById('seal-container').addEventListener('click', startExperience, { once: true });
-      window.addEventListener('resize', onWindowResize);
-      precomputeBeat('./sfx2_5.mp3');
-      requestWakeLock();
-      animate();
-    }
-
-    function startExperience() {
-      if (animationInProgress) return;
-      animationInProgress = true;
-      document.getElementById('arcane-seal-img').classList.add('clicked');
-      const id1 = sfx1.play();
-      setTimeout(() => { document.getElementById('seal-container').style.display = 'none'; }, 400);
-      showInterstitial(3000);
-      setTimeout(() => { sfx2Id = sfx2.play(); sfx25Id = sfx25.play(); }, 4500);
-      setTimeout(createCrawlText, 3000);
-    }
-
-    function showInterstitial(ms) {
-      const el = document.getElementById('interstitial');
-      el.style.display = 'flex';
-      requestAnimationFrame(() => el.classList.add('show'));
-      setTimeout(() => { el.classList.remove('show'); el.classList.add('hide'); setTimeout(() => { el.style.display = 'none'; el.classList.remove('hide'); }, 500); }, ms);
-    }
-
-    let sdfTexture = null;
-    function createCrawlText() {
-      if (!sdfTexture) sdfTexture = generateSDFTexture(LOREM_IPSUM_ARCANO);
-      const isMobile = window.innerWidth < 768;
-      const scale = isMobile ? 1.5 : 2.0;
-      const width = 800 * scale;
-      const height = 1600 * scale;
-      const material = new THREE.ShaderMaterial({
-        uniforms: {
-          tMap: { value: sdfTexture },
-          uTime: { value: 0 },
-          uGlowColor: { value: ARCANE_PURPLE },
-          uBeat: { value: 0 },
-          uResolution: { value: new THREE.Vector2(width, height) },
-          uDistortion: { value: 0.010 },
-          uNoise: { value: 0.010 }
-        },
-        vertexShader: document.getElementById('vertexShader').textContent,
-        fragmentShader: document.getElementById('sdfFragmentShader').textContent,
-        transparent: true,
-        side: THREE.DoubleSide
-      });
-      const geometry = new THREE.PlaneGeometry(width, height);
-      textMesh = new THREE.Mesh(geometry, material);
-      crawlGroup = new THREE.Group();
-      crawlGroup.add(textMesh);
-      crawlGroup.position.y = -height / 2 - 300;
-      scene.add(crawlGroup);
-      const visibleHeight = 2 * Math.tan(camera.fov * Math.PI / 180 / 2) * camera.position.z;
-      targetDistance = height + visibleHeight * 0.7;
-      totalDistance = 0;
-    }
-
-    function generateSDFTexture(text) {
-      const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
-      const isMobile = window.innerWidth < 768;
-      const fontSize = isMobile ? 28 : 36;
-      const lineHeight = fontSize * 1.4;
-      const padding = 60;
-      const width = 800;
-      const height = Math.max(1200, lines.length * lineHeight + padding * 2);
-      const canvas = document.createElement('canvas');
-      canvas.width = width; canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = 'black'; ctx.fillRect(0,0,width,height);
-      ctx.font = `bold ${fontSize}px 'Uncial Antiqua', 'Cinzel Decorative', 'MedievalSharp', serif`;
-      ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      let y = padding + fontSize/2;
-      lines.forEach(l => { ctx.fillText(l, width/2, y); y += lineHeight; });
-      const imageData = ctx.getImageData(0,0,width,height);
-      const sdfData = generateSDF(imageData, width, height);
-      const sdfCanvas = document.createElement('canvas');
-      sdfCanvas.width = width; sdfCanvas.height = height;
-      const sdfCtx = sdfCanvas.getContext('2d');
-      const img = sdfCtx.createImageData(width, height);
-      for (let i=0; i<sdfData.length; i++) { const v=sdfData[i]; img.data[i*4]=v; img.data[i*4+1]=v; img.data[i*4+2]=v; img.data[i*4+3]=255; }
-      sdfCtx.putImageData(img,0,0);
-      const tex = new THREE.CanvasTexture(sdfCanvas);
-      tex.minFilter = tex.magFilter = THREE.LinearFilter;
-      tex.generateMipmaps = false;
-      tex.needsUpdate = true;
-      return tex;
-    }
-
-    function generateSDF(img, w, h) {
-      const data = img.data;
-      const grid = new Float32Array(w*h);
-      for (let i=0; i<data.length; i+=4) grid[i/4] = data[i]>128 ? 0 : 1;
-      const dist = new Float32Array(w*h);
-      let step = 1 << (Math.log2(Math.max(w,h))|0) - 1;
-      while (step > 0) {
-        for (let y=0; y<h; y++) for (let x=0; x<w; x++) {
-          const idx = y*w + x; let minD = Infinity;
-          for (let dy=-1; dy<=1; dy++) for (let dx=-1; dx<=1; dx++) {
-            const nx = x + dx*step, ny = y + dy*step;
-            if (nx>=0 && nx<w && ny>=0 && ny<h && grid[ny*w + nx] < 0.5) {
-              const d = Math.hypot(dx, dy) * step;
-              if (d < minD) minD = d;
-            }
-          }
-          if (minD < Infinity) dist[idx] = grid[idx] < 0.5 ? -minD : minD;
-        }
-        step >>= 1;
+        if (sdf[idx]===0 && maxVal>0) sdf[idx] = Math.max(0, maxVal-1);
       }
-      let minD = Infinity, maxD = -Infinity;
-      for (let i=0; i<dist.length; i++) { const d=Math.abs(dist[i]); if(d<minD)minD=d; if(d>maxD)maxD=d; }
-      const range = maxD - minD || 1;
-      const out = new Uint8ClampedArray(dist.length);
-      for (let i=0; i<dist.length; i++) out[i] = ((dist[i]-minD)/range)*255;
-      return out;
+      temp.set(sdf);
     }
+    const result = ctx.createImageData(width, height);
+    for (let i=0; i<sdf.length; i++) { const v=sdf[i]; result.data[i*4]=v; result.data[i*4+1]=v; result.data[i*4+2]=v; result.data[i*4+3]=255; }
+    ctx.putImageData(result,0,0);
 
-    function animate() {
-      requestAnimationFrame(animate);
-      const dt = clock.getDelta();
-      beatAccum += dt;
-      const beat = getBeatAt(beatAccum);
-      if (textMesh?.material?.uniforms) {
-        textMesh.material.uniforms.uTime.value = clock.getElapsedTime();
-        textMesh.material.uniforms.uBeat.value = beat;
-      }
-      if (crawlGroup && animationInProgress) {
-        crawlGroup.position.y += scrollSpeed;
-        totalDistance += scrollSpeed;
-        if (totalDistance >= targetDistance) finishAnimation();
-      }
-      renderer.render(scene, camera);
-    }
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = tex.magFilter = THREE.LinearFilter;
+    tex.needsUpdate = true;
+    return tex;
+  }
 
-    function finishAnimation() {
-      if (!animationInProgress) return;
-      animationInProgress = false;
-      if (crawlGroup) scene.remove(crawlGroup);
-      if (sfx2Id) sfx2.stop(sfx2Id);
-      if (sfx25Id) sfx25.stop(sfx25Id);
-      sfx3.play();
-      const sig = document.getElementById('signature-container');
-      sig.style.display = 'block';
-      requestAnimationFrame(() => sig.style.opacity = '1');
-    }
+  // ... resto do código
+</script>
 
-    function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      if (crawlGroup) { scene.remove(crawlGroup); createCrawlText(); }
-    }
-
-    document.fonts.ready.then(() => { console.log("Fontes carregadas."); init(); });
-  </script>
-</body>
-</html>
+<!-- 2. Substitua o shader -->
+<script type="x-shader/x-fragment" id="sdfFragmentShader">
+  uniform sampler2D tSDF;
+  uniform float uTime;
+  uniform float uBeat;
+  uniform vec2 uResolution;
+  varying vec2 vUv;
+  void main() {
+    vec2 uv = vUv;
+    vec2 p = uv * 2.0 - 1.0;
+    p.y += 0.3 * p.y * p.y * (1.0 - abs(p.x) * 0.3);
+    p /= 1.0 + 0.3 * (p.y + 1.0) * 0.6;
+    uv = p * 0.5 + 0.5;
+    float wave = 0.01 * (1.0 + 2.0 * uBeat);
+    uv.x += wave * sin(uv.y * 25.0 + uTime * 2.0);
+    uv.x += wave * 0.5 * sin(uv.y * 40.0 + uTime * 3.0);
+    float sdf = texture2D(tSDF, uv).r / 255.0;
+    float alpha = smoothstep(0.45, 0.55, sdf);
+    float glow = smoothstep(0.0, 0.6, sdf);
+    vec3 color = mix(vec3(0.8), vec3(1.0), sin(uTime * 6.0) * 0.5 + 0.5);
+    vec3 glowColor = vec3(0.7, 0.3, 1.0) * glow * (2.0 + uBeat);
+    vec3 final = color * alpha * 3.0 + glowColor;
+    gl_FragColor = vec4(final, alpha);
+  }
+</script>
