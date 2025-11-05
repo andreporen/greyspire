@@ -417,7 +417,8 @@ E vos chama.`.trim();
         cutoff = 0.25      // corte
       } = opts || {};
 
-      const Tiny = window.TinySDF || (window.TinySDF && window.TinySDF.TinySDF);
+      // Robust TinySDF loader
+      const Tiny = window.TinySDF?.TinySDF || window.TinySDF || window.tinySDF || window.tinysdf;
       const tiny = new Tiny(fontSize, buffer, radius, cutoff, fontFamily, fontWeight);
       // Canvas para medir avanços
       const measure = document.createElement('canvas').getContext('2d');
