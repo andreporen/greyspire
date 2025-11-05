@@ -5,18 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
   <title>O Pergaminho Arcano</title>
 
-  <!-- Fonts + Libs -->
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
+
+  <!-- Three.js + Howler -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
-  <!-- TINYSDF (1.5 KB) -->
-  <script src="https://cdn.jsdelivr.net/npm/tinysdf@1.1.0/dist/tinysdf.min.js"></script>
 
   <style>
     :root { --cor-arcana: #b24cff; }
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width:100%; height:100%; background:#000; overflow:hidden; touch-action:none; }
-    #seal-container { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:160px; height:160px; display:flex; justify-content:center; align-items:center; cursor:pointer; z-index:100; }
+    #seal-container { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:160px; height:160px; display:flex; justify-content:center; align-items:center; cursor:pointer; z-index:100; pointer-events:auto; }
     #arcane-seal-img { width:120px; filter:drop-shadow(0 0 22px var(--cor-arcana)); transition:opacity .4s; }
     #arcane-seal-img.clicked { opacity:0; }
     canvas { position:fixed; top:0; left:0; z-index:1; }
@@ -122,7 +122,6 @@ E vos chama.`.trim();
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       renderer.setSize(innerWidth, innerHeight);
 
-      // === TINYSDF: SDF PERFEITO ===
       sdfTex = makeSDFWithTinySDF();
 
       ['sfx1','sfx2','sfx2_5','sfx3'].forEach(n=>sounds[n]=new Howl({src:[`./${n}.mp3`],volume:0.8,loop:n==='sfx2'||n==='sfx2_5'}));
@@ -144,17 +143,13 @@ E vos chama.`.trim();
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
       const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w, h);
 
-      // Fundo preto
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, w, h);
-
-      // Config TinySDF
       const fontSize = 36;
       const buffer = 16;
       const radius = 8;
       const cutoff = 0.25;
-      const fontFamily = 'Uncial Antiqua, Cinzel Decorative, MedievalSharp, Georgia, serif';
+      const fontFamily = 'Uncial Antiqua';
       const fontWeight = 'bold';
 
       const sdf = new TinySDF(fontSize, buffer, radius, cutoff, fontFamily, fontWeight);
@@ -163,15 +158,13 @@ E vos chama.`.trim();
       const lines = TEXT.split('\n').map(l => l.trim()).filter(Boolean);
       let y = 100;
       lines.forEach(line => {
-        const metrics = ctx.measureText(line);
-        const x = w / 2;
-        const sdfData = sdf.draw(line, x, y, w, h);
+        const sdfData = sdf.draw(line);
         const imgData = ctx.createImageData(sdfData.width, sdfData.height);
         for (let i = 0; i < sdfData.data.length; i++) {
           const v = sdfData.data[i];
           imgData.data[i*4] = v; imgData.data[i*4+1] = v; imgData.data[i*4+2] = v; imgData.data[i*4+3] = 255;
         }
-        ctx.putImageData(imgData, x - sdfData.width/2, y - sdfData.height/2);
+        ctx.putImageData(imgData, w/2 - sdfData.width/2, y - sdfData.height/2);
         y += 52;
       });
 
@@ -234,7 +227,18 @@ E vos chama.`.trim();
       sig.style.display='block'; requestAnimationFrame(()=>sig.style.opacity='1');
     }
 
-    document.fonts.ready.then(init);
+    // === CARREGA TINYSDF ANTES DE INICIAR ===
+    const tinysdfScript = document.createElement('script');
+    tinysdfScript.src = 'https://cdn.jsdelivr.net/npm/tinysdf@1.1.0/dist/tinysdf.min.js';
+    tinysdfScript.onload = () => {
+      console.log('TinySDF carregado');
+      document.fonts.ready.then(init);
+    };
+    tinysdfScript.onerror = () => {
+      console.error('Falha ao carregar TinySDF');
+      document.fonts.ready.then(init); // fallback
+    };
+    document.head.appendChild(tinysdfScript);
   </script>
 </body>
 </html>
